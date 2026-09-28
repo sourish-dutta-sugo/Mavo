@@ -376,17 +376,19 @@ private fun AppContent(
                         containerColor = AppColors.screenBg,
                         bottomBar = {
                             if (isTopLevel) {
-                                Box {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp)
+                                        .padding(bottom = 8.dp)
+                                ) {
                                     NavigationBar(
-containerColor = AppColors.bottomBarBg,
+                                        containerColor = AppColors.bottomBarBg,
                                         tonalElevation = 0.dp,
                                         modifier = Modifier
-                                            .navigationBarsPadding()
-                                            .height(64.dp)
-                                            .background(
-                                                AppColors.bottomBarBg,
-                                                RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp)
-                                            )
+                                            .height(72.dp)
+                                            .shadow(8.dp, RoundedCornerShape(24.dp))
+                                            .background(AppColors.bottomBarBg, RoundedCornerShape(24.dp)),
                                     ) {
                                         val destinationsWithFab = listOf(
                                             topLevelDestinations[0],
@@ -398,7 +400,7 @@ containerColor = AppColors.bottomBarBg,
                                             val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
                                             NavigationBarItem(
                                                 selected = selected,
-                                                enabled = !selected,
+                                                enabled = true,
                                                 onClick = {
                                                     if (selected) return@NavigationBarItem
                                                     navController.navigateToTopLevel(destination.route)
@@ -446,10 +448,10 @@ containerColor = AppColors.bottomBarBg,
                                     Box(
                                         modifier = Modifier
                                             .align(Alignment.TopCenter)
-                                            .offset(y = (-14).dp)
-                                            .size(52.dp)
-                                            .background(AppColors.primary, RoundedCornerShape(16.dp))
-                                            .shadow(6.dp, RoundedCornerShape(16.dp))
+                                            .offset(y = (-18).dp)
+                                            .size(56.dp)
+                                            .background(AppColors.primary, CircleShape)
+                                            .shadow(8.dp, CircleShape)
                                             .clickable {
                                                 navController.navigate(newVoucherRoute())
                                             },

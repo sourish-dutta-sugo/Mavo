@@ -211,6 +211,55 @@ fun Modifier.pressScale(
     }
 }
 
+val M3ExpressiveSpringSpec = spring<Float>(
+    dampingRatio = 0.75f,
+    stiffness = 380f
+)
+
+@Composable
+fun Modifier.m3SpringPress(
+    enabled: Boolean = true,
+    pressedScale: Float = 0.96f,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+): Modifier {
+    val prefs = rememberPremiumMotionPrefs()
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (enabled && isPressed) pressedScale else 1f,
+        animationSpec = spring(
+            dampingRatio = if (prefs.reducedMotion) 0.92f else 0.75f,
+            stiffness = if (prefs.reducedMotion) 450f else 380f
+        ),
+        label = "m3_spring_press_scale"
+    )
+    val translationYPx by animateFloatAsState(
+        targetValue = if (enabled && isPressed) 1.5f else 0f,
+        animationSpec = spring(
+            dampingRatio = if (prefs.reducedMotion) 0.92f else 0.75f,
+            stiffness = if (prefs.reducedMotion) 450f else 380f
+        ),
+        label = "m3_spring_press_y"
+    )
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+        translationY = translationYPx
+    }
+}
+
+@Composable
+fun Modifier.m3PulseHighlight(active: Boolean): Modifier {
+    val scale by animateFloatAsState(
+        targetValue = if (active) 1.04f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+        label = "m3_pulse_highlight"
+    )
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Modifier.premiumClickable(
@@ -219,7 +268,7 @@ fun Modifier.premiumClickable(
     onClick: () -> Unit
 ): Modifier {
     val interactionSource = remember { MutableInteractionSource() }
-    return pressScale(enabled = enabled, interactionSource = interactionSource)
+    return m3SpringPress(enabled = enabled, interactionSource = interactionSource)
         .combinedClickable(
             enabled = enabled,
             role = role,
@@ -238,7 +287,7 @@ fun Modifier.premiumCombinedClickable(
     onLongClick: (() -> Unit)? = null
 ): Modifier {
     val interactionSource = remember { MutableInteractionSource() }
-    return pressScale(enabled = enabled, interactionSource = interactionSource)
+    return m3SpringPress(enabled = enabled, interactionSource = interactionSource)
         .combinedClickable(
             enabled = enabled,
             role = role,

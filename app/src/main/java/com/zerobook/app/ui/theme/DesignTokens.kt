@@ -134,4 +134,5 @@ object ThemeNames {
     const val SLATE = "SLATE"
     const val INK = "INK"
     const val LEDGER = "LEDGER"
+    const val NIGHT = "NIGHT"
 }

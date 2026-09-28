@@ -2108,37 +2108,38 @@ fun SettingsMenuCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .premiumClickable { onClick() }
-            .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .premiumClickable { onClick() }
+                .padding(horizontal = 12.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = AppColors.primary.copy(alpha = 0.12f)),
-                    shape = RoundedCornerShape(6.dp)
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(AppColors.primary.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
                         tint = AppColors.primary,
-                        modifier = Modifier.padding(10.dp).size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
                 Column {
-                    Text(text = title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = AppColors.textPrimary)
-                    Text(text = description, color = AppColors.textSecondary, fontSize = 11.sp)
+                    Text(text = title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = AppColors.textPrimary)
+                    Text(text = description, color = AppColors.textSecondary, fontSize = 12.sp)
                 }
             }
             Icon(
@@ -2148,6 +2149,7 @@ fun SettingsMenuCard(
                 modifier = Modifier.size(20.dp)
             )
         }
+        HorizontalDivider(color = AppColors.divider)
     }
 }
 
@@ -2157,11 +2159,11 @@ private fun ThemePickerRow(
     onThemeSelected: (String) -> Unit
 ) {
     val themeOptions = listOf(
-        Triple("BEACH", "Beach", Color(0xFFFDF6EC)),
-        Triple("BLUE", "Blue", Color(0xFF1A73E8)),
-        Triple("GREEN", "Green", Color(0xFF1E8A3C)),
-        Triple("PURPLE", "Purple", Color(0xFF6200EA)),
-        Triple("TEAL", "Teal", Color(0xFF0F9D8A))
+        Triple("SAFFRON", "Saffron", Color(0xFFFDF6EC)),
+        Triple("SLATE", "Slate", Color(0xFF22755F)),
+        Triple("LEDGER", "Ledger", Color(0xFF22A06B)),
+        Triple("INK", "Ink", Color(0xFF7C3AED)),
+        Triple("NIGHT", "Night", Color(0xFF18211F))
     )
 
     Row(
@@ -2184,10 +2186,10 @@ private fun ThemePickerRow(
                         .clip(RoundedCornerShape(21.dp))
                         .background(swatch)
                         .border(
-                            width = if (name == "BEACH") 2.dp else 1.dp,
+                            width = if (name == "SAFFRON") 2.dp else 1.dp,
                             color = when {
                                 isSelected -> AppColors.primary
-                                name == "BEACH" -> Color(0xFF8D6E63)
+                                name == "SAFFRON" -> Color(0xFF8D6E63)
                                 else -> AppColors.border
                             },
                             shape = RoundedCornerShape(21.dp)
@@ -2198,7 +2200,7 @@ private fun ThemePickerRow(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = label,
-                            tint = if (name == "BEACH") AppColors.textPrimary else Color.White,
+                            tint = if (name == "SAFFRON") AppColors.textPrimary else Color.White,
                             modifier = Modifier.size(18.dp)
                         )
                     }

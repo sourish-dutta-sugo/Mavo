@@ -61,6 +61,7 @@ fun ReportsScreen(
     val parties by viewModel.parties.collectAsState()
     val products by viewModel.products.collectAsState()
     val vouchers by viewModel.vouchers.collectAsState()
+    val financialYear by viewModel.financialYear.collectAsState()
 
     var activeReport by remember { mutableStateOf(if (isDesktop) "TRIAL" else "MENU") }
 
@@ -177,7 +178,7 @@ fun ReportsScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Reports Menu (${viewModel.financialYear.value})",
+                            text = "Reports Menu ($financialYear)",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = AppColors.textSecondary
@@ -257,7 +258,7 @@ fun ReportsScreen(
                                         fontSize = 16.sp
                                     )
                                     Text(
-                                        text = "ZeroBook • Financial Year ${viewModel.financialYear.value}",
+                                        text = "ZeroBook • Financial Year $financialYear",
                                         fontSize = 11.sp,
                                         color = AppColors.textTertiary
                                     )
@@ -415,7 +416,7 @@ fun ReportsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Double Entry Ledger Reports Summary (${viewModel.financialYear.value})",
+                        text = "Double Entry Ledger Reports Summary ($financialYear)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = AppColors.textSecondary
@@ -508,7 +509,7 @@ fun ReportsScreen(
                                     fontSize = 16.sp
                                 )
                                 Text(
-                                    text = "ZeroBook • Financial Year ${viewModel.financialYear.value}",
+                                    text = "ZeroBook • Financial Year $financialYear",
                                     fontSize = 11.sp,
                                     color = AppColors.textTertiary
                                 )

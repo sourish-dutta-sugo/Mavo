@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zerobook.app.data.*
 import com.zerobook.app.ui.AppViewModel
+import com.zerobook.app.ui.animation.m3SpringPress
 import com.zerobook.app.ui.animation.premiumCombinedClickable
 import com.zerobook.app.ui.animation.premiumFabEntrance
 import com.zerobook.app.ui.animation.pressScale
@@ -175,19 +176,20 @@ fun PartiesScreen(
                         // Filter Buttons Row
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             val filters = listOf("ALL", "CUSTOMER", "SUPPLIER")
                             filters.forEach { filter ->
                                 FilterChip(
                                     selected = selectedTypeFilter == filter,
                                     onClick = { selectedTypeFilter = filter },
-                                    label = { Text(filter, fontSize = 9.sp) },
-                                    shape = RoundedCornerShape(4.dp),
+                                    label = { Text(filter, fontSize = 11.sp) },
+                                    shape = RoundedCornerShape(999.dp),
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = AppColors.primary,
                                         selectedLabelColor = AppColors.textOnPrimary
-                                    )
+                                    ),
+                                    modifier = Modifier.m3SpringPress()
                                 )
                             }
                         }
@@ -423,11 +425,12 @@ fun PartiesScreen(
                                 selected = selectedTypeFilter == filter,
                                 onClick = { selectedTypeFilter = filter },
                                 label = { Text(filter, fontSize = 11.sp) },
-                                shape = RoundedCornerShape(4.dp),
+                                shape = RoundedCornerShape(999.dp),
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = AppColors.primary,
                                     selectedLabelColor = AppColors.textOnPrimary
-                                )
+                                ),
+                                modifier = Modifier.m3SpringPress()
                             )
                         }
                     }

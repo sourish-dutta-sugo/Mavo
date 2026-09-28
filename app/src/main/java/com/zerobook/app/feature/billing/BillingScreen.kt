@@ -1,36 +1,62 @@
 package com.zerobook.app.feature.billing
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -43,7 +69,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,18 +81,22 @@ import com.zerobook.app.data.Utils
 import com.zerobook.app.data.Voucher
 import com.zerobook.app.data.VoucherItem
 import com.zerobook.app.ui.AppViewModel
-import com.zerobook.app.ui.theme.AppColors
+import com.zerobook.app.ui.animation.m3PulseHighlight
+import com.zerobook.app.ui.animation.m3SpringPress
+import com.zerobook.app.ui.animation.premiumClickable
+import com.zerobook.app.ui.theme.LocalAppTheme
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun BillingScreen(
     viewModel: AppViewModel,
     onNavigateBack: () -> Unit
 ) {
+    val theme = LocalAppTheme.current
     val products by viewModel.products.collectAsState()
     val parties by viewModel.parties.collectAsState()
     val cart = remember { mutableStateListOf<VoucherItem>() }
@@ -72,6 +105,9 @@ fun BillingScreen(
     var selectedPartyId by remember { mutableStateOf<String?>(null) }
     var paymentMode by remember { mutableStateOf("CASH") }
     var search by remember { mutableStateOf("") }
+    val configuration = LocalConfiguration.current
+    val isTablet = configuration.screenWidthDp >= 600
+
     val filteredProducts = remember(products, selectedUnitFilter, search) {
         products.filter {
             (selectedUnitFilter == "ALL" || it.unit == selectedUnitFilter) &&
@@ -81,61 +117,231 @@ fun BillingScreen(
     val total = cart.sumOf { it.totalAmount }
 
     Scaffold(
-        containerColor = AppColors.screenBg,
+        containerColor = theme.backgroundPrimary,
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(Icons.Default.Bolt, contentDescription = null)
-                        Text("Counter Billing", fontWeight = FontWeight.Bold)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = theme.accentPrimary.copy(alpha = 0.15f),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Bolt,
+                                    contentDescription = null,
+                                    tint = theme.accentPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        Column {
+                            Text(
+                                "Express Counter Billing",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = theme.textPrimary
+                            )
+                            Text(
+                                "Material 3 POS Terminal",
+                                fontSize = 11.sp,
+                                color = theme.textTertiary
+                            )
+                        }
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.m3SpringPress()
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = theme.textPrimary
+                        )
+                    }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+                actions = {
+                    if (cart.isNotEmpty()) {
+                        AssistChip(
+                            onClick = { cart.clear() },
+                            label = { Text("Clear Cart (${cart.sumOf { it.qty.toInt() }})", fontSize = 12.sp) },
+                            leadingIcon = { Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(14.dp)) },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = theme.backgroundTertiary,
+                                labelColor = theme.textSecondary
+                            ),
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .m3SpringPress()
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = theme.backgroundSecondary
+                )
             )
         }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppColors.screenBg)
                 .padding(innerPadding)
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Card(colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                        Text("Walk-in Customer", fontWeight = FontWeight.SemiBold)
-                        Switch(checked = walkInCustomer, onCheckedChange = { walkInCustomer = it; if (it) selectedPartyId = null })
-                    }
-                    if (!walkInCustomer) {
-                        parties.filter { it.type == "CUSTOMER" || it.type == "BOTH" }.take(6).forEach { party ->
-                            FilterChip(
-                                selected = selectedPartyId == party.id,
-                                onClick = { selectedPartyId = party.id },
-                                label = { Text(party.name) }
+            // Customer Type & Party Selection Section
+            ElevatedCard(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = theme.backgroundSecondary),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                tint = theme.accentPrimary,
+                                modifier = Modifier.size(20.dp)
                             )
+                            Text(
+                                if (walkInCustomer) "Walk-in Customer" else "Select Customer / Party",
+                                fontWeight = FontWeight.SemiBold,
+                                color = theme.textPrimary,
+                                fontSize = 14.sp
+                            )
+                        }
+                        Switch(
+                            checked = walkInCustomer,
+                            onCheckedChange = {
+                                walkInCustomer = it
+                                if (it) selectedPartyId = null
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = theme.accentPrimary,
+                                uncheckedBorderColor = theme.textTertiary
+                            )
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visible = !walkInCustomer,
+                        enter = fadeIn() + slideInVertically(),
+                        exit = fadeOut() + slideOutVertically()
+                    ) {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            parties.filter { it.type == "CUSTOMER" || it.type == "BOTH" }.take(8).forEach { party ->
+                                val isSelected = selectedPartyId == party.id
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { selectedPartyId = if (isSelected) null else party.id },
+                                    label = { Text(party.name, fontSize = 12.sp) },
+                                    leadingIcon = if (isSelected) {
+                                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp)) }
+                                    } else null,
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = theme.accentPrimary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = theme.backgroundTertiary,
+                                        labelColor = theme.textPrimary
+                                    ),
+                                    modifier = Modifier.m3SpringPress()
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(modifier = Modifier.weight(0.42f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = search, onValueChange = { search = it }, label = { Text("Search products") }, modifier = Modifier.fillMaxWidth())
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        listOf("ALL" to "All").plus(products.map { it.unit }.distinct().take(3).map { it to it }).forEach { (value, label) ->
-                            FilterChip(selected = selectedUnitFilter == value, onClick = { selectedUnitFilter = value }, label = { Text(label) })
-                        }
+            // Products Grid vs Cart Summary
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Product Selection Column
+                Column(
+                    modifier = Modifier
+                        .weight(if (isTablet) 0.5f else 0.45f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = search,
+                        onValueChange = { search = it },
+                        placeholder = { Text("Search items...", color = theme.textTertiary, fontSize = 13.sp) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = theme.accentPrimary) },
+                        trailingIcon = if (search.isNotEmpty()) {
+                            {
+                                IconButton(onClick = { search = "" }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear", tint = theme.textTertiary)
+                                }
+                            }
+                        } else null,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = theme.accentPrimary,
+                            unfocusedBorderColor = theme.backgroundTertiary,
+                            focusedContainerColor = theme.backgroundSecondary,
+                            unfocusedContainerColor = theme.backgroundSecondary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Unit Filter Chips
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf("ALL" to "All")
+                            .plus(products.map { it.unit }.distinct().take(3).map { it to it })
+                            .forEach { (value, label) ->
+                                val isSelected = selectedUnitFilter == value
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { selectedUnitFilter = value },
+                                    label = { Text(label, fontSize = 11.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = theme.accentPrimary,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = theme.backgroundSecondary,
+                                        labelColor = theme.textSecondary
+                                    ),
+                                    modifier = Modifier.m3SpringPress()
+                                )
+                            }
                     }
+
+                    // Products list
                     filteredProducts.forEach { product ->
-                        Card(
+                        ElevatedCard(
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.elevatedCardColors(containerColor = theme.backgroundSecondary),
+                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
+                                .premiumClickable {
                                     val existing = cart.indexOfFirst { it.productId == product.id }
                                     if (existing >= 0) {
                                         val current = cart[existing]
@@ -147,62 +353,279 @@ fun BillingScreen(
                                     } else {
                                         cart.add(product.toBillingItem())
                                     }
-                                },
-                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                                }
                         ) {
-                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(product.name, fontWeight = FontWeight.Bold)
-                                Text(Utils.formatIndianCurrency(product.saleRate), color = AppColors.primary)
-                                Text("Stock: ${product.currentStock}", color = AppColors.textSecondary, fontSize = 12.sp)
-                            }
-                        }
-                    }
-                }
-                Column(modifier = Modifier.weight(0.58f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Cart", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(cart, key = { it.id }) { item ->
-                            Card(colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                            Row(
+                                modifier = Modifier
+                                    .padding(12.dp)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(item.productName, fontWeight = FontWeight.Bold)
-                                        Text("${item.qty} x ${Utils.formatIndianCurrency(item.rate)}", color = AppColors.textSecondary)
-                                    }
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        IconButton(onClick = {
-                                            val newQty = item.qty - 1
-                                            if (newQty <= 0.0) cart.remove(item) else {
-                                                val index = cart.indexOfFirst { it.id == item.id }
-                                                cart[index] = item.copy(qty = newQty, taxableAmount = newQty * item.rate, totalAmount = newQty * item.rate)
-                                            }
-                                        }) {
-                                            Icon(Icons.Default.Remove, contentDescription = "Reduce")
-                                        }
-                                        Text(Utils.formatIndianCurrency(item.totalAmount), fontWeight = FontWeight.Bold)
+                                    Text(
+                                        product.name,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp,
+                                        color = theme.textPrimary
+                                    )
+                                    Text(
+                                        "Stock: ${product.currentStock} ${product.unit}",
+                                        fontSize = 11.sp,
+                                        color = theme.textTertiary
+                                    )
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        Utils.formatIndianCurrency(product.saleRate),
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 14.sp,
+                                        color = theme.accentPrimary
+                                    )
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = theme.accentPrimary.copy(alpha = 0.1f),
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = "Add",
+                                            tint = theme.accentPrimary,
+                                            modifier = Modifier
+                                                .padding(4.dp)
+                                                .size(14.dp)
+                                        )
                                     }
                                 }
                             }
                         }
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        listOf("CASH", "UPI", "CARD").forEach { mode ->
-                            FilterChip(selected = paymentMode == mode, onClick = { paymentMode = if (mode == "CARD") "BANK" else mode }, label = { Text(mode) })
+                }
+
+                // Cart & Payment Column
+                Column(
+                    modifier = Modifier
+                        .weight(if (isTablet) 0.5f else 0.55f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.ShoppingCart,
+                                contentDescription = null,
+                                tint = theme.accentPrimary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                "Current Cart",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = theme.textPrimary
+                            )
+                        }
+                        if (cart.isNotEmpty()) {
+                            Surface(
+                                shape = CircleShape,
+                                color = theme.accentPrimary,
+                                modifier = Modifier.m3PulseHighlight(active = cart.isNotEmpty())
+                            ) {
+                                Text(
+                                    "${cart.sumOf { it.qty.toInt() }} items",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
                         }
                     }
-                    Card(colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)) {
-                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("Total", fontSize = 12.sp, color = AppColors.textSecondary)
-                            Text(Utils.formatIndianCurrency(total), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = AppColors.primary)
+
+                    // Cart Items List
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .animateContentSize(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        items(cart, key = { it.id }) { item ->
+                            OutlinedCard(
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.outlinedCardColors(containerColor = theme.backgroundSecondary),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateItem()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            item.productName,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 13.sp,
+                                            color = theme.textPrimary
+                                        )
+                                        Text(
+                                            "${item.qty.toInt()} x ${Utils.formatIndianCurrency(item.rate)}",
+                                            fontSize = 11.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = theme.textSecondary
+                                        )
+                                    }
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                val newQty = item.qty - 1
+                                                if (newQty <= 0.0) {
+                                                    cart.remove(item)
+                                                } else {
+                                                    val index = cart.indexOfFirst { it.id == item.id }
+                                                    cart[index] = item.copy(
+                                                        qty = newQty,
+                                                        taxableAmount = newQty * item.rate,
+                                                        totalAmount = newQty * item.rate
+                                                    )
+                                                }
+                                            },
+                                            modifier = Modifier
+                                                .size(28.dp)
+                                                .m3SpringPress()
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Remove,
+                                                contentDescription = "Reduce",
+                                                tint = theme.accentPrimary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+
+                                        Text(
+                                            Utils.formatIndianCurrency(item.totalAmount),
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 13.sp,
+                                            color = theme.textPrimary,
+                                            modifier = Modifier.padding(horizontal = 4.dp)
+                                        )
+
+                                        IconButton(
+                                            onClick = {
+                                                val index = cart.indexOfFirst { it.id == item.id }
+                                                val newQty = item.qty + 1
+                                                cart[index] = item.copy(
+                                                    qty = newQty,
+                                                    taxableAmount = newQty * item.rate,
+                                                    totalAmount = newQty * item.rate
+                                                )
+                                            },
+                                            modifier = Modifier
+                                                .size(28.dp)
+                                                .m3SpringPress()
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Add,
+                                                contentDescription = "Increase",
+                                                tint = theme.accentPrimary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
+
+                    // Payment Mode Selector
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf("CASH" to "Cash", "UPI" to "UPI QR", "CARD" to "Bank/Card").forEach { (mode, label) ->
+                            val isSelected = paymentMode == (if (mode == "CARD") "BANK" else mode)
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { paymentMode = if (mode == "CARD") "BANK" else mode },
+                                label = { Text(label, fontSize = 11.sp, fontWeight = FontWeight.Medium) },
+                                leadingIcon = if (isSelected) {
+                                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(12.dp)) }
+                                } else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = theme.accentPrimary,
+                                    selectedLabelColor = Color.White,
+                                    containerColor = theme.backgroundSecondary,
+                                    labelColor = theme.textPrimary
+                                ),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .m3SpringPress()
+                            )
+                        }
+                    }
+
+                    // Total Amount Display
+                    ElevatedCard(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = theme.accentLight
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .m3PulseHighlight(active = cart.isNotEmpty())
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    "NET PAYABLE TOTAL",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = theme.accentPrimary
+                                )
+                                Text(
+                                    "Incl. GST Taxes",
+                                    fontSize = 10.sp,
+                                    color = theme.textTertiary
+                                )
+                            }
+                            Text(
+                                Utils.formatIndianCurrency(total),
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontFamily = FontFamily.Monospace,
+                                color = theme.accentPrimary
+                            )
+                        }
+                    }
+
+                    // Final Submit Button
                     Button(
                         onClick = {
                             if (cart.isEmpty()) {
-                                Toast.makeText(viewModel.getApplication(), "Add items first", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(viewModel.getApplication(), "Please add items to cart", Toast.LENGTH_SHORT).show()
                             } else {
                                 val now = System.currentTimeMillis()
                                 CoroutineScope(Dispatchers.Main).launch {
@@ -232,15 +655,37 @@ fun BillingScreen(
                                         partyName = parties.find { it.id == selectedPartyId }?.name
                                     ) {
                                         cart.clear()
-                                        Toast.makeText(viewModel.getApplication(), "Counter sale saved", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(viewModel.getApplication(), "Counter sale invoice saved!", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = theme.accentPrimary,
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .m3SpringPress()
                     ) {
-                        Text("BILL NOW", color = AppColors.textOnPrimary, fontWeight = FontWeight.Bold)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.PointOfSale,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                "GENERATE BILL",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
                     }
                 }
             }

@@ -81,6 +81,7 @@ import com.zerobook.app.data.Utils
 import com.zerobook.app.data.Voucher
 import com.zerobook.app.ui.AppViewModel
 import com.zerobook.app.ui.DashboardViewModel
+import com.zerobook.app.ui.animation.m3SpringPress
 import com.zerobook.app.ui.animation.premiumClickable
 import com.zerobook.app.ui.theme.AppColors
 import kotlinx.coroutines.delay
@@ -409,15 +410,19 @@ fontWeight = FontWeight.SemiBold,
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    val gstinLabel = profile?.gstin
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { "GSTIN: $it" }
+                        ?: "Non-GST business"
                     Text(
-text = "Hello ${headerState.businessName.ifBlank { "there" }}",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
+                        text = headerState.businessName.ifBlank { "ZeroBook" },
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = AppColors.textPrimary
                     )
                     Text(
-                        text = "What would you like to do today?",
-                        fontSize = 13.sp,
+                        text = "$gstinLabel\nFinancial Year: FY ${headerState.fyLabel}",
+                        fontSize = 12.sp,
                         color = AppColors.textSecondary
                     )
 
@@ -586,10 +591,13 @@ tint = AppColors.primary,
                         },
                     shape = RoundedCornerShape(50.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AppColors.primary.copy(alpha = 0.4f),
+                        focusedTextColor = AppColors.textPrimary,
+                        unfocusedTextColor = AppColors.textPrimary,
+                        focusedBorderColor = AppColors.border,
                         unfocusedBorderColor = AppColors.border,
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
+                        focusedContainerColor = AppColors.cardBg,
+                        unfocusedContainerColor = AppColors.cardBg,
+                        cursorColor = AppColors.primary
                     ),
                     singleLine = true,
                     textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
@@ -794,11 +802,11 @@ tint = AppColors.primary,
                 // Recent Transactions
                 Card(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp), clip = false),
+                        .fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    border = BorderStroke(1.dp, AppColors.border),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(if (isTablet) 16.dp else 14.dp),

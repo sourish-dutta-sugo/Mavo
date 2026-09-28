@@ -15,7 +15,7 @@ object AppColors {
     val tableRowOdd get() = theme.backgroundPrimary
     val bottomBarBg get() = theme.backgroundSecondary
     val topBarBg get() = theme.backgroundSecondary
-    val divider = Color(0xFFE0E4EA)
+    val divider get() = theme.textTertiary.copy(alpha = 0.22f)
     val shimmerBg get() = theme.accentLight.copy(alpha = 0.45f)
 
     val textPrimary get() = theme.textPrimary
@@ -31,14 +31,14 @@ object AppColors {
     val primaryLight get() = theme.accentLight
     val primaryText get() = theme.accentPrimary
 
-    val border = Color(0xFFE0E4EA)
+    val border get() = theme.textTertiary.copy(alpha = if (theme.isDark) 0.32f else 0.22f)
     val borderFocus get() = theme.accentPrimary
-    val borderLight = Color(0xFFF3F2EF)
+    val borderLight get() = theme.backgroundTertiary
 
     val debit = Color(0xFFE24B4A)
-    val debitBg = Color(0xFFFEF0F0)
+    val debitBg get() = if (theme.isDark) Color(0xFF452522) else Color(0xFFFEF0F0)
     val credit = Color(0xFF22A06B)
-    val creditBg = Color(0xFFE8F8F0)
+    val creditBg get() = if (theme.isDark) Color(0xFF1D4034) else Color(0xFFE8F8F0)
 
     val gold = Color(0xFFC8943A)
     val goldLight = Color(0xFFF0C060)
@@ -62,16 +62,16 @@ object AppColors {
 
     val inputText get() = theme.textPrimary
     val inputPlaceholder get() = theme.textTertiary
-    val inputBorder = Color(0xFFE0E4EA)
+    val inputBorder get() = border
     val inputBorderFocus get() = theme.accentPrimary
     val labelText get() = theme.textSecondary
 
     val success = Color(0xFF22A06B)
-    val successBg = Color(0xFFE8F8F0)
+    val successBg get() = if (theme.isDark) Color(0xFF1D4034) else Color(0xFFE8F8F0)
     val error = Color(0xFFE24B4A)
-    val errorBg = Color(0xFFFEF0F0)
+    val errorBg get() = if (theme.isDark) Color(0xFF452522) else Color(0xFFFEF0F0)
     val warning = Color(0xFFD97706)
-    val warningBg = Color(0xFFFFF7E6)
-    val info = Color(0xFF6366F1)
-    val infoBg = Color(0xFFEEF2FF)
+    val warningBg get() = if (theme.isDark) Color(0xFF49371D) else Color(0xFFFFF7E6)
+    val info = Color(0xFF8B95FF)
+    val infoBg get() = if (theme.isDark) Color(0xFF29305A) else Color(0xFFEEF2FF)
 }

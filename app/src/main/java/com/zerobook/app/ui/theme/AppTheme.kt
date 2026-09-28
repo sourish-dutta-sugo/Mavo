@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,7 +30,8 @@ data class AppTheme(
     val textSecondary: Color,
     val textTertiary: Color,
     val statusBarColor: Color,
-    val statusBarDarkIcons: Boolean
+    val statusBarDarkIcons: Boolean,
+    val isDark: Boolean = false
 ) {
     companion object {
         val SAFFRON = AppTheme(
@@ -88,10 +90,26 @@ data class AppTheme(
             statusBarDarkIcons = true
         )
 
+        val NIGHT = AppTheme(
+            name = ThemeNames.NIGHT,
+            backgroundPrimary = Color(0xFF101615),
+            backgroundSecondary = Color(0xFF18211F),
+            backgroundTertiary = Color(0xFF22302C),
+            accentPrimary = Color(0xFF72D2B2),
+            accentLight = Color(0xFF213C35),
+            textPrimary = Color(0xFFF1F5F3),
+            textSecondary = Color(0xFFB8C8C2),
+            textTertiary = Color(0xFF81938C),
+            statusBarColor = Color(0xFF101615),
+            statusBarDarkIcons = false,
+            isDark = true
+        )
+
         fun fromName(name: String?): AppTheme = when (name?.uppercase()) {
             ThemeNames.SLATE, "BLUE" -> SLATE
             ThemeNames.LEDGER, "GREEN" -> LEDGER
             ThemeNames.INK, "PURPLE", "DARK" -> INK
+            ThemeNames.NIGHT -> NIGHT
             ThemeNames.SAFFRON, "BEACH", "TEAL" -> SAFFRON
             else -> SAFFRON
         }
@@ -153,7 +171,18 @@ fun ZeroBookTheme(
     appTheme: AppTheme = LocalAppTheme.current,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = lightColorScheme(
+    val colorScheme = (if (appTheme.isDark) darkColorScheme(
+        primary = appTheme.accentPrimary,
+        onPrimary = Color(0xFF082018),
+        secondary = appTheme.textSecondary,
+        background = appTheme.backgroundPrimary,
+        surface = appTheme.backgroundSecondary,
+        outline = appTheme.textTertiary.copy(alpha = 0.45f),
+        onBackground = appTheme.textPrimary,
+        onSurface = appTheme.textPrimary,
+        surfaceVariant = appTheme.backgroundTertiary,
+        onSurfaceVariant = appTheme.textSecondary
+    ) else lightColorScheme(
         primary = appTheme.accentPrimary,
         onPrimary = TextColors.onPrimary,
         secondary = appTheme.textSecondary,
@@ -164,7 +193,7 @@ fun ZeroBookTheme(
         onSurface = appTheme.textPrimary,
         surfaceVariant = appTheme.backgroundTertiary,
         onSurfaceVariant = appTheme.textSecondary
-    )
+    ))
 
     MaterialTheme(
         colorScheme = colorScheme,

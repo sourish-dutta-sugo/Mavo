@@ -887,23 +887,23 @@ fun VouchersScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 0.dp)
+                                .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 0.dp)
                         ) {
                             Text(
                                 text = "Vouchers",
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.SemiBold,
                                 color = AppColors.textPrimary,
-                                letterSpacing = (-0.5).sp
+                                letterSpacing = (-0.25).sp
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp)
+                                .padding(horizontal = 16.dp)
                         ) {
                             OutlinedTextField(
                                 value = searchQuery,
@@ -949,7 +949,6 @@ fun VouchersScreen(
                                 textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .shadow(2.dp, RoundedCornerShape(999.dp), ambientColor = Color(0x0A000000))
                                     .testTag("voucher_search_bar")
                             )
                         }
@@ -959,7 +958,7 @@ fun VouchersScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
+                                .padding(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -1222,23 +1221,23 @@ fun VouchersScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 0.dp)
+                        .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 0.dp)
                 ) {
                     Text(
                         text = "Vouchers",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = AppColors.textPrimary,
-                        letterSpacing = (-0.5).sp
+                        letterSpacing = (-0.25).sp
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
+                        .padding(horizontal = 16.dp)
                 ) {
                     OutlinedTextField(
                         value = searchQuery,
@@ -1284,7 +1283,6 @@ fun VouchersScreen(
                         textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .shadow(2.dp, RoundedCornerShape(999.dp), ambientColor = Color(0x0A000000))
                             .testTag("voucher_search_bar")
                     )
                 }
@@ -1294,7 +1292,7 @@ fun VouchersScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
