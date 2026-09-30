@@ -75,6 +75,12 @@ Thank you.
             .replace("{{amount}}", amount.ifBlank { "N/A" })
             .replace("{{due_date}}", dueDate.ifBlank { "N/A" })
 
+    fun buildAuthorizationHeader(token: String): String {
+        val accessToken = token.trim()
+        require(accessToken.isNotBlank()) { "Gmail access token is missing" }
+        return "Bearer $accessToken"
+    }
+
     fun getConsentAccepted(context: Context): Boolean = securePrefs(context).getBoolean(KEY_CONSENT, false)
     fun setConsentAccepted(context: Context, accepted: Boolean) = securePrefs(context).edit().putBoolean(KEY_CONSENT, accepted).apply()
 
