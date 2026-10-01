@@ -135,7 +135,7 @@ fun BankCashScreen(
                                 Utils.formatIndianCurrency(cashTotal),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (cashTotal >= 0) SuccessGreen else DangerRed
+                                color = if (cashTotal >= 0) AppColors.credit else AppColors.debit
                             )
                         }
                         Box(
@@ -150,7 +150,7 @@ fun BankCashScreen(
                                 Utils.formatIndianCurrency(bankTotal),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (bankTotal >= 0) SuccessGreen else DangerRed
+                                color = if (bankTotal >= 0) AppColors.credit else AppColors.debit
                             )
                         }
                     }
@@ -206,7 +206,7 @@ fun BankCashScreen(
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         val icon = if (tx.type == "RECEIPT") Icons.Default.ArrowUpward else Icons.Default.ArrowDownward
-                                        val iconColor = if (tx.type == "RECEIPT") SuccessGreen else DangerRed
+                                        val iconColor = if (tx.type == "RECEIPT") AppColors.credit else AppColors.debit
                                         Icon(
                                             imageVector = icon,
                                             contentDescription = null,
@@ -230,7 +230,7 @@ fun BankCashScreen(
                                         text = "${if (tx.type == "RECEIPT") "+" else "-"} ${Utils.formatIndianCurrency(tx.amount)}",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp,
-                                        color = if (tx.type == "RECEIPT") SuccessGreen else Color(0xFF1A1A1A)
+                                        color = if (tx.type == "RECEIPT") AppColors.credit else Color(0xFF1A1A1A)
                                     )
                                 }
                             }

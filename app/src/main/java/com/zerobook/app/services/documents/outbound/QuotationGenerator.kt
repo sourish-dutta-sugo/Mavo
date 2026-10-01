@@ -10,6 +10,9 @@ import com.zerobook.app.services.documents.DocumentHtmlComponents.escapeHtml
 import com.zerobook.app.services.documents.DocumentHtmlComponents.formatMoney
 import com.zerobook.app.services.documents.DocumentHtmlComponents.formatQty
 import com.zerobook.app.services.documents.DocumentHtmlComponents.toFileUrl
+import com.zerobook.app.services.documents.DocumentHtmlComponents.buildBusinessHeader
+import com.zerobook.app.services.documents.DocumentHtmlComponents.buildPartySection
+import com.zerobook.app.services.documents.DocumentHtmlComponents.buildTermsSection
 import com.zerobook.app.services.documents.DocumentType
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -216,70 +219,4 @@ class QuotationGenerator : DocumentGenerator {
         """.trimIndent()
     }
     
-    private fun buildBusinessHeader(business: BusinessProfile, showLogo: Boolean): String {
-        val detailsHtml = buildString {
-            append("<div class='company-name'>${escapeHtml(business.businessName)}</div>")
-            if (business.address.isNotBlank()) append("<div>${escapeHtml(business.address).replace("\n", "<br/>")}</div>")
-            if (business.city.isNotBlank() || business.pin.isNotBlank()) {
-                append("<div>${escapeHtml(business.city)}${if (business.pin.isNotBlank()) " - ${escapeHtml(business.pin)}" else ""}</div>")
-            }
-            if (business.gstin.isNotBlank()) {
-                append("<div>GSTIN: ${escapeHtml(business.gstin)}</div>")
-            }
-        }
-        
-        return if (showLogo) {
-            """
-            <table class='seller-grid' style='border:1px solid #000;'>
-              <tr>
-                <td class='seller-logo' style='border-right:1px solid #000;padding:8px;'><img src='${toFileUrl(business.logoPath!!)}'/></td>
-                <td style='padding:8px;vertical-align:top;'>$detailsHtml</td>
-              </tr>
-            </table>
-            """.trimIndent()
-        } else {
-            """
-            <div style='border:1px solid #000;padding:8px;'>
-              $detailsHtml
-            </div>
-            """.trimIndent()
-        }
-    }
-    
-    private fun buildPartySection(party: Party?): String = buildString {
-        append("<div style='margin-bottom:4px;'><strong>To:</strong></div>")
-        if (party != null) {
-            append("<div><strong>${escapeHtml(party.name)}</strong></div>")
-            if (party.address.isNotBlank()) {
-                append("<div>${escapeHtml(party.address).replace("\n", "<br/>")}</div>")
-            }
-            if (party.city.isNotBlank() || party.pin.isNotBlank()) {
-                append("<div>${escapeHtml(party.city)}${if (party.pin.isNotBlank()) " - ${escapeHtml(party.pin)}" else ""}</div>")
-            }
-        } else {
-            append("<div>Cash / Walk-in Customer</div>")
-        }
-    }
-    
-    private fun buildTermsSection(rawTerms: String): String {
-        if (rawTerms.isBlank()) return ""
-        
-        val termsLines = rawTerms.lines()
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .mapIndexed { index, line ->
-                val prefix = if (line.first().isDigit()) "" else "${index + 1}. "
-                "<span class='terms-line'>$prefix${escapeHtml(line)}</span>"
-            }
-            .joinToString("")
-        
-        return """
-        <div style='margin:16px 0;'>
-          <strong>Terms & Conditions:</strong>
-          <div style='margin-top:8px;'>
-            $termsLines
-          </div>
-        </div>
-        """.trimIndent()
-    }
 }

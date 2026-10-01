@@ -10,6 +10,7 @@ import com.zerobook.app.services.documents.DocumentHtmlComponents.escapeHtml
 import com.zerobook.app.services.documents.DocumentHtmlComponents.formatMoney
 import com.zerobook.app.services.documents.DocumentHtmlComponents.formatQty
 import com.zerobook.app.services.documents.DocumentHtmlComponents.toFileUrl
+import com.zerobook.app.services.documents.DocumentHtmlComponents.buildBusinessHeader
 import com.zerobook.app.services.documents.DocumentType
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -210,33 +211,4 @@ class CreditNoteGenerator : DocumentGenerator {
         """.trimIndent()
     }
     
-    private fun buildBusinessHeader(business: BusinessProfile, showLogo: Boolean): String {
-        val detailsHtml = buildString {
-            append("<div class='company-name'>${escapeHtml(business.businessName)}</div>")
-            if (business.address.isNotBlank()) append("<div>${escapeHtml(business.address).replace("\n", "<br/>")}</div>")
-            if (business.city.isNotBlank() || business.pin.isNotBlank()) {
-                append("<div>${escapeHtml(business.city)}${if (business.pin.isNotBlank()) " - ${escapeHtml(business.pin)}" else ""}</div>")
-            }
-            if (business.gstin.isNotBlank()) {
-                append("<div>GSTIN: ${escapeHtml(business.gstin)}</div>")
-            }
-        }
-        
-        return if (showLogo) {
-            """
-            <table class='seller-grid' style='border:1px solid #000;'>
-              <tr>
-                <td class='seller-logo' style='border-right:1px solid #000;padding:8px;'><img src='${toFileUrl(business.logoPath!!)}'/></td>
-                <td style='padding:8px;vertical-align:top;'>$detailsHtml</td>
-              </tr>
-            </table>
-            """.trimIndent()
-        } else {
-            """
-            <div style='border:1px solid #000;padding:8px;'>
-              $detailsHtml
-            </div>
-            """.trimIndent()
-        }
-    }
 }

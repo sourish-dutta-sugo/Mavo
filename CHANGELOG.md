@@ -52,6 +52,8 @@ DB migration: no
 - Unused imports and variables cleaned up
 - Predictive back gesture support added
 - Navigation back stack behaves correctly
+- Restored shared invoice defaults, file-picker, and multi-select APIs required by active screens
+- Corrected business-profile default terms reference that blocked Kotlin compilation
 
 ### Performance
 - Cleaner build output, zero warnings

@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.zerobook.app.data.*
 import com.zerobook.app.ui.AppViewModel
 import com.zerobook.app.services.EmailComposer
-import com.zerobook.app.ui.theme.Colors
+import com.zerobook.app.ui.theme.AppColors
 import com.zerobook.app.ui.theme.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -834,7 +834,7 @@ fun TrialBalanceView(
             .fillMaxSize()
             .verticalScroll(listState)
             .border(1.dp, AppColors.border, RoundedCornerShape(8.dp))
-            .background(Colors.surface)
+            .background(AppColors.cardBg)
     ) {
         // Table Header
         Row(
@@ -1041,7 +1041,7 @@ fun TrialBalanceView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Colors.warning.copy(alpha = 0.12f))
+                    .background(AppColors.warning.copy(alpha = 0.12f))
                     .padding(10.dp)
             ) {
                 Text(
@@ -1461,7 +1461,7 @@ fun BalanceSheetView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Colors.warning.copy(alpha = 0.12f))
+                    .background(AppColors.warning.copy(alpha = 0.12f))
                     .padding(10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {

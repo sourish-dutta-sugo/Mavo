@@ -126,23 +126,6 @@ fun LoadingAvatar(
 }
 
 @Composable
-fun LoadingRectangle(
-    modifier: Modifier = Modifier,
-    width: Dp = Dp.Unspecified,
-    height: Dp = 16.dp,
-    shape: Shape = RoundedCornerShape(8.dp),
-    animate: Boolean = true
-) {
-    LoadingText(
-        modifier = modifier,
-        width = width,
-        height = height,
-        shape = shape,
-        animate = animate
-    )
-}
-
-@Composable
 fun LoadingRoundedPlaceholder(
     modifier: Modifier = Modifier,
     width: Dp = Dp.Unspecified,

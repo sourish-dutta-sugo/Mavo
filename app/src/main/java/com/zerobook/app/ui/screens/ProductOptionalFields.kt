@@ -21,7 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zerobook.app.ui.theme.AppColors
-import com.zerobook.app.ui.theme.Colors
+import com.zerobook.app.ui.theme.Surface
 
 @Composable
 fun ProductOptionalFields(
@@ -43,7 +43,7 @@ fun ProductOptionalFields(
         focusedTextColor = AppColors.textPrimary,
         unfocusedTextColor = AppColors.textPrimary,
         focusedBorderColor = AppColors.primary,
-        unfocusedBorderColor = Colors.inputBorder
+        unfocusedBorderColor = Surface.inputBorder
     )
 
     Text("HSN/SAC Code (optional)", color = AppColors.labelText, fontSize = 12.sp, fontWeight = FontWeight.Medium)

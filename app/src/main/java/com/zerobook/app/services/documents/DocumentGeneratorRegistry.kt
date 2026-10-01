@@ -57,25 +57,9 @@ object DocumentGeneratorRegistry {
     }
     
     /**
-     * Get the generator for a voucher type string.
-     * 
-     * @param voucherType The voucher type string (e.g., "SALE", "QUOTATION")
-     * @return The DocumentGenerator for the voucher type
-     */
-    fun getGeneratorForVoucherType(voucherType: String): DocumentGenerator {
-        val documentType = DocumentType.fromVoucherType(voucherType)
-        return getGenerator(documentType)
-    }
-    
-    /**
      * Check if a generator is registered for the given document type.
      */
     fun hasGenerator(documentType: DocumentType): Boolean {
         return generators.containsKey(documentType)
     }
-    
-    /**
-     * Get all registered document types.
-     */
-    fun getRegisteredTypes(): Set<DocumentType> = generators.keys
 }

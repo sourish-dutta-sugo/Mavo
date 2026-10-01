@@ -46,6 +46,9 @@ import com.zerobook.app.ui.animation.pressScale
 import com.zerobook.app.ui.selection.UniversalSelectionController
 import com.zerobook.app.ui.selection.UniversalSelectionIndicator
 import com.zerobook.app.ui.selection.UniversalSelectionTopAppBar
+import com.zerobook.app.ui.components.LoadingCard
+import com.zerobook.app.ui.components.LoadingListItem
+import com.zerobook.app.ui.components.LoadingText
 import com.zerobook.app.ui.theme.*
 import kotlinx.coroutines.delay
 import java.util.UUID
@@ -284,7 +287,7 @@ fun PartiesScreen(
                                                 }
                                                 val displayBal = Utils.formatIndianCurrency(Math.abs(currentBal))
                                                 val balLabel = if (currentBal >= 0) "DR" else "CR"
-                                                val balColor = if (currentBal >= 0) DangerRed else SuccessGreen
+                                                val balColor = if (currentBal >= 0) AppColors.debit else AppColors.credit
 
                                                 Text(
                                                     text = displayBal,
@@ -543,7 +546,7 @@ fun PartiesScreen(
                                             }
                                             val displayBal = Utils.formatIndianCurrency(Math.abs(currentBal))
                                             val balLabel = if (currentBal >= 0) "DR (Receivable)" else "CR (Payable)"
-                                            val balColor = if (currentBal >= 0) DangerRed else SuccessGreen
+                                            val balColor = if (currentBal >= 0) AppColors.debit else AppColors.credit
 
                                             Text(
                                                 text = displayBal,
@@ -1182,7 +1185,7 @@ fun PartyDetailScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text("Outstanding Balance:", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            val color = if (finalOutstanding >= 0) DangerRed else SuccessGreen
+                            val color = if (finalOutstanding >= 0) AppColors.debit else AppColors.credit
                             Text(
                                 text = Utils.formatIndianCurrency(Math.abs(finalOutstanding)) + if (finalOutstanding >= 0) " DR" else " CR",
                                 fontWeight = FontWeight.Bold,
@@ -1285,7 +1288,7 @@ fun PartyDetailScreen(
                                         
                                         val rowBal = row.runningBalance
                                         val displayStr = Utils.formatIndianCurrency(Math.abs(rowBal)) + if (rowBal >= 0) " DR" else " CR"
-                                        val color = if (rowBal >= 0) DangerRed else SuccessGreen
+                                        val color = if (rowBal >= 0) AppColors.debit else AppColors.credit
 
                                         Text(displayStr, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = color, modifier = Modifier.weight(1.2f))
                                     }
@@ -1311,27 +1314,27 @@ private fun PartyDetailSkeleton(innerPadding: PaddingValues) {
             .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        SkeletonCard(
+        LoadingCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .border(0.5.dp, Color(0xFFEAEAEA), RoundedCornerShape(8.dp))
         ) {
             repeat(3) {
-                SkeletonListItem(
+                LoadingListItem(
                     modifier = Modifier.fillMaxWidth(),
                     lineCount = 1
                 )
             }
         }
 
-        SkeletonCard(modifier = Modifier.fillMaxWidth()) {
-            SkeletonText(
+        LoadingCard(modifier = Modifier.fillMaxWidth()) {
+            LoadingText(
                 modifier = Modifier.fillMaxWidth(0.45f),
                 height = 18.dp
             )
             Spacer(modifier = Modifier.height(14.dp))
             repeat(5) {
-                SkeletonListItem(
+                LoadingListItem(
                     modifier = Modifier.fillMaxWidth(),
                     lineCount = 2
                 )

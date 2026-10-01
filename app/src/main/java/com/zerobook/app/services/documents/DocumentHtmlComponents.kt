@@ -45,16 +45,15 @@ object DocumentHtmlComponents {
     }
     
     /**
-     * Build the business header section with optional logo.
-     * 
-     * Reference design: Business name and address in a bordered box with logo on left.
+     * Build the business header box with optional logo.
      */
-    fun buildBusinessHeader(business: BusinessProfile): String {
-        val showLogo = business.showLogo && !business.logoPath.isNullOrBlank() 
-            && java.io.File(business.logoPath!!).exists()
-        
+    fun buildBusinessHeader(business: BusinessProfile, showLogo: Boolean, inlineName: Boolean = false): String {
         val detailsHtml = buildString {
-            append("<div style='font-size:13px;font-weight:bold;margin-bottom:4px;'>${escapeHtml(business.businessName)}</div>")
+            if (inlineName) {
+                append("<div style='font-size:13px;font-weight:bold;margin-bottom:4px;'>${escapeHtml(business.businessName)}</div>")
+            } else {
+                append("<div class='company-name'>${escapeHtml(business.businessName)}</div>")
+            }
             if (business.address.isNotBlank()) {
                 append("<div>${escapeHtml(business.address).replace("\n", "<br/>")}</div>")
             }
@@ -65,17 +64,13 @@ object DocumentHtmlComponents {
                 append("<div>GSTIN: ${escapeHtml(business.gstin)}</div>")
             }
         }
-        
+
         return if (showLogo) {
             """
-            <table style='width:100%;border-collapse:collapse;border:1px solid #000;'>
+            <table class='seller-grid' style='border:1px solid #000;'>
               <tr>
-                <td style='width:80px;padding:8px;border-right:1px solid #000;vertical-align:top;'>
-                  <img src='${toFileUrl(business.logoPath!!)}' style='max-width:70px;max-height:70px;object-fit:contain;display:block;'/>
-                </td>
-                <td style='padding:8px;vertical-align:top;'>
-                  $detailsHtml
-                </td>
+                <td class='seller-logo' style='border-right:1px solid #000;padding:8px;'><img src='${toFileUrl(business.logoPath!!)}'/></td>
+                <td style='padding:8px;vertical-align:top;'>$detailsHtml</td>
               </tr>
             </table>
             """.trimIndent()
@@ -87,28 +82,48 @@ object DocumentHtmlComponents {
             """.trimIndent()
         }
     }
-    
+
     /**
-     * Build the party (To:) section.
+     * Build the party block (To: / Consignee:).
      */
-    fun buildPartySection(party: Party?, label: String = "To:"): String {
-        return buildString {
-            append("<div style='margin-bottom:8px;'><strong>${escapeHtml(label)}</strong></div>")
-            if (party != null) {
-                append("<div><strong>${escapeHtml(party.name)}</strong></div>")
-                if (party.address.isNotBlank()) {
-                    append("<div>${escapeHtml(party.address).replace("\n", "<br/>")}</div>")
-                }
-                if (party.city.isNotBlank() || party.pin.isNotBlank()) {
-                    append("<div>${escapeHtml(party.city)}${if (party.pin.isNotBlank()) " - ${escapeHtml(party.pin)}" else ""}</div>")
-                }
-                if (party.gstin.isNullOrBlank().not()) {
-                    append("<div>GSTIN: ${escapeHtml(party.gstin!!)}</div>")
-                }
-            } else {
-                append("<div>Cash / Walk-in Customer</div>")
+    fun buildPartySection(party: Party?, label: String = "To:", emptyText: String = "Cash / Walk-in Customer"): String = buildString {
+        append("<div style='margin-bottom:4px;'><strong>${escapeHtml(label)}</strong></div>")
+        if (party != null) {
+            append("<div><strong>${escapeHtml(party.name)}</strong></div>")
+            if (party.address.isNotBlank()) {
+                append("<div>${escapeHtml(party.address).replace("\n", "<br/>")}</div>")
             }
+            if (party.city.isNotBlank() || party.pin.isNotBlank()) {
+                append("<div>${escapeHtml(party.city)}${if (party.pin.isNotBlank()) " - ${escapeHtml(party.pin)}" else ""}</div>")
+            }
+        } else {
+            append("<div>$emptyText</div>")
         }
+    }
+
+    /**
+     * Build the terms and conditions block.
+     */
+    fun buildTermsSection(rawTerms: String): String {
+        if (rawTerms.isBlank()) return ""
+
+        val termsLines = rawTerms.lines()
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .mapIndexed { index, line ->
+                val prefix = if (line.first().isDigit()) "" else "${index + 1}. "
+                "<span class='terms-line'>$prefix${escapeHtml(line)}</span>"
+            }
+            .joinToString("")
+
+        return """
+        <div style='margin:16px 0;'>
+          <strong>Terms & Conditions:</strong>
+          <div style='margin-top:8px;'>
+            $termsLines
+          </div>
+        </div>
+        """.trimIndent()
     }
     
     /**

@@ -76,5 +76,5 @@ ZeroBook is evolving from a single-device native Android billing app into an omn
 
 ## 🐛 Known Issues & Backlog
 
-- **Known Bugs:** Zero active bugs blocking v2.2.3.
+- **Known Bugs:** Zero active bugs blocking v2.2.3. Shared API deletions that blocked compilation are fixed.
 - **Verification Checklist:** Unit tests (`./gradlew testDebugUnitTest`) pass with 0 warnings.

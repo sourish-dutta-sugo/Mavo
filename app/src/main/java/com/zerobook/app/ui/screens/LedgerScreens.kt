@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -39,7 +38,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -49,9 +47,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -62,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.zerobook.app.data.Expense
 import com.zerobook.app.data.Income
 import com.zerobook.app.data.Utils
 import com.zerobook.app.data.filterDecimalInput
@@ -72,9 +71,7 @@ import com.zerobook.app.ui.animation.premiumFabEntrance
 import com.zerobook.app.ui.animation.pressScale
 import com.zerobook.app.ui.theme.AppColors
 import java.io.File
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Locale
 import java.util.UUID
 
 private val incomeCategories = listOf(
@@ -83,21 +80,141 @@ private val incomeCategories = listOf(
     "Refunds Received", "Other Income"
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val expenseCategories = listOf(
+    "Rent", "Electricity", "Water", "Telephone", "Internet",
+    "Staff Salary", "Transport", "Packaging", "Maintenance",
+    "Office Supplies", "Advertising", "Insurance", "Bank Charges",
+    "Miscellaneous", "Other"
+)
+
+private data class LedgerRow(
+    val id: String,
+    val date: Long,
+    val category: String,
+    val description: String,
+    val amount: Double,
+    val paymentMode: String,
+    val referenceNo: String
+)
+
+private data class LedgerDraft(
+    val id: String,
+    val date: Long,
+    val category: String,
+    val description: String,
+    val amount: Double,
+    val paymentMode: String,
+    val referenceNo: String,
+    val attachmentPath: String,
+    val voucherNo: String
+)
+
+private class LedgerKind(
+    val title: String,
+    val entryTitle: String,
+    val noLabel: String,
+    val missingNoMessage: String,
+    val saveButtonLabel: String,
+    val fabDescription: String,
+    val csvFileName: String,
+    val voucherType: String,
+    val categories: List<String>,
+    val save: (AppViewModel, LedgerDraft, onSuccess: () -> Unit) -> Unit
+)
+
+private val IncomeKind = LedgerKind(
+    title = "Income",
+    entryTitle = "Add Income",
+    noLabel = "Income No",
+    missingNoMessage = "Cannot save: Income No is missing!",
+    saveButtonLabel = "Save Income",
+    fabDescription = "Add income",
+    csvFileName = "ZeroBook_Income.csv",
+    voucherType = "INCOME",
+    categories = incomeCategories,
+    save = { viewModel, draft, onSuccess ->
+        viewModel.saveIncome(
+            Income(
+                id = draft.id,
+                date = draft.date,
+                category = draft.category,
+                description = draft.description,
+                amount = draft.amount,
+                paymentMode = draft.paymentMode,
+                referenceNo = draft.referenceNo,
+                attachmentPath = draft.attachmentPath,
+                voucherNo = draft.voucherNo
+            ),
+            onSuccess
+        )
+    }
+)
+
+private val ExpenseKind = LedgerKind(
+    title = "Expenses",
+    entryTitle = "Add Expense",
+    noLabel = "Expense No",
+    missingNoMessage = "Cannot save: Expense No is missing!",
+    saveButtonLabel = "Save Expense",
+    fabDescription = "Add expense",
+    csvFileName = "ZeroBook_Expenses.csv",
+    voucherType = "EXPENSE",
+    categories = expenseCategories,
+    save = { viewModel, draft, onSuccess ->
+        viewModel.saveExpense(
+            Expense(
+                id = draft.id,
+                date = draft.date,
+                category = draft.category,
+                description = draft.description,
+                amount = draft.amount,
+                paymentMode = draft.paymentMode,
+                referenceNo = draft.referenceNo,
+                attachmentPath = draft.attachmentPath,
+                voucherNo = draft.voucherNo
+            ),
+            onSuccess
+        )
+    }
+)
+
+private fun Income.toLedgerRow() = LedgerRow(id, date, category, description, amount, paymentMode, referenceNo)
+private fun Expense.toLedgerRow() = LedgerRow(id, date, category, description, amount, paymentMode, referenceNo)
+
 @Composable
 fun IncomeScreen(
     viewModel: AppViewModel,
     onNavigateBack: () -> Unit
 ) {
     val incomes by viewModel.incomes.collectAsState()
+    LedgerListScreen(IncomeKind, incomes.map { it.toLedgerRow() }, viewModel, onNavigateBack)
+}
+
+@Composable
+fun ExpensesScreen(
+    viewModel: AppViewModel,
+    onNavigateBack: () -> Unit
+) {
+    val expenses by viewModel.expenses.collectAsState()
+    LedgerListScreen(ExpenseKind, expenses.map { it.toLedgerRow() }, viewModel, onNavigateBack)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LedgerListScreen(
+    kind: LedgerKind,
+    rows: List<LedgerRow>,
+    viewModel: AppViewModel,
+    onNavigateBack: () -> Unit
+) {
     var showForm by remember { mutableStateOf(false) }
     var activeFilter by remember { mutableStateOf("ALL") }
-    val filteredIncomes = remember(incomes, activeFilter) {
-        incomes.filter { activeFilter == "ALL" || it.category == activeFilter }
+    val filteredRows = remember(rows, activeFilter) {
+        rows.filter { activeFilter == "ALL" || it.category == activeFilter }
     }
 
     if (showForm) {
-        IncomeEntryScreen(viewModel = viewModel, onDismiss = { showForm = false })
+        LedgerEntryScreen(kind = kind, viewModel = viewModel, onDismiss = { showForm = false })
         return
     }
 
@@ -105,7 +222,7 @@ fun IncomeScreen(
         containerColor = AppColors.screenBg,
         topBar = {
             TopAppBar(
-                title = { Text("Income", fontWeight = FontWeight.Bold) },
+                title = { Text(kind.title, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -122,7 +239,7 @@ fun IncomeScreen(
                     .premiumFabEntrance()
                     .pressScale()
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add income", tint = AppColors.textOnPrimary)
+                Icon(Icons.Default.Add, contentDescription = kind.fabDescription, tint = AppColors.textOnPrimary)
             }
         }
     ) { innerPadding ->
@@ -136,7 +253,7 @@ fun IncomeScreen(
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 FilterChip(selected = activeFilter == "ALL", onClick = { activeFilter = "ALL" }, label = { Text("All") })
-                incomeCategories.take(4).forEach { category ->
+                kind.categories.take(4).forEach { category ->
                     FilterChip(selected = activeFilter == category, onClick = { activeFilter = category }, label = { Text(category) })
                 }
             }
@@ -144,14 +261,14 @@ fun IncomeScreen(
                 onClick = {
                     val csv = buildString {
                         append("date,category,description,amount,payment_mode,reference\n")
-                        filteredIncomes.forEach { income ->
-                            append("${Utils.formatDate(income.date)},${income.category},${income.description},${income.amount},${income.paymentMode},${income.referenceNo}\n")
+                        filteredRows.forEach { row ->
+                            append("${Utils.formatDate(row.date)},${row.category},${row.description},${row.amount},${row.paymentMode},${row.referenceNo}\n")
                         }
                     }
                     val result = ExportStorageManager.exportBytes(
                         context = viewModel.getApplication(),
                         bytes = csv.toByteArray(),
-                        displayName = "ZeroBook_Income.csv",
+                        displayName = kind.csvFileName,
                         mimeType = "text/csv",
                         target = ExportTarget.Reports
                     )
@@ -166,7 +283,7 @@ fun IncomeScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(bottom = 120.dp)
             ) {
-                items(filteredIncomes, key = { it.id }) { income ->
+                items(filteredRows, key = { it.id }) { row ->
                     Card(colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)) {
                         Row(
                             modifier = Modifier
@@ -175,13 +292,13 @@ fun IncomeScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(income.category, fontWeight = FontWeight.Bold)
-                                Text(income.description.ifBlank { "No description" }, color = AppColors.textSecondary)
-                                Text("${Utils.formatDate(income.date)} | ${income.paymentMode}", color = AppColors.textSecondary)
+                                Text(row.category, fontWeight = FontWeight.Bold)
+                                Text(row.description.ifBlank { "No description" }, color = AppColors.textSecondary)
+                                Text("${Utils.formatDate(row.date)} | ${row.paymentMode}", color = AppColors.textSecondary)
                             }
-                            Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                                Text(Utils.formatIndianCurrency(income.amount), fontWeight = FontWeight.Bold, color = AppColors.primary)
-                                if (income.referenceNo.isNotBlank()) Text(income.referenceNo, color = AppColors.textSecondary)
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(Utils.formatIndianCurrency(row.amount), fontWeight = FontWeight.Bold, color = AppColors.primary)
+                                if (row.referenceNo.isNotBlank()) Text(row.referenceNo, color = AppColors.textSecondary)
                             }
                         }
                     }
@@ -193,18 +310,18 @@ fun IncomeScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun IncomeEntryScreen(
+private fun LedgerEntryScreen(
+    kind: LedgerKind,
     viewModel: AppViewModel,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     var date by remember { mutableStateOf(System.currentTimeMillis()) }
     var dateText by remember { mutableStateOf(Utils.formatDate(System.currentTimeMillis())) }
     var isDateEditing by remember { mutableStateOf(false) }
     var voucherNo by remember { mutableStateOf("") }
     var voucherNoTouched by remember { mutableStateOf(false) }
-    var category by remember { mutableStateOf(incomeCategories.first()) }
+    var category by remember { mutableStateOf(kind.categories.first()) }
     var description by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var paymentMode by remember { mutableStateOf("CASH") }
@@ -215,10 +332,9 @@ private fun IncomeEntryScreen(
         attachmentPath = uri?.toString().orEmpty()
     }
 
-    // Auto-generate voucher number on first load and when date changes (if not manually edited)
-    androidx.compose.runtime.LaunchedEffect(date, voucherNoTouched) {
+    LaunchedEffect(date, voucherNoTouched) {
         if (!voucherNoTouched) {
-            voucherNo = viewModel.generateNextVoucherNo("INCOME", date)
+            voucherNo = viewModel.generateNextVoucherNo(kind.voucherType, date)
         }
     }
 
@@ -226,7 +342,7 @@ private fun IncomeEntryScreen(
         containerColor = AppColors.screenBg,
         topBar = {
             TopAppBar(
-                title = { Text("Add Income", fontWeight = FontWeight.Bold) },
+                title = { Text(kind.entryTitle, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -247,7 +363,7 @@ private fun IncomeEntryScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (isDateEditing) {
-                val dateFocusReq = remember { androidx.compose.ui.focus.FocusRequester() }
+                val dateFocusReq = remember { FocusRequester() }
                 val focusMgr = LocalFocusManager.current
                 LaunchedEffect(Unit) { dateFocusReq.requestFocus() }
                 OutlinedTextField(
@@ -355,7 +471,7 @@ private fun IncomeEntryScreen(
                     voucherNoTouched = true
                     voucherNo = it
                 },
-                label = { Text("Income No") },
+                label = { Text(kind.noLabel) },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
@@ -367,7 +483,7 @@ private fun IncomeEntryScreen(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 0.dp)
             )
             DropdownMenu(expanded = categoryExpanded, onDismissRequest = { categoryExpanded = false }) {
-                incomeCategories.forEach { option ->
+                kind.categories.forEach { option ->
                     DropdownMenuItem(text = { Text(option) }, onClick = { category = option; categoryExpanded = false })
                 }
             }
@@ -396,10 +512,11 @@ private fun IncomeEntryScreen(
                     if (amountValue <= 0.0) {
                         Toast.makeText(viewModel.getApplication(), "Enter a valid amount", Toast.LENGTH_SHORT).show()
                     } else if (voucherNo.trim().isBlank()) {
-                        Toast.makeText(viewModel.getApplication(), "Cannot save: Income No is missing!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(viewModel.getApplication(), kind.missingNoMessage, Toast.LENGTH_SHORT).show()
                     } else {
-                        viewModel.saveIncome(
-                            Income(
+                        kind.save(
+                            viewModel,
+                            LedgerDraft(
                                 id = UUID.randomUUID().toString(),
                                 date = date,
                                 category = category,
@@ -420,7 +537,7 @@ private fun IncomeEntryScreen(
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary)
             ) {
-                Text("Save Income", color = AppColors.textOnPrimary, fontWeight = FontWeight.Bold)
+                Text(kind.saveButtonLabel, color = AppColors.textOnPrimary, fontWeight = FontWeight.Bold)
             }
         }
     }

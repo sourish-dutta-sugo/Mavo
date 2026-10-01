@@ -85,10 +85,9 @@ import com.zerobook.app.ui.selection.UniversalSelectionController
 import com.zerobook.app.ui.selection.UniversalSelectionIndicator
 import com.zerobook.app.ui.selection.UniversalSelectionTopAppBar
 import com.zerobook.app.ui.theme.AppColors
-import com.zerobook.app.ui.theme.Colors
-import com.zerobook.app.ui.theme.SkeletonCard
-import com.zerobook.app.ui.theme.SkeletonRoundedPlaceholder
-import com.zerobook.app.ui.theme.SkeletonText
+import com.zerobook.app.ui.components.LoadingCard
+import com.zerobook.app.ui.components.LoadingRoundedPlaceholder
+import com.zerobook.app.ui.components.LoadingText
 import com.zerobook.app.ui.theme.zeroBookInputColors
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.BackHandler
@@ -5902,13 +5901,13 @@ fun StickyBottomBar(
 
 @Composable
 private fun VoucherPrintPreviewSkeleton() {
-    SkeletonCard(
+    LoadingCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(420.dp)
             .padding(12.dp)
     ) {
-        SkeletonRoundedPlaceholder(
+        LoadingRoundedPlaceholder(
             modifier = Modifier.fillMaxWidth(),
             height = 28.dp,
             cornerRadius = 8.dp
@@ -5919,12 +5918,12 @@ private fun VoucherPrintPreviewSkeleton() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SkeletonText(
+            LoadingText(
                 modifier = Modifier.weight(1f),
                 height = 14.dp
             )
             Spacer(modifier = Modifier.width(12.dp))
-            SkeletonRoundedPlaceholder(
+            LoadingRoundedPlaceholder(
                 width = 96.dp,
                 height = 48.dp,
                 cornerRadius = 8.dp
@@ -5932,21 +5931,21 @@ private fun VoucherPrintPreviewSkeleton() {
         }
         Spacer(modifier = Modifier.height(18.dp))
         repeat(3) {
-            SkeletonText(
+            LoadingText(
                 modifier = Modifier.fillMaxWidth(),
                 height = 12.dp
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
         Spacer(modifier = Modifier.height(16.dp))
-        SkeletonRoundedPlaceholder(
+        LoadingRoundedPlaceholder(
             modifier = Modifier.fillMaxWidth(),
             height = 160.dp,
             cornerRadius = 8.dp
         )
         Spacer(modifier = Modifier.height(16.dp))
         repeat(4) {
-            SkeletonText(
+            LoadingText(
                 modifier = Modifier.fillMaxWidth(),
                 height = 12.dp
             )

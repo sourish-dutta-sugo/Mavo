@@ -75,7 +75,6 @@ import com.zerobook.app.data.BusinessProfile
 import com.zerobook.app.data.Utils
 import com.zerobook.app.ui.AppViewModel
 import com.zerobook.app.ui.theme.AppColors
-import com.zerobook.app.ui.theme.Colors
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
@@ -252,14 +251,14 @@ fun SetupScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Colors.surface)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
             )
         }
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Colors.surface)
+                .background(AppColors.cardBg)
                 .padding(innerPadding)
                 .imePadding()
         ) {

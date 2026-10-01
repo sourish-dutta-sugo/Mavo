@@ -12,17 +12,12 @@ import com.zerobook.app.services.InvoiceGenerator
  * to provide its own HTML template and file naming convention.
  */
 interface DocumentGenerator {
-    
+
     /**
      * The document type this generator handles.
      */
     val documentType: DocumentType
-    
-    /**
-     * Check if this generator can handle the given document type.
-     */
-    fun canGenerate(type: DocumentType): Boolean = type == documentType
-    
+
     /**
      * Generate HTML for the document.
      * 

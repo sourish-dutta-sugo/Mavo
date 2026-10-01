@@ -62,7 +62,6 @@ import com.zerobook.app.services.ExportTarget
 import com.zerobook.app.services.CsvTransferManager
 import com.zerobook.app.ui.AppViewModel
 import com.zerobook.app.ui.theme.AppColors
-import com.zerobook.app.ui.theme.Colors
 import com.zerobook.app.ui.theme.GstinValidationFeedback
 import com.zerobook.app.ui.theme.LocalAppTheme
 import com.zerobook.app.ui.theme.ThemeViewModel

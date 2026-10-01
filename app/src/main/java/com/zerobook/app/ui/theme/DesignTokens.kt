@@ -2,17 +2,6 @@ package com.zerobook.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-object Brand {
-    val tealDark = Color(0xFF1A5C4B)
-    val tealMid = Color(0xFF22755F)
-    val tealCard = Color(0xFF2D8A70)
-    val tealLight = Color(0xFFE8F5F1)
-    val tealAccent = Color(0xFF3AAA87)
-
-    val gold = Color(0xFFC8943A)
-    val goldLight = Color(0xFFF0C060)
-}
-
 object Semantic {
     val success = Color(0xFF22A06B)
     val successBg = Color(0xFFE8F8F0)
@@ -84,49 +73,6 @@ object Badge {
     val partialText = Color(0xFFD97706)
     val paidBg = Color(0xFFE8F8F0)
     val paidText = Color(0xFF22A06B)
-}
-
-object Elevation {
-    val small = 2f
-    val medium = 4f
-    val large = 8f
-    val xLarge = 12f
-}
-
-object CornerRadius {
-    val xs = 4f
-    val sm = 8f
-    val md = 12f
-    val lg = 14f
-    val xl = 20f
-    val full = 999f
-}
-
-object Spacing {
-    val xs = 4f
-    val sm = 8f
-    val md = 12f
-    val lg = 16f
-    val xl = 24f
-    val xxl = 32f
-}
-
-object TypographyTokens {
-    val displayLarge = 32f
-    val displayMedium = 28f
-    val displaySmall = 24f
-    val headlineLarge = 22f
-    val headlineMedium = 20f
-    val headlineSmall = 18f
-    val titleLarge = 16f
-    val titleMedium = 14f
-    val titleSmall = 12f
-    val bodyLarge = 16f
-    val bodyMedium = 14f
-    val bodySmall = 12f
-    val labelLarge = 14f
-    val labelMedium = 12f
-    val labelSmall = 11f
 }
 
 object ThemeNames {
