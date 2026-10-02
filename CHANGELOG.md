@@ -14,8 +14,11 @@
 
 ### Changed
 - Party-related ledger entries now consistently populate `partyId` from the start
+- Counter billing now adapts to compact, medium, and expanded windows
+- Expanded windows keep products and cart/payment visible in a split pane
 
 ### Fixed
+- Billing screen compilation errors caused by the responsive layout migration
 - Financial-year lock checks now protect Expense and Income entries more reliably
 - Voucher reference handling now uses a dedicated column instead of fragile narration-based matching
 - Balance Sheet no longer force-balances itself; Trial Balance issue corrected

@@ -1,6 +1,12 @@
 package com.zerobook.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+
+object LayoutTokens {
+    val paneGap = 16.dp
+    val compactPaneGap = 12.dp
+}
 
 object Semantic {
     val success = Color(0xFF22A06B)

@@ -38,7 +38,7 @@ App Launch
 | `ExpensesScreen.kt` | `expenses` | Expense logging and list | Dashboard quick action | Back to Dashboard |
 | `IncomeScreen.kt` | (inline) | Income logging and list | Dashboard quick action | Back to Dashboard |
 | `LedgerListScreen.kt` | `ledger_books` | Browse ledger accounts and entries | Dashboard quick action | Back to Dashboard |
-| `BillingScreen.kt` | `counter_sale` | Quick counter sale flow | Dashboard quick action | Back to Dashboard |
+| `BillingScreen.kt` | `counter_sale` | Responsive counter sale flow; stacked on compact windows and split-pane on expanded windows | Dashboard quick action | Back to Dashboard |
 | `NewVoucherScreen` | `new_voucher?voucherId={id}` | Create/edit voucher of any type | VouchersScreen, Dashboard | Invoice, back to Vouchers |
 | `VoucherItemSheet.kt` | (bottom sheet in NewVoucher) | Add/edit line item on a voucher | NewVoucherScreen | NewVoucherScreen |
 | `InvoiceScreen.kt` | `invoice/{voucherId}` | View generated invoice, share/print | NewVoucher (after save) | Back to Vouchers |

@@ -61,6 +61,7 @@ app/src/androidTest/java/   # Instrumentation tests (Espresso)
 | Migrations | Unit test | Use Room `MigrationTestHelper` |
 | ViewModels | Unit test | State flow emissions, error handling |
 | Compose screens | Screenshot test | Visual regression via Roborazzi |
+| Responsive billing layout | Unit test + screenshot test | Compact/medium stack; expanded split pane |
 | Full user flows | Instrumentation test | End-to-end with Espresso + Compose test APIs |
 
 ## Critical paths to always test

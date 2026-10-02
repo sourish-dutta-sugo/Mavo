@@ -35,7 +35,7 @@ app/src/main/java/com/zerobook/app/
 │   ├── reference/            # Reference data
 │   └── rules/                # Business rules
 ├── feature/
-│   ├── billing/              # BillingScreen.kt (counter sale)
+│   ├── billing/              # BillingScreen.kt + responsive counter layout
 │   ├── dashboard/            # (dashboard feature logic)
 │   ├── invoice/              # (invoice feature logic)
 │   ├── ledger/               # (ledger feature logic)
@@ -68,6 +68,14 @@ app/src/main/java/com/zerobook/app/
 ```
 
 ## Architecture pattern: MVVM
+
+### Responsive Compose layout
+
+The billing feature uses Material 3 window size classes rather than raw screen
+width checks. Compact and medium windows stack product and cart panes; expanded
+windows place them in a persistent split pane. `ResponsivePaneLayout` owns only
+measurement and placement, while `BillingScreen` retains cart state and
+business actions.
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────┐

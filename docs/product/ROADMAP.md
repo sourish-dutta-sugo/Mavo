@@ -1,6 +1,6 @@
 # ROADMAP.md — ZeroBook Product Roadmap & Milestones
 
-> Last updated: 2026-09-30  
+> Last updated: 2026-10-02
 > Single source of truth for active development phases, prioritized tasks, and platform evolution.
 
 ---
@@ -76,5 +76,5 @@ ZeroBook is evolving from a single-device native Android billing app into an omn
 
 ## 🐛 Known Issues & Backlog
 
-- **Known Bugs:** Zero active bugs blocking v2.2.3. Shared API deletions that blocked compilation are fixed.
+- **Known Bugs:** Zero active bugs blocking v2.2.3. Shared API and BillingScreen compilation errors are fixed.
 - **Verification Checklist:** Unit tests (`./gradlew testDebugUnitTest`) pass with 0 warnings.

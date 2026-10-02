@@ -71,11 +71,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.windowsizeclass.*
 import com.zerobook.app.data.Product
 import com.zerobook.app.data.Utils
 import com.zerobook.app.data.Voucher
@@ -90,7 +92,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun BillingScreen(
     viewModel: AppViewModel,
@@ -105,8 +107,8 @@ fun BillingScreen(
     var selectedPartyId by remember { mutableStateOf<String?>(null) }
     var paymentMode by remember { mutableStateOf("CASH") }
     var search by remember { mutableStateOf("") }
-    val configuration = LocalConfiguration.current
-    val isTablet = configuration.screenWidthDp >= 600
+    val activity = LocalContext.current as Activity
+    val windowSizeClass = calculateWindowSizeClass(activity)
 
     val filteredProducts = remember(products, selectedUnitFilter, search) {
         products.filter {
@@ -276,14 +278,14 @@ fun BillingScreen(
             }
 
             // Products Grid vs Cart Summary
-            Row(
+            ResponsivePaneLayout(
+                widthSizeClass = windowSizeClass.widthSizeClass,
                 modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+                productContent = {
                 // Product Selection Column
                 Column(
                     modifier = Modifier
-                        .weight(if (isTablet) 0.5f else 0.45f)
+                        .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -405,11 +407,12 @@ fun BillingScreen(
                         }
                     }
                 }
+                },
+                cartContent = {
 
                 // Cart & Payment Column
                 Column(
-                    modifier = Modifier
-                        .weight(if (isTablet) 0.5f else 0.55f),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
@@ -448,7 +451,7 @@ fun BillingScreen(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                 )
                             }
-                        }
+                            }
                     }
 
                     // Cart Items List
@@ -689,8 +692,10 @@ fun BillingScreen(
                     }
                 }
             }
-        }
+        )
     }
+}
+
 }
 
 private fun Product.toBillingItem(): VoucherItem = VoucherItem(

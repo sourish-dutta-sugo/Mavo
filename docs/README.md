@@ -34,6 +34,7 @@
 | [design/DESIGN_SYSTEM.md](design/DESIGN_SYSTEM.md) | Color themes, semantic colors, spacing tokens, radiuses, and elevation |
 | [design/TYPOGRAPHY.md](design/TYPOGRAPHY.md) | Material 3 type scale, font weights, line heights, and numeric formatting rules |
 | [design/COMPONENTS.md](design/COMPONENTS.md) | Shared UI composables catalog, properties, states, and usage locations |
+| [design/design.md](design/design.md) | Responsive Compose design direction, layout contract, token rules, and visual QA checklist |
 
 ---
 
@@ -46,6 +47,7 @@
 | [engineering/API.md](engineering/API.md) | Internal services: PDF generation, JavaMail, CSV transfer, CameraX/MLKit |
 | [engineering/TESTING.md](engineering/TESTING.md) | Testing strategy, Robolectric, Roborazzi screenshot tests, and verification commands |
 | [engineering/DECISIONS.md](engineering/DECISIONS.md) | Architecture Decision Records (ADRs) explaining technical trade-offs |
+| [superpowers/specs/2026-10-01-responsive-counter-layout-design.md](superpowers/specs/2026-10-01-responsive-counter-layout-design.md) | Approved responsive counter layout specification |
 
 ---
 

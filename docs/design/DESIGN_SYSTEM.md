@@ -61,7 +61,7 @@ Defined in `DesignTokens.kt` → `Semantic` object. Theme-independent.
 
 ## Spacing (dp)
 
-Defined in `DesignTokens.kt` → `Spacing`.
+Responsive geometry is defined in `DesignTokens.kt` → `LayoutTokens`.
 
 | Token | Value |
 |-------|-------|
@@ -71,6 +71,13 @@ Defined in `DesignTokens.kt` → `Spacing`.
 | `lg` | 16 |
 | `xl` | 24 |
 | `xxl` | 32 |
+
+Responsive layout tokens:
+
+| Token | Value | Usage |
+|---|---:|---|
+| `paneGap` | 16 | Expanded product/cart pane gap |
+| `compactPaneGap` | 12 | Compact stacked pane gap |
 
 ## Corner radius (dp)
 
