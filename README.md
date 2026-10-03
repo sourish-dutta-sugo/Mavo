@@ -1,8 +1,8 @@
-# ZeroBook 📒
+# Mavo 📒
 
 **The Free, Zero-Friction MSME ERP & GST Invoicing Engine**
 
-ZeroBook is a modern, free, cross-platform enterprise resource planning (ERP) and GST billing engine designed specifically for Indian Micro, Small, and Medium Enterprises (MSMEs). From high-traffic retail counters and bustling wholesale yards to manufacturing workshops and service contractors, ZeroBook eliminates accounting complexity so business owners can record, transact, and scale effortlessly.
+Mavo is a modern, free, cross-platform enterprise resource planning (ERP) and GST billing engine designed specifically for Indian Micro, Small, and Medium Enterprises (MSMEs). From high-traffic retail counters and bustling wholesale yards to manufacturing workshops and service contractors, Mavo eliminates accounting complexity so business owners can record, transact, and scale effortlessly.
 
 This repository hosts the **native Android reference implementation**, built with Kotlin and Jetpack Compose.
 

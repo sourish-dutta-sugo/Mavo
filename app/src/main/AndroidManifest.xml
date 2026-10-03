@@ -18,15 +18,15 @@
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="ZeroBook"
+        android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ZeroBook">
+        android:theme="@style/Theme.Mavo">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="ZeroBook"
-            android:theme="@style/Theme.ZeroBook.Splash"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Mavo.Splash"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "ZeroBook"
+rootProject.name = "Mavo"
 
 include(":app")

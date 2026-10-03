@@ -1,4 +1,4 @@
-# GEMINI.md — ZeroBook
+# GEMINI.md — Mavo
 
 > Master agent instructions are located in [AGENTS.md](AGENTS.md).  
 > Complete documentation index is in [docs/README.md](docs/README.md).

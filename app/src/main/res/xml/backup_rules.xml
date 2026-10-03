@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-   Harkened backup rules for ZeroBook to prevent database and credential leakage.
+   Hardened backup rules for Mavo to prevent database and credential leakage.
    See https://developer.android.com/guide/topics/data/autobackup
 -->
 <full-backup-content>
     <!-- Exclude database containing PII, financial history, and credentials -->
+    <exclude domain="database" path="Mavo.db"/>
+    <exclude domain="database" path="Mavo.db-shm"/>
+    <exclude domain="database" path="Mavo.db-wal"/>
     <exclude domain="database" path="ZeroBook.db"/>
     <exclude domain="database" path="ZeroBook.db-shm"/>
     <exclude domain="database" path="ZeroBook.db-wal"/>

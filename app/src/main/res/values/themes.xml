@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ZeroBook"
+    <style name="Theme.Mavo"
         parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">
             @android:color/transparent
         </item>
     </style>
 
-    <style name="Theme.ZeroBook.Splash"
+    <style name="Theme.Mavo.Splash"
         parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">
             #FAF8F5
@@ -19,7 +19,7 @@
             @android:color/transparent
         </item>
         <item name="postSplashScreenTheme">
-            @style/Theme.ZeroBook
+            @style/Theme.Mavo
         </item>
     </style>
 </resources>

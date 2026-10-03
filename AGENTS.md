@@ -1,11 +1,11 @@
-# AGENTS.md — ZeroBook (Android)
+# AGENTS.md — Mavo (Android)
 
 > Last updated: 2026-09-29  
 > Single source of truth for agent workflow rules, documentation standards, and database safety.
 
 ## What this project is
 
-ZeroBook is a native Android retail accounting & GST invoicing app for small Indian retailers. See [docs/product/PRODUCT.md](docs/product/PRODUCT.md) for full context. Complete documentation index is at [docs/README.md](docs/README.md).
+Mavo is a native Android retail accounting & GST invoicing app for small Indian retailers. See [docs/product/PRODUCT.md](docs/product/PRODUCT.md) for full context. Complete documentation index is at [docs/README.md](docs/README.md).
 
 ## Read these docs first
 

@@ -8,11 +8,11 @@ val releaseKeystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-uploa
 val hasReleaseKeystore = file(releaseKeystorePath).exists()
 
 android {
-  namespace = "com.zerobook.app"
+  namespace = "com.mavo.app"
   compileSdk = 36
 
   defaultConfig {
-    applicationId = "com.zerobook.app"
+    applicationId = "com.mavo.app"
     minSdk = 24
     targetSdk = 35
     versionCode = 4
