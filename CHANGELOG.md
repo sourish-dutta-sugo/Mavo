@@ -1,4 +1,4 @@
-# CHANGELOG.md — ZeroBook
+# CHANGELOG.md — Mavo
 
 > Last updated: 2026-09-29  
 > Version source of truth: `app/build.gradle.kts` → `versionName`  
@@ -18,6 +18,7 @@
 - Expanded windows keep products and cart/payment visible in a split pane
 
 ### Fixed
+- Database upgrade from pre-rebrand installs now retires the old database file after a successful copy, and a failed copy is cleaned up instead of leaving a partial file for Room to open
 - Billing screen compilation errors caused by the responsive layout migration
 - Financial-year lock checks now protect Expense and Income entries more reliably
 - Voucher reference handling now uses a dedicated column instead of fragile narration-based matching

@@ -1,11 +1,11 @@
-# DESIGN_SYSTEM.md — ZeroBook
+# DESIGN_SYSTEM.md — Mavo
 
-> Last updated: 2026-09-29  
+> Last updated: 2026-10-03  
 > Source of truth: `ui/theme/` package — `DesignTokens.kt`, `AppTheme.kt`, `AppColors.kt`, `Type.kt`
 
 ## Themes
 
-5 named themes, selectable at runtime. Persisted in SharedPreferences (`zerobook_pref` → `selected_theme`).
+5 named themes, selectable at runtime. Persisted in SharedPreferences (`mavo_pref` → `selected_theme`).
 
 | Name | Key | Accent | Background | Dark? |
 |------|-----|--------|------------|-------|
@@ -132,4 +132,4 @@ Material Icons (core + extended). No custom icon library. Access via `Icons.Defa
 - Night theme uses `isDark = true` flag
 - `AppColors` object switches colors dynamically via `get()` delegates that read `ThemeRuntime.currentTheme`
 - Semantic colors (debit/credit bg, success/error bg) have dark-mode variants with alpha-adjusted deep tones
-- `ZeroBookTheme` composable builds either `darkColorScheme()` or `lightColorScheme()` based on `appTheme.isDark`
+- `MavoTheme` composable builds either `darkColorScheme()` or `lightColorScheme()` based on `appTheme.isDark`

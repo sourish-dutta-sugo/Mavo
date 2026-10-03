@@ -1,6 +1,6 @@
-# FEATURES.md — ZeroBook
+# FEATURES.md — Mavo
 
-> Last updated: 2026-09-29
+> Last updated: 2026-10-03
 
 Status key: ✅ Done · 🟡 Partial · 📋 Planned
 

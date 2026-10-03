@@ -20,9 +20,9 @@ Over 63 million MSMEs power the Indian economy, yet their digital toolset remain
 
 ---
 
-## 💡 What is ZeroBook?
+## 💡 What is Mavo?
 
-ZeroBook bridges this gap with a radical philosophy: **Zero Learning Curve, Zero Subscription Barriers, Zero Jargon.**
+Mavo bridges this gap with a radical philosophy: **Zero Learning Curve, Zero Subscription Barriers, Zero Jargon.**
 
 If you know how to tap a phone screen or click a mouse, you can run your entire enterprise. You don't need a commerce degree. "Sales" means goods going out; "Purchase" means stock coming in; "Stock" is what sits on your shelves.
 
@@ -52,9 +52,9 @@ If you know how to tap a phone screen or click a mouse, you can run your entire 
 
 ---
 
-## 📊 ZeroBook vs. The Market
+## 📊 Mavo vs. The Market
 
-| Feature / Metric | Traditional ERP *(Tally/SAP)* | Paid Billing Apps *(Vyapar/MyBillBook)* | Paper Khata | ZeroBook |
+| Feature / Metric | Traditional ERP *(Tally/SAP)* | Paid Billing Apps *(Vyapar/MyBillBook)* | Paper Khata | Mavo |
 |---|---|---|---|---|
 | **Price** | Very High (₹18k – Lakhs) | Subscription paywalls | Low (notebooks) | **100% Free / MSME First** |
 | **Learning Curve** | Months (needs accountant) | Moderate (mobile-first) | Low | **Zero (Intuitive Plain Language)** |
@@ -87,7 +87,7 @@ If you know how to tap a phone screen or click a mouse, you can run your entire 
 | **Hardware & ML** | CameraX, Google ML Kit (Barcode Scanning & Text Recognition) |
 | **Background & I/O** | WorkManager, JavaMail, Android Printing Framework |
 
-> **Cross-Platform Evolution:** This repository represents the rock-solid Android native reference app. ZeroBook is actively evolving into a **Kotlin Multiplatform (KMP) + Compose Multiplatform** architecture to natively power Android, iOS, Desktop (Windows, macOS, Linux with keyboard-first navigation), and Web.
+> **Cross-Platform Evolution:** This repository represents the rock-solid Android native reference app. Mavo is actively evolving into a **Kotlin Multiplatform (KMP) + Compose Multiplatform** architecture to natively power Android, iOS, Desktop (Windows, macOS, Linux with keyboard-first navigation), and Web.
 
 ---
 
@@ -100,8 +100,8 @@ If you know how to tap a phone screen or click a mouse, you can run your entire 
 
 ### Build & Run
 ```bash
-git clone https://github.com/sourish-dutta-sugo/ZeroBook.git
-cd ZeroBook
+git clone https://github.com/sourish-dutta-sugo/Mavo.git
+cd Mavo
 ./gradlew assembleDebug
 ```
 Launch on your connected device. On initial run, the setup wizard will guide you through your business profile and industry mode selection.
@@ -124,4 +124,4 @@ See [docs/product/ROADMAP.md](docs/product/ROADMAP.md) for detailed release mile
 ## 📄 License & Rights
 
 Copyright (c) 2026 Sugo. All Rights Reserved.  
-ZeroBook is free for personal, educational, and internal business use. Redistribution, rebranding, or publishing this application under another name on public app stores without authorization is strictly prohibited. See the full license in [docs/README.md](docs/README.md).
+Mavo is free for personal, educational, and internal business use. Redistribution, rebranding, or publishing this application under another name on public app stores without authorization is strictly prohibited. See the full license in [docs/README.md](docs/README.md).

@@ -1,6 +1,6 @@
-# COMPONENTS.md — ZeroBook
+# COMPONENTS.md — Mavo
 
-> Last updated: 2026-09-29
+> Last updated: 2026-10-03
 
 ## Shared components
 
@@ -81,14 +81,14 @@
 
 ## Theme components
 
-### ZeroBookTheme
+### MavoTheme
 
 - **File:** `ui/theme/AppTheme.kt`
 - **Purpose:** Root theme composable wrapping MaterialTheme with app-specific color scheme
 - **Props:** `appTheme: AppTheme`
 - **Where used:** MainActivity (root of composition tree)
 
-### themedInputColors / zeroBookInputColors
+### themedInputColors / mavoInputColors
 
 - **File:** `ui/theme/AppTheme.kt`
 - **Purpose:** Pre-configured `TextFieldColors` matching current theme

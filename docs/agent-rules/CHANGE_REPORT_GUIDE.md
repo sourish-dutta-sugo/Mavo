@@ -1,13 +1,13 @@
-# CHANGE_REPORT_GUIDE.md — ZeroBook Change Reports
+# CHANGE_REPORT_GUIDE.md — Mavo Change Reports
 
-> Last updated: 2026-09-29  
+> Last updated: 2026-10-03  
 > Single source of truth for post-task change reporting.
 
 ---
 
 ## Purpose & Requirement
 
-After **EVERY** task completed on ZeroBook (including features, UI changes, bug fixes, refactoring, documentation reorganization, or small tweaks), the agent **must** create a new change report file in `docs/changes/`.
+After **EVERY** task completed on Mavo (including features, UI changes, bug fixes, refactoring, documentation reorganization, or small tweaks), the agent **must** create a new change report file in `docs/changes/`.
 
 ### Naming Convention
 

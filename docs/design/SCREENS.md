@@ -1,6 +1,6 @@
-# SCREENS.md — ZeroBook
+# SCREENS.md — Mavo
 
-> Last updated: 2026-09-29
+> Last updated: 2026-10-03
 
 ## Navigation structure
 

@@ -1,8 +1,8 @@
-# API.md — ZeroBook (Services & Internal APIs)
+# API.md — Mavo (Services & Internal APIs)
 
-> Last updated: 2026-09-29
+> Last updated: 2026-10-03
 
-ZeroBook has **no backend server**. All data is local (Room/SQLite). This doc covers internal services and integrations.
+Mavo has **no backend server**. All data is local (Room/SQLite). This doc covers internal services and integrations.
 
 ## Invoice generation
 
@@ -68,7 +68,7 @@ ZeroBook has **no backend server**. All data is local (Room/SQLite). This doc co
 ## DataStore preferences
 
 - **File:** `data/AppPreferences.kt`
-- **Store name:** `zerobook_prefs`
+- **Store name:** `mavo_prefs`
 - **Keys:** FY last checked date, last seen changelog version, progress tracker settings, KPI animation mode
 
 ## Changelog (in-app)

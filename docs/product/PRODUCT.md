@@ -1,13 +1,13 @@
-# PRODUCT.md — ZeroBook Product Definition
+# PRODUCT.md — Mavo Product Definition
 
-> Last updated: 2026-09-30  
-> Single source of truth for ZeroBook product identity, vision, user personas, and design philosophy.
+> Last updated: 2026-10-03  
+> Single source of truth for Mavo product identity, vision, user personas, and design philosophy.
 
 ---
 
-## 1. What ZeroBook Is
+## 1. What Mavo Is
 
-**ZeroBook** is a zero-friction, 100% free enterprise resource planning (ERP) and GST invoicing engine built specifically for Indian Micro, Small, and Medium Enterprises (MSMEs).
+**Mavo** is a zero-friction, 100% free enterprise resource planning (ERP) and GST invoicing engine built specifically for Indian Micro, Small, and Medium Enterprises (MSMEs).
 
 It replaces legacy, expensive accounting software (Tally Prime, SAP, Oracle) and restrictive paywalled mobile apps (Vyapar, MyBillBook) with an intuitive, jargon-free platform that anyone can operate without an accounting or commerce background.
 
@@ -15,14 +15,14 @@ While this repository contains the **stable Android native reference implementat
 
 ---
 
-## 2. Who ZeroBook Serves (Target Personas)
+## 2. Who Mavo Serves (Target Personas)
 
-ZeroBook is built to adapt dynamically to four core MSME business archetypes:
+Mavo is built to adapt dynamically to four core MSME business archetypes:
 
 ### A. Retailers & Shop Owners
 - **Who:** Kirana stores, electronics shops, hardware stores, stationery, apparel merchants.
 - **Workflow:** High-speed counter billing, barcode scanning, dual units of measurement, fast cash/UPI reconciliation.
-- **Killer Feature:** **Vernacular Voice-to-Bill** — Counter operators speak item names and quantities in Indian languages (Hindi, Bengali, English) on their phone during busy hours; ZeroBook auto-populates the invoice lines with one-tap confirmation.
+- **Killer Feature:** **Vernacular Voice-to-Bill** — Counter operators speak item names and quantities in Indian languages (Hindi, Bengali, English) on their phone during busy hours; Mavo auto-populates the invoice lines with one-tap confirmation.
 
 ### B. Wholesalers & Distributors
 - **Who:** Bulk FMCG distributors, grain merchants, building material suppliers, hardware stockists.
@@ -41,10 +41,10 @@ ZeroBook is built to adapt dynamically to four core MSME business archetypes:
 
 ## 3. The Core Problems It Solves
 
-1. **The Cost & Complexity Barrier:** Tally and SAP cost tens of thousands of rupees annually and require specialized accountants. ZeroBook is 100% free and requires zero accounting education.
+1. **The Cost & Complexity Barrier:** Tally and SAP cost tens of thousands of rupees annually and require specialized accountants. Mavo is 100% free and requires zero accounting education.
 2. **The "Kirana-Only" & Paywall Trap:** Existing mobile apps either gate essential features behind costly subscriptions or assume every small business is a simple grocery store.
 3. **The Counter Speed Bottleneck:** Typing on small smartphone touchscreens while 5 impatient customers wait at the counter is slow. Voice billing and fast quick-sale flows solve this.
-4. **Disjointed Department Workflows:** In multi-person shops, the stock receiver at the back dock logs purchases while the front counter rings up sales. ZeroBook synchronizes departments under a single unified business account.
+4. **Disjointed Department Workflows:** In multi-person shops, the stock receiver at the back dock logs purchases while the front counter rings up sales. Mavo synchronizes departments under a single unified business account.
 
 ---
 

@@ -5,6 +5,25 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import java.io.File
+
+// ponytail: "ZeroBook.db" is the pre-rebrand on-disk name — the string must stay to FIND old installs' data; the files are retired after a successful copy. Upgrade path: delete once min supported install predates the rebrand.
+internal fun migrateLegacyDbFiles(databasesDir: File) {
+    val newDb = File(databasesDir, "Mavo.db")
+    val oldDb = File(databasesDir, "ZeroBook.db")
+    if (newDb.exists() || !oldDb.exists()) return
+    try {
+        oldDb.copyTo(newDb, overwrite = false)
+        listOf("shm", "wal").forEach { s ->
+            File(databasesDir, "ZeroBook.db-$s").takeIf { it.exists() }
+                ?.copyTo(File(databasesDir, "Mavo.db-$s"), overwrite = false)
+        }
+        listOf("ZeroBook.db", "ZeroBook.db-shm", "ZeroBook.db-wal").forEach { File(databasesDir, it).delete() }
+    } catch (_: Exception) {
+        // partial copy must never reach Room; legacy files stay put so the next launch retries
+        listOf("Mavo.db", "Mavo.db-shm", "Mavo.db-wal").forEach { File(databasesDir, it).delete() }
+    }
+}
 
 @Database(
     entities = [
@@ -60,17 +79,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                val mavoDb = context.getDatabasePath("Mavo.db")
-                val oldDb = context.getDatabasePath("ZeroBook.db")
-                if (!mavoDb.exists() && oldDb.exists()) {
-                    try {
-                        oldDb.copyTo(mavoDb, overwrite = false)
-                        val oldShm = context.getDatabasePath("ZeroBook.db-shm")
-                        if (oldShm.exists()) oldShm.copyTo(context.getDatabasePath("Mavo.db-shm"), overwrite = false)
-                        val oldWal = context.getDatabasePath("ZeroBook.db-wal")
-                        if (oldWal.exists()) oldWal.copyTo(context.getDatabasePath("Mavo.db-wal"), overwrite = false)
-                    } catch (_: Exception) {}
-                }
+                context.getDatabasePath("Mavo.db").parentFile?.let { migrateLegacyDbFiles(it) }
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,

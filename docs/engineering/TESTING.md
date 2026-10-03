@@ -1,4 +1,4 @@
-# TESTING.md — ZeroBook
+# TESTING.md — Mavo
 
 > Last updated: 2026-09-29
 

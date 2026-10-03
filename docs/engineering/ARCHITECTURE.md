@@ -1,11 +1,11 @@
-# ARCHITECTURE.md — ZeroBook
+# ARCHITECTURE.md — Mavo
 
 > Last updated: 2026-09-29
 
 ## Folder structure
 
 ```
-app/src/main/java/com/zerobook/app/
+app/src/main/java/com/mavo/app/
 ├── MainActivity.kt          # Single Activity, NavHost, bottom nav, theme setup
 ├── core/
 │   ├── db/                   # Database utilities

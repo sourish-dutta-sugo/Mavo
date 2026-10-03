@@ -1,7 +1,7 @@
-# DATABASE.md — ZeroBook
+# DATABASE.md — Mavo
 
 > Last updated: 2026-09-29  
-> DB file: `ZeroBook.db` (SQLite via Room)  
+> DB file: `Mavo.db` (SQLite via Room)  
 > Current schema version: **14** (in `AppDatabase.kt`)
 
 ## Version tracking

@@ -1,6 +1,6 @@
-# USER_FLOWS.md — ZeroBook
+# USER_FLOWS.md — Mavo
 
-> Last updated: 2026-09-29
+> Last updated: 2026-10-03
 
 ## Flow 1: First launch (Setup)
 

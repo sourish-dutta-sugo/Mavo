@@ -1,13 +1,13 @@
-# ROADMAP.md — ZeroBook Product Roadmap & Milestones
+# ROADMAP.md — Mavo Product Roadmap & Milestones
 
-> Last updated: 2026-10-02
+> Last updated: 2026-10-03
 > Single source of truth for active development phases, prioritized tasks, and platform evolution.
 
 ---
 
 ## 🧭 Strategic Vision & Phases
 
-ZeroBook is evolving from a single-device native Android billing app into an omnichannel MSME ERP engine. Development is organized into clear progressive phases:
+Mavo is evolving from a single-device native Android billing app into an omnichannel MSME ERP engine. Development is organized into clear progressive phases:
 
 ```
 [ Phase 0: Android Baseline ] ──▶ [ Phase 1: Rapid Invoicing & Quote Flow ]

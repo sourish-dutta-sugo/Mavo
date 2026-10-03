@@ -1,11 +1,11 @@
-# TYPOGRAPHY.md — ZeroBook
+# TYPOGRAPHY.md — Mavo
 
-> Last updated: 2026-09-29  
-> Source of truth: `app/src/main/java/com/zerobook/app/ui/theme/Type.kt`
+> Last updated: 2026-10-03  
+> Source of truth: `app/src/main/java/com/mavo/app/ui/theme/Type.kt`
 
 ## Typography System
 
-ZeroBook uses Jetpack Compose Material 3 typography with system default font family (`FontFamily.Default`), optimized for legibility on diverse Android retail screens.
+Mavo uses Jetpack Compose Material 3 typography with system default font family (`FontFamily.Default`), optimized for legibility on diverse Android retail screens.
 
 ---
 

@@ -1,4 +1,4 @@
-# DECISIONS.md — ZeroBook
+# DECISIONS.md — Mavo
 
 > Last updated: 2026-09-29  
 > Purpose: Document why specific technical choices were made so agents don't undo them.

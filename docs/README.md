@@ -1,7 +1,7 @@
-# ZeroBook Documentation Index
+# Mavo Documentation Index
 
-> Last updated: 2026-09-29  
-> Single source of truth index for all documentation across the ZeroBook project.
+> Last updated: 2026-10-03  
+> Single source of truth index for all documentation across the Mavo project.
 
 ---
 
@@ -21,7 +21,7 @@
 | [product/PRODUCT.md](product/PRODUCT.md) | What the app is, target audience, core objectives, and deliberate non-goals |
 | [product/FEATURES.md](product/FEATURES.md) | Comprehensive feature inventory categorized with status (Done / Partial / Planned) |
 | [product/ROADMAP.md](product/ROADMAP.md) | Active work, next priority tasks, known issues, and roadmap history |
-| [product/GLOSSARY.md](product/GLOSSARY.md) | Domain glossary for Indian accounting, GST compliance, and ZeroBook concepts |
+| [product/GLOSSARY.md](product/GLOSSARY.md) | Domain glossary for Indian accounting, GST compliance, and Mavo concepts |
 
 ---
 
