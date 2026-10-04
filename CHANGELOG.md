@@ -1,6 +1,6 @@
 # CHANGELOG.md — Mavo
 
-> Last updated: 2026-09-29  
+> Last updated: 2026-10-04  
 > Version source of truth: `app/build.gradle.kts` → `versionName`  
 > In-app source: `app/src/main/assets/changelog.json`
 
@@ -9,10 +9,16 @@
 ## [2.2.3] — 2026-09-XX
 
 ### Added
+- First-run wizard split into eight steps: launch, initialising, three onboarding screens, Terms & Privacy with a consent checkbox, an optional location-permission screen, then three setup steps (business details, location/GST, tax & bank)
+- Alternate phone number, business type (Manufacturer / Wholesaler / Retailer) and what you sell (Products / Services) captured during setup
+- GST toggle on setup step 2: the GST state code, GSTIN and PAN fields only appear for GST-registered businesses
 - Income vouchers now work as a full voucher type, mirroring Expense workflows for posting and reporting
 - Debit Note and Credit Note entries now post to ledger accounts with dedicated handling
 
 ### Changed
+- The single setup form is now a three-step flow with a shared wizard shell, Back navigation between steps, and draft state that survives moving backwards
+- Location permission is requested on its own screen with a rationale before setup, instead of silently during setup
+- Existing installs skip the wizard entirely and open the dashboard directly
 - Party-related ledger entries now consistently populate `partyId` from the start
 - Counter billing now adapts to compact, medium, and expanded windows
 - Expanded windows keep products and cart/payment visible in a split pane
@@ -25,7 +31,7 @@
 - Balance Sheet no longer force-balances itself; Trial Balance issue corrected
 - Crashes when opening Journal, Credit Note, Debit Note, and Income resolved
 
-DB migration: no
+DB migration: yes (business_profile schema v14 → v15)
 
 ---
 

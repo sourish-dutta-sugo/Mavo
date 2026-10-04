@@ -76,6 +76,9 @@ fun ensureBusinessProfileExtensionColumns(db: SupportSQLiteDatabase) {
     ensureColumn("smtp_host", "ALTER TABLE business_profile ADD COLUMN smtp_host TEXT NOT NULL DEFAULT 'smtp.gmail.com'")
     ensureColumn("smtp_port", "ALTER TABLE business_profile ADD COLUMN smtp_port TEXT NOT NULL DEFAULT '587'")
     ensureColumn("createdAt", "ALTER TABLE business_profile ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
+    ensureColumn("alt_phone", "ALTER TABLE business_profile ADD COLUMN alt_phone TEXT NOT NULL DEFAULT ''")
+    ensureColumn("business_type", "ALTER TABLE business_profile ADD COLUMN business_type TEXT NOT NULL DEFAULT ''")
+    ensureColumn("selling_type", "ALTER TABLE business_profile ADD COLUMN selling_type TEXT NOT NULL DEFAULT ''")
 }
 
 fun ensurePartyExtensionColumns(db: SupportSQLiteDatabase) {
@@ -673,6 +676,21 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
 }
 
 val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        ensureVoucherExtensionColumns(db)
+        ensureBusinessProfileExtensionColumns(db)
+        ensurePartyExtensionColumns(db)
+        ensureProductExtensionColumns(db)
+        ensureBankCashSourceVoucherColumn(db)
+        ensureFinancialYearColumnsAndIndexes(db)
+        ensureReminderScheduleTable(db)
+        ensureExpenseTable(db)
+        ensureIncomeTable(db)
+        ensureEmailAutomationTables(db)
+    }
+}
+
+val MIGRATION_14_15 = object : Migration(14, 15) {
     override fun migrate(db: SupportSQLiteDatabase) {
         ensureVoucherExtensionColumns(db)
         ensureBusinessProfileExtensionColumns(db)

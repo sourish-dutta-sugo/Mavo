@@ -27,10 +27,16 @@ data class BusinessProfile(
     val state: String,
     val pin: String,
     val phone: String,
+    @ColumnInfo(name = "alt_phone")
+    val altPhone: String = "",
     val email: String,
     val gstin: String,
     val pan: String,
     val stateCode: String,
+    @ColumnInfo(name = "business_type")
+    val businessType: String = "",
+    @ColumnInfo(name = "selling_type")
+    val sellingType: String = "",
     val bankName: String,
     val accountNo: String,
     val ifsc: String,

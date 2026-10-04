@@ -16,11 +16,11 @@ app/src/main/java/com/mavo/app/
 │   ├── share/                # Share intents
 │   └── util/                 # General utilities
 ├── data/
-│   ├── AppDatabase.kt        # Room database class (version 14, 20 entities)
+│   ├── AppDatabase.kt        # Room database class (version 15, 20 entities)
 │   ├── AppDaos.kt            # All DAO interfaces
 │   ├── AppRepository.kt      # Single repository (all business logic)
 │   ├── Entities.kt           # All Room entity data classes
-│   ├── Migrations.kt         # DB migrations (v4→v14) + ensureColumn helpers
+│   ├── Migrations.kt         # DB migrations (v4→v15) + ensureColumn helpers
 │   ├── AppPreferences.kt     # Jetpack DataStore wrapper
 │   ├── ChangelogLoader.kt    # Loads changelog.json from assets
 │   ├── FinancialYearUtils.kt # FY date calculations
@@ -39,7 +39,6 @@ app/src/main/java/com/mavo/app/
 │   ├── dashboard/            # (dashboard feature logic)
 │   ├── invoice/              # (invoice feature logic)
 │   ├── ledger/               # (ledger feature logic)
-│   ├── onboarding/           # (setup/onboarding logic)
 │   ├── parties/              # (party feature logic)
 │   ├── products/             # (product feature logic)
 │   ├── reports/              # (reports feature logic)
@@ -56,7 +55,7 @@ app/src/main/java/com/mavo/app/
 ├── ui/
 │   ├── AppViewModel.kt       # Main ViewModel (DB init, all state)
 │   ├── DashboardViewModel.kt # Dashboard-specific ViewModel
-│   ├── screens/              # 23 Compose screen files (see ../design/SCREENS.md)
+│   ├── screens/              # 24 Compose screen files incl. FirstRunFlow (see ../design/SCREENS.md)
 │   ├── components/           # Shared composables (LoadingIndicator)
 │   ├── theme/                # Design system (see ../design/DESIGN_SYSTEM.md)
 │   ├── animation/            # Animation utilities

@@ -2,15 +2,21 @@
 
 > Last updated: 2026-10-03
 
-## Flow 1: First launch (Setup)
+## Flow 1: First launch (wizard)
+
+Runs only when no `business_profile` row exists; existing installs skip straight
+to PIN (if enabled) → Dashboard. System Back returns one step at a time.
 
 | Step | Trigger | What shows | Data used | Result | Error state |
 |------|---------|------------|-----------|--------|-------------|
-| 1 | App opens for first time | SplashScreen → checks `BusinessProfile` | `businessProfileDao.getProfile()` | If null → go to Setup | — |
-| 2 | SetupScreen renders | Form: Business Name*, Address*, City, State, PIN Code*, Phone, Email, GSTIN, PAN, Bank details | None (empty form) | User fills in fields | — |
-| 3 | User taps "Save" | Validates required fields (Business Name, Address, PIN Code) | Form state | If invalid → red borders on empty required fields, auto-focus first missing | Shows English summary of pending fields |
-| 4 | Validation passes | `businessProfileDao.insertProfile(profile)` | Filled form | Profile saved, navigate to Dashboard | DB error → error card shown |
-| 5 | Optional: auto-detect state code | User taps location detect | Device GPS via `play-services-location` | State code auto-filled from lat/lng | Permission denied → manual entry |
+| 1 | App opens, profile absent | SplashScreen → Initialising | `businessProfileDao.getProfile()` null → start wizard | Wizard step 1 | — |
+| 2 | Onboarding 1 / 2 / 3 | Static explainers: what Mavo is, what it does, a quick note | — | Next → Terms | — |
+| 3 | Terms & Privacy | T&C + Privacy text with one checkbox | Local text | Continue enabled only when ticked | Unticked → "Tick the box to continue." |
+| 4 | Location permission | Rationale card, Allow / Skip | `play-services-location` (optional) | Grant → state code auto-detected into draft; Skip → manual pick | Denied → manual state entry |
+| 5 | Setup 1 | Business Name*, Owner, Phone, Alt phone, Email, Address*, business type, what you sell | Empty `SetupDraft` | Continue enabled when Business Name + Address filled | Hint lists missing fields |
+| 6 | Setup 2 | PIN*, City, GST toggle, State, (GST State Code if toggle on) | `fetchPinLookup` after 6 digits, `StateDropdownMenu` | PIN auto-fills city/state; GST toggle reveals state code | Lookup fails → "Unable to fetch location" |
+| 7 | Setup 3 | GSTIN + PAN (only if GST on), Account No, IFSC, Bank, Branch | `fetchGstinDetails`, `fetchIfscDetails` | "Finish Setup" → sample-data dialog | IFSC unresolved → field left as typed |
+| 8 | Sample-data choice | Yes, Import / No, Start Clean | `businessProfileDao.insertProfile(profile)` | Profile saved → `isSetupCompleted` → Dashboard | DB error → DB error card on relaunch |
 
 ## Flow 2: Create a sale voucher
 

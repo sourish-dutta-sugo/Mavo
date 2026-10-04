@@ -47,7 +47,7 @@ Mavo is evolving from a single-device native Android billing app into an omnicha
 
 | Feature / Milestone | Priority | Scope & Notes |
 |---|---|---|
-| **Adaptive Setup Wizard** | **P1 (High)** | Business type selector on first launch (Retailer, Wholesaler, Manufacturer, Service Provider). |
+| **Adaptive Setup Wizard** | **P1 (High)** | ✅ Business type selector ships in the first-run wizard (`SetupBasicScreen`). Still pending: per-type adaptation of screens and voucher defaults (Service Provider not offered yet). |
 | **Adaptive Voucher UI Filtering** | **P1 (High)** | Tailor visible voucher types based on business mode (e.g., conceal raw-material GRN for Kirana; emphasize SAC codes and transit challans for Transporters/Services). |
 | **Manufacturing Raw Material Flow** | **P2 (Medium)** | Dedicated purchase-to-raw-material tracking and bill-of-materials (BOM) inventory consumption. |
 | **Services & SAC Code Catalog** | **P2 (Medium)** | Native support for Service Accounting Codes (SAC), time/service billing, and non-inventory challans. |

@@ -76,8 +76,16 @@
 ### ProfileFormSupport
 
 - **File:** `ui/screens/ProfileFormSupport.kt`
-- **Purpose:** Shared validation and state auto-detect helpers for business profile forms
-- **Where used:** SetupScreen, BusinessProfileSettingsSection
+- **Purpose:** Shared validation, `SetupStep` order and state auto-detect helpers for business profile forms
+- **Where used:** FirstRunFlow / setup steps, BusinessProfileSettingsSection
+
+### WizardScaffold
+
+- **File:** `ui/screens/SharedComponents.kt`
+- **Purpose:** Shared chrome for first-run steps — header (logo, back arrow, step label), scrollable body, pinned footer button
+- **Props:** `title`, `subtitle`, `stepLabel`, `onBack`, `nextLabel`, `nextEnabled`, `hint`, `secondary` slot, `content`
+- **States:** Primary action enabled / disabled, optional hint line, optional secondary action
+- **Where used:** All 8 first-run wizard steps (`FirstRunFlow.kt`, `SetupScreen.kt`)
 
 ## Theme components
 

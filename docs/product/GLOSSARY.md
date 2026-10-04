@@ -1,16 +1,16 @@
-# GLOSSARY.md — ZeroBook
+# GLOSSARY.md — Mavo
 
-> Last updated: 2026-09-29
+> Last updated: 2026-10-03
 
-Project-specific accounting, taxation, and application terms used in ZeroBook.
+Project-specific accounting, taxation, and application terms used in Mavo.
 
 ---
 
 ## Accounting & Transaction Terms
 
-| Term | Meaning in ZeroBook |
-|------|---------------------|
-| **Voucher** | A primary document recording a business transaction. ZeroBook supports Sale, Purchase, Sale Return, Purchase Return, Receipt, Payment, Expense, Income, Journal, Debit Note, and Credit Note. |
+| Term | Meaning in Mavo |
+|------|-----------------|
+| **Voucher** | A primary document recording a business transaction. Mavo supports Sale, Purchase, Sale Return, Purchase Return, Receipt, Payment, Expense, Income, Journal, Debit Note, and Credit Note. |
 | **Party** | A business entity transacted with — either a Customer (Debtor) or a Supplier (Creditor). Stored in the `parties` table with running balance tracking. |
 | **Ledger Entry** | An individual double-entry debit (`DR`) or credit (`CR`) posting associated with a voucher and account/party, recorded in `ledger_entries`. |
 | **Day Book** | Chronological record of all vouchers entered within a selected date or date range. |
@@ -26,8 +26,8 @@ Project-specific accounting, taxation, and application terms used in ZeroBook.
 
 ## Indian GST & Compliance Terms
 
-| Term | Meaning in ZeroBook |
-|------|---------------------|
+| Term | Meaning in Mavo |
+|------|-----------------|
 | **GSTIN** | 15-character Goods and Services Tax Identification Number of a business or party. |
 | **State Code** | First 2 digits of GSTIN identifying the Indian state/UT (e.g., `19` for West Bengal, `27` for Maharashtra). Used to determine intrastate vs interstate tax. |
 | **CGST** | Central GST — applied equally with SGST on intrastate transactions (same state). |
@@ -41,9 +41,9 @@ Project-specific accounting, taxation, and application terms used in ZeroBook.
 
 ## App Architecture & Data Terms
 
-| Term | Meaning in ZeroBook |
-|------|---------------------|
-| **Room / SQLite** | Local offline-first relational database engine powering ZeroBook (`ZeroBook.db`). Current schema version: 14. |
+| Term | Meaning in Mavo |
+|------|-----------------|
+| **Room / SQLite** | Local offline-first relational database engine powering Mavo (`Mavo.db`). Current schema version: 14. |
 | **AppRepository** | Central data repository orchestrating DAOs, business rules, double-entry validation, and transactions. |
 | **DesignTokens** | Single source of truth for color tokens, spacing, radiuses, elevations, and semantic colors. |
 

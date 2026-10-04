@@ -2,14 +2,14 @@
 
 > Last updated: 2026-09-29  
 > DB file: `Mavo.db` (SQLite via Room)  
-> Current schema version: **14** (in `AppDatabase.kt`)
+> Current schema version: **15** (in `AppDatabase.kt`)
 
 ## Version tracking
 
 | Concept | Where | Current |
 |---------|-------|---------|
 | App version | `app/build.gradle.kts` → `versionName` | `2.2.1` |
-| DB schema version | `AppDatabase.kt` → `@Database(version = N)` | `14` |
+| DB schema version | `AppDatabase.kt` → `@Database(version = N)` | `15` |
 
 **These are independent.** An app version bump does NOT require a schema bump, and vice versa.
 
@@ -34,7 +34,8 @@
 | Column | Type | PK | Notes |
 |--------|------|----|-------|
 | id | INTEGER | ✅ | Always 1 (singleton) |
-| businessName, ownerName, address, city, state, pin, phone, email | TEXT | | |
+| businessName, ownerName, address, city, state, pin, phone, alt_phone, email | TEXT | | alt_phone added in v15 |
+| business_type, selling_type | TEXT | | v15: Manufacturer/Wholesaler/Retailer, Products/Services |
 | gstin, pan, stateCode | TEXT | | |
 | bankName, accountNo, ifsc, bank_branch, upiId, upiPhone | TEXT | | |
 | logoPath, signaturePath | TEXT | | nullable, file paths |

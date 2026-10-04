@@ -132,6 +132,7 @@ Status key: ✅ Done · 🟡 Partial · 📋 Planned
 | Skeleton loading states | ✅ | |
 | Premium motion system (transitions, press feedback) | ✅ | |
 | Splash screen | ✅ | AndroidX SplashScreen |
+| Initialising screen | ✅ | DB init + setup-status gate before the app renders |
 | Progress tracker (dashboard KPI) | ✅ | Configurable metric/period/target |
 
 ## Financial Year Management
@@ -147,7 +148,11 @@ Status key: ✅ Done · 🟡 Partial · 📋 Planned
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Setup screen (first-run onboarding) | ✅ | Business profile entry |
+| Setup screen (first-run onboarding) | ✅ | 3 steps: business details, location/GST, tax & bank |
+| First-run wizard | ✅ | Onboarding ×3 → Terms → permission → 3 setup steps (`FirstRunFlow.kt`) |
+| Terms & privacy consent | ✅ | Single checkbox gates the wizard until accepted |
+| Location permission step | ✅ | Optional GST state code auto-detect; skippable |
+| Business type & selling type | ✅ | Manufacturer/Wholesaler/Retailer · Products/Services |
 | Settings screen | ✅ | Profile, theme, FY, email, export |
 | In-app changelog (What's New) | ✅ | Reads from `changelog.json` |
 | Version display | ✅ | From `BuildConfig.VERSION_NAME` |

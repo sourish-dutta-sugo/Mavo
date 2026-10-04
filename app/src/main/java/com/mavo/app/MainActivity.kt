@@ -110,7 +110,7 @@ import com.mavo.app.ui.screens.ProductsScreen
 import com.mavo.app.feature.billing.BillingScreen
 import com.mavo.app.ui.screens.ReportsScreen
 import com.mavo.app.ui.screens.SettingsScreen
-import com.mavo.app.ui.screens.SetupScreen
+import com.mavo.app.ui.screens.FirstRunFlow
 import com.mavo.app.ui.screens.SplashScreen
 import com.mavo.app.ui.screens.VouchersScreen
 import com.mavo.app.ui.theme.AppColors
@@ -345,10 +345,7 @@ private fun AppContent(
                 }
 
                 !isSetupCompleted -> {
-                    SetupScreen(
-                        viewModel = viewModel,
-                        onSetupComplete = {}
-                    )
+                    FirstRunFlow(viewModel = viewModel)
                 }
 
                 pinRequired && !pinAuthed -> {

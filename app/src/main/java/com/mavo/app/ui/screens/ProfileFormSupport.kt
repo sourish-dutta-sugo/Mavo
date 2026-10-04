@@ -20,6 +20,10 @@ enum class RequiredBusinessField(val label: String) {
     PinCode("PIN Code")
 }
 
+enum class SetupStep {
+    Onboarding1, Onboarding2, Onboarding3, Terms, Permission, Basic, Location, TaxBank
+}
+
 fun missingRequiredBusinessFields(
     businessName: String,
     address: String,
@@ -28,6 +32,21 @@ fun missingRequiredBusinessFields(
     if (businessName.isBlank()) add(RequiredBusinessField.BusinessName)
     if (address.isBlank()) add(RequiredBusinessField.Address)
     if (pinCode.isBlank()) add(RequiredBusinessField.PinCode)
+}
+
+/** Fields a given wizard step refuses to advance without. */
+fun missingFieldsFor(
+    step: SetupStep,
+    businessName: String,
+    address: String,
+    pinCode: String
+): List<RequiredBusinessField> = when (step) {
+    SetupStep.Basic -> buildList {
+        if (businessName.isBlank()) add(RequiredBusinessField.BusinessName)
+        if (address.isBlank()) add(RequiredBusinessField.Address)
+    }
+    SetupStep.Location -> if (pinCode.isBlank()) listOf(RequiredBusinessField.PinCode) else emptyList()
+    else -> emptyList()
 }
 
 fun resolveIndianStateInfo(rawValue: String): Pair<String, String>? {

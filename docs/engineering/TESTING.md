@@ -69,4 +69,5 @@ app/src/androidTest/java/   # Instrumentation tests (Espresso)
 1. Create voucher → verify ledger entries + stock update + bank/cash transaction
 2. FY close → verify balance carry-forward
 3. DB migration → verify no data loss
-4. App first launch → Setup → Dashboard flow
+4. App first launch → wizard (onboarding → Terms → permission → 3 setup steps) → Dashboard
+5. Returning install → PIN (if enabled) → Dashboard, no wizard replay
