@@ -14,7 +14,7 @@
 ### SharedComponents
 
 - **File:** `ui/screens/SharedComponents.kt`
-- **Purpose:** Common UI pieces reused across multiple screens
+- **Purpose:** Common UI pieces reused across multiple screens — `RetailTextField` (now a thin delegate over `ZbField`: label-above, uppercase gray label, optional `fieldModifier` for focus targets), `StateDropdownMenu`, PIN lookup
 - **Where used:** Throughout the app
 
 ### Skeleton
@@ -86,6 +86,13 @@
 - **Props:** `title`, `subtitle`, `stepLabel`, `onBack`, `nextLabel`, `nextEnabled`, `hint`, `secondary` slot, `content`
 - **States:** Primary action enabled / disabled, optional hint line, optional secondary action
 - **Where used:** All 8 first-run wizard steps (`FirstRunFlow.kt`, `SetupScreen.kt`)
+
+### ZeroUi kit
+
+- **File:** `ui/components/ZeroUi.kt`
+- **Purpose:** Zero-language primitives — `CircleIconButton`, `StepProgress` (4dp segments, 4dp gaps), `WizardHeader`, `WizardTitle`, `ZbField` (label-above uppercase field, optional `fieldModifier` for focus/blur logic), `PrimaryButton` / `SecondaryButton`, chips, segmented tabs, `ZbCard`, `SearchField`, `SectionLabel`, `EmptyState`
+- **States:** Press feedback (scale-on-press) on all interactive controls
+- **Where used:** Voucher wizard and every Zero-restyled screen
 
 ## Theme components
 

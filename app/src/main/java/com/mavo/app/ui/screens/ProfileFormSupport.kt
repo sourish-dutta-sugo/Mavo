@@ -21,7 +21,7 @@ enum class RequiredBusinessField(val label: String) {
 }
 
 enum class SetupStep {
-    Onboarding1, Onboarding2, Onboarding3, Terms, Permission, Basic, Location, TaxBank
+    Onboarding1, Onboarding2, Terms, Permission, Basic, Location, TaxBank
 }
 
 fun missingRequiredBusinessFields(

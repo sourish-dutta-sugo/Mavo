@@ -3,21 +3,34 @@ package com.mavo.app.ui.screens
 import android.Manifest
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,11 +39,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.components.PrimaryButton
+import com.mavo.app.ui.components.SecondaryButton
 import com.mavo.app.ui.theme.AppColors
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -44,7 +61,6 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 fun FirstRunFlow(viewModel: AppViewModel) {
     var stepIndex by rememberSaveable { mutableStateOf(0) }
     var draft by rememberSaveable(stateSaver = DraftSaver) { mutableStateOf(SetupDraft()) }
-    var termsAccepted by rememberSaveable { mutableStateOf(false) }
     val step = SetupStep.entries[stepIndex]
 
     fun goTo(index: Int) {
@@ -55,70 +71,27 @@ fun FirstRunFlow(viewModel: AppViewModel) {
     BackHandler(enabled = stepIndex > 0) { goTo(stepIndex - 1) }
 
     when (step) {
-        SetupStep.Onboarding1 -> WizardScaffold(
-            title = "What is Mavo?",
-            subtitle = "Mavo is a GST-ready accounting app built for Indian shops, wholesalers and manufacturers.",
-            onNext = { goTo(stepIndex + 1) },
-            nextLabel = "Next"
-        ) {
-            WizardBullet("One place for your books", "Bills, parties, stock and payments recorded as you work.")
-            WizardBullet("Built for Indian business", "GST invoices, HSN codes and state codes handled for you.")
-            WizardBullet("Nothing leaves your phone", "Your data is stored on this device and works offline.")
-        }
+        SetupStep.Onboarding1 -> OnboardingPage(
+            icon = Icons.AutoMirrored.Outlined.MenuBook,
+            title = "Your business, in a single ledger.",
+            body = "Mavo is a fast, offline-first accounting companion built for shopkeepers, traders and small businesses in India.",
+            pageIndex = 0,
+            onNext = { goTo(stepIndex + 1) }
+        )
 
-        SetupStep.Onboarding2 -> WizardScaffold(
-            title = "What Mavo does",
-            subtitle = "Everything you need to run the numbers at your shop.",
-            onNext = { goTo(stepIndex + 1) },
-            nextLabel = "Next"
-        ) {
-            WizardBullet("Bill in seconds", "Raise GST invoices, quotations and vouchers without the paperwork.")
-            WizardBullet("Know who owes whom", "Party ledgers track outstanding balances automatically.")
-            WizardBullet("See how the business is doing", "Reports, summaries and trends, ready when you are.")
-        }
+        SetupStep.Onboarding2 -> OnboardingPage(
+            icon = Icons.Outlined.ReceiptLong,
+            title = "Post vouchers. Print invoices. Done.",
+            body = "Sales, purchase, receipts, payments and journals \u2014 all posted to the correct ledger automatically with GST, PDF export and party ledgers.",
+            pageIndex = 1,
+            onNext = { goTo(stepIndex + 1) }
+        )
 
-        SetupStep.Onboarding3 -> WizardScaffold(
-            title = "A quick note",
-            subtitle = "Two things worth knowing before you start.",
-            onNext = { goTo(stepIndex + 1) },
-            nextLabel = "Got it"
-        ) {
-            WizardBullet("Back up regularly", "Your books live on this device. Export a backup from Settings from time to time.")
-            WizardBullet("Mavo is your tool, not your accountant", "It records and reports what you enter — filing returns stays your responsibility.")
-        }
-
-        SetupStep.Terms -> WizardScaffold(
-            title = "Terms & Privacy",
-            subtitle = "Please read and accept both to continue.",
-            onBack = { goTo(stepIndex - 1) },
-            onNext = { goTo(stepIndex + 1) },
-            nextLabel = "Agree & Continue",
-            nextEnabled = termsAccepted,
-            hint = if (termsAccepted) null else "Tick the box to continue."
-        ) {
-            TermsBody()
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(AppColors.cardBg, RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = termsAccepted,
-                    onCheckedChange = { termsAccepted = it },
-                    colors = CheckboxDefaults.colors(checkedColor = AppColors.primary)
-                )
-                Text(
-                    text = "I have read and agree to the Terms & Conditions and the Privacy Policy.",
-                    fontSize = 13.sp,
-                    color = AppColors.textPrimary
-                )
-            }
-        }
+        SetupStep.Terms -> TermsPage(
+            onNext = { goTo(stepIndex + 1) }
+        )
 
         SetupStep.Permission -> PermissionStep(
-            onBack = { goTo(stepIndex - 1) },
             onDetected = { detected ->
                 draft = draft.copy(state = detected.first, stateCode = detected.second)
             },
@@ -153,38 +126,243 @@ fun FirstRunFlow(viewModel: AppViewModel) {
     }
 }
 
+private const val ONBOARDING_PAGE_COUNT = 3
+
 @Composable
-private fun WizardBullet(title: String, body: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.Top
+private fun OnboardingPage(
+    icon: ImageVector,
+    title: String,
+    body: String,
+    pageIndex: Int,
+    onNext: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColors.screenBg)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp)
     ) {
+        Spacer(modifier = Modifier.height(72.dp))
         Box(
             modifier = Modifier
-                .size(24.dp)
-                .background(AppColors.primaryLight, RoundedCornerShape(8.dp)),
+                .size(130.dp)
+                .clip(RoundedCornerShape(34.dp))
+                .background(AppColors.cardBg)
+                .border(1.dp, AppColors.border, RoundedCornerShape(34.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "\u2022",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.primary
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = AppColors.textPrimary,
+                modifier = Modifier.size(56.dp)
             )
         }
-        Column {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = AppColors.textPrimary
+        Spacer(modifier = Modifier.height(56.dp))
+        Text(
+            text = title,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppColors.textPrimary,
+            lineHeight = 38.sp
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = body,
+            fontSize = 17.sp,
+            color = AppColors.textSecondary,
+            lineHeight = 25.sp
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OnboardingDots(activeIndex = pageIndex, count = ONBOARDING_PAGE_COUNT)
+            Spacer(modifier = Modifier.weight(1f))
+            PillButton(label = "Next", showChevron = true, onClick = onNext)
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun TermsPage(onNext: () -> Unit) {
+    var accepted by rememberSaveable { mutableStateOf(false) }
+    var showDocumentText by rememberSaveable { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColors.screenBg)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp)
+    ) {
+        Spacer(modifier = Modifier.height(48.dp))
+        Box(
+            modifier = Modifier
+                .size(130.dp)
+                .clip(RoundedCornerShape(34.dp))
+                .background(AppColors.cardBg)
+                .border(1.dp, AppColors.border, RoundedCornerShape(34.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = AppColors.textPrimary,
+                modifier = Modifier.size(64.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(44.dp))
+        Text(
+            text = "A quick note before you begin.",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppColors.textPrimary,
+            lineHeight = 38.sp
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        Text(
+            text = "Please review our terms and privacy practices. Your data stays on your device unless you choose to back it up.",
+            fontSize = 17.sp,
+            color = AppColors.textSecondary,
+            lineHeight = 25.sp
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        DocumentRow(
+            label = "Read Terms & Conditions",
+            onClick = { showDocumentText = !showDocumentText }
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        DocumentRow(
+            label = "Read Privacy Policy",
+            onClick = { showDocumentText = !showDocumentText }
+        )
+        if (showDocumentText) {
+            Spacer(modifier = Modifier.height(12.dp))
+            TermsBody()
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { accepted = !accepted },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = accepted,
+                onCheckedChange = { accepted = it },
+                colors = CheckboxDefaults.colors(checkedColor = AppColors.primary)
             )
             Text(
-                text = body,
-                fontSize = 13.sp,
-                color = AppColors.textSecondary,
-                lineHeight = 18.sp
+                text = "I have read and agree to the Terms & Conditions and Privacy Policy.",
+                fontSize = 14.sp,
+                color = AppColors.textPrimary,
+                lineHeight = 20.sp
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OnboardingDots(activeIndex = 2, count = ONBOARDING_PAGE_COUNT)
+            Spacer(modifier = Modifier.weight(1f))
+            PillButton(
+                label = "Get Started",
+                showChevron = false,
+                enabled = accepted,
+                onClick = { if (accepted) onNext() }
+            )
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun DocumentRow(label: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(AppColors.cardBg)
+            .border(1.dp, AppColors.border, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = AppColors.textPrimary,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            imageVector = Icons.Default.KeyboardArrowRight,
+            contentDescription = null,
+            tint = AppColors.textTertiary
+        )
+    }
+}
+
+@Composable
+private fun OnboardingDots(activeIndex: Int, count: Int) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(count) { index ->
+            if (index == activeIndex) {
+                Box(
+                    modifier = Modifier
+                        .width(22.dp)
+                        .height(8.dp)
+                        .background(AppColors.primary, RoundedCornerShape(4.dp))
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(AppColors.border, CircleShape)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PillButton(
+    label: String,
+    showChevron: Boolean,
+    onClick: () -> Unit,
+    enabled: Boolean = true
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(28.dp))
+            .background(if (enabled) AppColors.primary else AppColors.primary.copy(alpha = 0.35f))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 26.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = AppColors.textOnPrimary
+        )
+        if (showChevron) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = AppColors.textOnPrimary,
+                modifier = Modifier.size(18.dp)
             )
         }
     }
@@ -217,7 +395,6 @@ private fun TermsBody() {
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun PermissionStep(
-    onBack: () -> Unit,
     onDetected: (Pair<String, String>) -> Unit,
     onNext: () -> Unit
 ) {
@@ -238,53 +415,58 @@ private fun PermissionStep(
         }
     }
 
-    WizardScaffold(
-        title = "Location access",
-        subtitle = "Mavo can read your location once to pick the GST state code printed on your invoices. You can always set it manually instead — nothing else uses your location.",
-        onBack = onBack,
-        onNext = {
-            if (granted) {
-                onNext()
-            } else {
-                requested = true
-                permissionsState.launchMultiplePermissionRequest()
-            }
-        },
-        nextLabel = if (granted) "Continue" else "Allow location access",
-        secondary = {
-            TextButton(onClick = onNext, modifier = Modifier.fillMaxWidth()) {
-                Text("Skip for now", color = AppColors.primary, fontWeight = FontWeight.SemiBold)
-            }
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColors.screenBg)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp)
     ) {
-        Row(
+        Spacer(modifier = Modifier.height(72.dp))
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(AppColors.cardBg, RoundedCornerShape(12.dp))
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .size(130.dp)
+                .background(AppColors.cardBg, CircleShape)
+                .border(1.dp, AppColors.border, CircleShape),
+            contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = null,
-                tint = AppColors.primary,
-                modifier = Modifier.size(28.dp)
+                tint = AppColors.textPrimary,
+                modifier = Modifier.size(52.dp)
             )
-            Column {
-                Text(
-                    text = "Optional, and only for the state code",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = AppColors.textPrimary
-                )
-                Text(
-                    text = "Deny it and you will pick your state by hand on the next screen.",
-                    fontSize = 12.sp,
-                    color = AppColors.textSecondary,
-                    lineHeight = 17.sp
-                )
-            }
         }
+        Spacer(modifier = Modifier.height(56.dp))
+        Text(
+            text = "Allow location access",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = AppColors.textPrimary,
+            lineHeight = 38.sp
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "We use your location once to auto-fill your pin code, city and state during setup. Nothing is uploaded \u2014 you can also enter these manually.",
+            fontSize = 17.sp,
+            color = AppColors.textSecondary,
+            lineHeight = 25.sp
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        PrimaryButton(
+            label = if (granted) "Continue" else "Allow location",
+            onClick = {
+                if (granted) {
+                    onNext()
+                } else {
+                    requested = true
+                    permissionsState.launchMultiplePermissionRequest()
+                }
+            }
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        SecondaryButton(label = "Enter manually", onClick = onNext)
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }

@@ -35,7 +35,11 @@ Status key: ✅ Done · 🟡 Partial · 📋 Planned
 | Round-off calculation | ✅ | Automatic |
 | Voucher numbering (auto-increment) | ✅ | Per type, per FY |
 | Voucher draft / posted status | ✅ | |
+| Voucher entry 3-step wizard | ✅ | Details → Items → Review for every voucher type on phones; edit opens as a single page with an "EDITING" header |
 | Discount (percent / amount) | ✅ | Per line item |
+| Voucher detail screen | ✅ | Zero summary with totals, line items, Edit/Share/PDF/Print actions (phones) |
+| Multi-select batch actions | ✅ | Black selection bar: Select/Deselect all, CSV export, delete (phones) |
+| Delete with reversal stats | ✅ | Bottom sheet shows voucher count, ledger entries reversed, total value |
 
 ## Party & Ledger Management
 
@@ -57,15 +61,16 @@ Status key: ✅ Done · 🟡 Partial · 📋 Planned
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Product CRUD | ✅ | |
-| HSN code lookup (built-in database) | ✅ | `HsnLookup.kt` |
+| Product CRUD | ✅ | Zero "New Product" entry form (phones) |
+| HSN code lookup (built-in database) | ✅ | `HsnLookup.kt`; Search HSN/SAC dialog with keyword search + Use-code confirm |
 | Stock tracking (current stock) | ✅ | Updated on voucher post |
 | Low stock alerts | ✅ | Configurable threshold |
+| Low & Out of Stock alert screen | ✅ | From Dashboard alert or Products banner; Reorder / Create purchase order opens a Purchase voucher |
 | Multiple units (PCS, KG, LTR, MTR, BOX, BAG, NOS) | ✅ | |
 | Secondary unit + conversion factor | ✅ | |
 | Barcode value field | ✅ | |
 | Batch number / expiry date fields | ✅ | Fields present |
-| Stock report | ✅ | Dedicated screen |
+| Stock report | ✅ | Stock Summary: SKU / stock value / low-out stats, search toggle, filter chips, status pills |
 | FY-wise product stock carry-forward | ✅ | |
 
 ## Bank & Cash
@@ -91,7 +96,7 @@ Status key: ✅ Done · 🟡 Partial · 📋 Planned
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Business reports (sales, purchases, P&L, balance sheet, trial balance) | ✅ | |
-| Stock report | ✅ | |
+| Stock report | ✅ | Stock Summary (Zero restyle) |
 | Day book | ✅ | |
 | Party-wise reports | ✅ | |
 | GST summary | ✅ | |
@@ -131,28 +136,29 @@ Status key: ✅ Done · 🟡 Partial · 📋 Planned
 | Dark mode (Night theme) | ✅ | |
 | Skeleton loading states | ✅ | |
 | Premium motion system (transitions, press feedback) | ✅ | |
-| Splash screen | ✅ | AndroidX SplashScreen |
-| Initialising screen | ✅ | DB init + setup-status gate before the app renders |
+| Splash screen | ✅ | AndroidX SplashScreen; Zero restyle: dark icon tile + "Mavo" wordmark on light bg |
+| Initialising screen | ✅ | DB init + setup-status gate: Zero logo tile, "INITIALIZING", progress bar |
 | Progress tracker (dashboard KPI) | ✅ | Configurable metric/period/target |
 
 ## Financial Year Management
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| FY creation and switching | ✅ | |
-| FY close / lock | ✅ | Prevents edits to locked years |
+| FY creation and switching | ✅ | Settings → Financial Year → Switch financial year (inline start-year field, Save changes) |
+| FY close / lock | ✅ | Settings → Financial Year → Close current books: confirm dialog, locks source year, auto-advances active year |
 | Balance carry-forward (parties, products, ledger accounts) | ✅ | |
-| Audit log for FY transitions | ✅ | |
+| Audit log for FY transitions | ✅ | Viewable at Settings → Data Management → Audit log |
 
 ## Data Management
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Setup screen (first-run onboarding) | ✅ | 3 steps: business details, location/GST, tax & bank |
-| First-run wizard | ✅ | Onboarding ×3 → Terms → permission → 3 setup steps (`FirstRunFlow.kt`) |
-| Terms & privacy consent | ✅ | Single checkbox gates the wizard until accepted |
+| Setup screen (first-run onboarding) | ✅ | 3 steps: Basic details, Where you are, Tax & bank |
+| First-run wizard | ✅ | Onboarding ×2 → Terms page → permission → 3 setup steps (`FirstRunFlow.kt`), Zero restyle |
+| Terms & privacy consent | ✅ | Terms page: document rows + agreement checkbox gates the wizard until accepted |
 | Location permission step | ✅ | Optional GST state code auto-detect; skippable |
 | Business type & selling type | ✅ | Manufacturer/Wholesaler/Retailer · Products/Services |
-| Settings screen | ✅ | Profile, theme, FY, email, export |
+| Settings screen | ✅ | Zero-style grouped menu: Profile & master data, Appearance, Financial, Data sections |
+| Data management screen | ✅ | Settings → Data Management: DB size/records, backup, restore, CSV export/import, audit log viewer |
 | In-app changelog (What's New) | ✅ | Reads from `changelog.json` |
 | Version display | ✅ | From `BuildConfig.VERSION_NAME` |

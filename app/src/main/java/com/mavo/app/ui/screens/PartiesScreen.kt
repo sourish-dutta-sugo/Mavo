@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.data.*
@@ -46,9 +47,14 @@ import com.mavo.app.ui.animation.pressScale
 import com.mavo.app.ui.selection.UniversalSelectionController
 import com.mavo.app.ui.selection.UniversalSelectionIndicator
 import com.mavo.app.ui.selection.UniversalSelectionTopAppBar
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import com.mavo.app.ui.components.LoadingCard
 import com.mavo.app.ui.components.LoadingListItem
 import com.mavo.app.ui.components.LoadingText
+import com.mavo.app.ui.components.ScreenBorder
+import com.mavo.app.ui.components.SearchField
+import com.mavo.app.ui.components.ZbCard
 import com.mavo.app.ui.theme.*
 import kotlinx.coroutines.delay
 import java.util.UUID
@@ -100,7 +106,8 @@ fun PartiesScreen(
             val matchesSearch = p.name.contains(searchQuery, ignoreCase = true) ||
                     (p.phone.contains(searchQuery)) ||
                     (p.gstin?.contains(searchQuery, ignoreCase = true) ?: false)
-            val matchesType = selectedTypeFilter == "ALL" || p.type == selectedTypeFilter || p.type == "BOTH"
+            val matchesType = selectedTypeFilter == "ALL" || p.type == selectedTypeFilter || p.type == "BOTH" ||
+                    (selectedTypeFilter == "OVERDUE" && (partyBalances[p.id] ?: 0.0) > 0.005)
                 matchesSearch && matchesType
             }
         }
@@ -400,20 +407,28 @@ fun PartiesScreen(
                         .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = "Parties",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AppColors.textPrimary
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Parties",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.textPrimary
+                        )
+                        Text(
+                            text = if (parties.size == 1) "1 ledger" else "${parties.size} ledgers",
+                            fontSize = 15.sp,
+                            color = AppColors.textSecondary
+                        )
+                    }
 
-                    // Search Box using RetailTextField
-                    RetailTextField(
+                    SearchField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        label = "Search Parties",
-                        placeholder = "Search by name, phone or GSTIN...",
-                        trailingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = AppColors.textSecondary) },
+                        placeholder = "Search parties",
                         modifier = Modifier.fillMaxWidth().testTag("party_search_bar")
                     )
 
@@ -422,12 +437,17 @@ fun PartiesScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        val filters = listOf("ALL", "CUSTOMER", "SUPPLIER")
-                        filters.forEach { filter ->
+                        val filters = listOf(
+                            "ALL" to "All",
+                            "CUSTOMER" to "Customers",
+                            "SUPPLIER" to "Suppliers",
+                            "OVERDUE" to "Overdue"
+                        )
+                        filters.forEach { (filter, label) ->
                             FilterChip(
                                 selected = selectedTypeFilter == filter,
                                 onClick = { selectedTypeFilter = filter },
-                                label = { Text(filter, fontSize = 11.sp) },
+                                label = { Text(label, fontSize = 13.sp) },
                                 shape = RoundedCornerShape(999.dp),
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = AppColors.primary,
@@ -437,6 +457,47 @@ fun PartiesScreen(
                             )
                         }
                     }
+
+                    val totalReceivables = partyBalances.values.filter { it > 0.005 }.sum()
+                    val totalPayables = partyBalances.values.filter { it < -0.005 }.sumOf { -it }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        ZbCard(modifier = Modifier.weight(1f), contentPadding = 14) {
+                            Text(
+                                "RECEIVABLES",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AppColors.textTertiary,
+                                letterSpacing = 0.5.sp
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                Utils.formatIndianCurrency(totalReceivables),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.textPrimary
+                            )
+                        }
+                        ZbCard(modifier = Modifier.weight(1f), contentPadding = 14) {
+                            Text(
+                                "PAYABLES",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AppColors.textTertiary,
+                                letterSpacing = 0.5.sp
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                Utils.formatIndianCurrency(totalPayables),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.textPrimary
+                            )
+                        }
+                    }
+                    HorizontalDivider(color = ScreenBorder)
 
                     if (parties.isEmpty()) {
                         Box(
@@ -499,67 +560,59 @@ fun PartiesScreen(
                                     colors = CardDefaults.cardColors(containerColor = if (selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg)
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(14.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         if (selectionController.isSelectionActive) {
-                                            Box(modifier = Modifier.padding(end = 8.dp)) {
-                                                UniversalSelectionIndicator(isSelected = selectionController.isSelected(party.id))
-                                            }
+                                            UniversalSelectionIndicator(isSelected = selectionController.isSelected(party.id))
                                         }
-                                        Column(modifier = Modifier.weight(1.2f)) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(
-                                                    text = party.name,
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 14.sp,
-                                                    color = AppColors.textPrimary
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Card(
-                                                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                                                    shape = RoundedCornerShape(2.dp)
-                                                ) {
-                                                    Text(
-                                                        text = party.type,
-                                                        fontSize = 9.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = AppColors.primary,
-                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                                                    )
-                                                }
-                                            }
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(text = "Phone: ${party.phone}", fontSize = 12.sp, color = AppColors.textSecondary)
-                                            Text(text = "GSTIN: ${party.gstin ?: "Unregistered (B2C)"}", fontSize = 11.sp, color = AppColors.textSecondary)
-                                        }
-
-                                        Column(
-                                            horizontalAlignment = Alignment.End,
-                                            modifier = Modifier.weight(0.8f)
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(CircleShape)
+                                                .background(AppColors.screenBg),
+                                            contentAlignment = Alignment.Center
                                         ) {
-                                            IconButton(
-                                                onClick = { editingPartyId = party.id }
-                                            ) {
-                                                Icon(Icons.Default.Edit, contentDescription = "Edit Party", tint = AppColors.primary)
-                                            }
-                                            val displayBal = Utils.formatIndianCurrency(Math.abs(currentBal))
-                                            val balLabel = if (currentBal >= 0) "DR (Receivable)" else "CR (Payable)"
-                                            val balColor = if (currentBal >= 0) AppColors.debit else AppColors.credit
-
                                             Text(
-                                                text = displayBal,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp,
-                                                color = balColor
+                                                text = party.name.first().uppercase(),
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = AppColors.textPrimary
                                             )
+                                        }
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = balLabel,
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
+                                                text = party.name,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = AppColors.textPrimary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = party.type.lowercase().replaceFirstChar { it.uppercase() },
+                                                fontSize = 14.sp,
                                                 color = AppColors.textSecondary
                                             )
+                                        }
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            val settled = Math.abs(currentBal) < 0.005
+                                            val displayBal = Utils.formatIndianCurrency(Math.abs(currentBal))
+                                            val balLabel = if (currentBal >= 0) "Dr" else "Cr"
+                                            Text(
+                                                text = if (settled) "Settled" else "$displayBal $balLabel",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = AppColors.textPrimary
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = { editingPartyId = party.id },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(Icons.Default.Edit, contentDescription = "Edit Party", tint = AppColors.textTertiary)
                                         }
                                     }
                                 }

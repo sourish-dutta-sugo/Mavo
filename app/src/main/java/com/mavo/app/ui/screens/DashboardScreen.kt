@@ -31,6 +31,12 @@ import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.NorthEast
+import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.outlined.SouthWest
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -82,6 +88,11 @@ import com.mavo.app.data.Voucher
 import com.mavo.app.ui.AppViewModel
 import com.mavo.app.ui.DashboardViewModel
 import com.mavo.app.ui.animation.m3SpringPress
+import com.mavo.app.ui.components.ChoiceChipRow
+import com.mavo.app.ui.components.CircleIconButton
+import com.mavo.app.ui.components.ScreenBorder
+import com.mavo.app.ui.components.SearchField
+import com.mavo.app.ui.components.ZbCard
 import com.mavo.app.ui.animation.premiumClickable
 import com.mavo.app.ui.theme.AppColors
 import kotlinx.coroutines.delay
@@ -157,27 +168,12 @@ fun DashboardScreen(
     var selectedAnalyticsCard by remember { mutableStateOf<KpiDetails?>(null) }
     var analyticsFilterByCard by remember { mutableStateOf(mapOf<String, AnalyticsFilter>()) }
     var analyticsChartTypeByCard by remember { mutableStateOf(mapOf<String, ChartType>()) }
-    var showTransactionFilterMenu by remember { mutableStateOf(false) }
-    var showTransactionSortMenu by remember { mutableStateOf(false) }
-    var searchFocused by remember { mutableStateOf(false) }
 
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val isTablet = configuration.screenWidthDp >= 600
-    val coroutineScope = rememberCoroutineScope()
-
-    val searchScrollFraction by remember {
-        derivedStateOf {
-            val scrollPx = scrollState.value.toFloat()
-            (scrollPx / (scrollState.maxValue.coerceAtLeast(1)).toFloat()).coerceIn(0f, 1f)
-        }
-    }
-    val isSearchContracted by remember { derivedStateOf { searchScrollFraction > 0.05f } }
 
     val calendar = Calendar.getInstance()
     calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -338,175 +334,139 @@ fun DashboardScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppColors.screenBg)
                 .verticalScroll(scrollState)
-                .padding(
-                    start = if (isTablet) 24.dp else 16.dp,
-                    end = if (isTablet) 24.dp else 16.dp,
-                    top = 16.dp,
-                    bottom = 80.dp
-                ),
-            verticalArrangement = Arrangement.spacedBy(if (isTablet) 16.dp else 12.dp)
         ) {
 
-            // ========== TEAL HEADER SECTION ==========
-            Box(
+            // ========== HEADER ==========
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-.background(AppColors.screenBg)
-                    .padding(
-                        start = if (isTablet) 8.dp else 4.dp,
-                        end = if (isTablet) 8.dp else 4.dp,
-                        top = 8.dp,
-                        bottom = 12.dp
-                    )
+                    .background(AppColors.cardBg)
+                    .padding(horizontal = if (isTablet) 24.dp else 16.dp)
+                    .padding(top = 4.dp, bottom = 16.dp)
             ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(RoundedCornerShape(15.dp))
+                            .background(AppColors.textPrimary),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Mavo",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-color = AppColors.primary,
-                            letterSpacing = 2.sp
+                        Icon(
+                            imageVector = Icons.Outlined.MenuBook,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
                         )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .background(AppColors.primaryLight, RoundedCornerShape(10.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Receipt,
-                                    contentDescription = "Notifications",
-tint = AppColors.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .background(AppColors.primaryLight, CircleShape)
-                                    .border(1.dp, AppColors.border, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = headerState.businessName.take(2).uppercase().ifBlank { "ZB" },
-                                    fontSize = 14.sp,
-fontWeight = FontWeight.SemiBold,
-                                    color = AppColors.primary
-                                )
-                            }
-                        }
                     }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    val gstinLabel = profile?.gstin
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { "GSTIN: $it" }
-                        ?: "Non-GST business"
+                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = headerState.businessName.ifBlank { "Mavo" },
-                        fontSize = 24.sp,
+                        text = "Mavo",
+                        fontSize = 21.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = AppColors.textPrimary
                     )
-                    Text(
-                        text = "$gstinLabel\nFinancial Year: FY ${headerState.fyLabel}",
-                        fontSize = 12.sp,
-                        color = AppColors.textSecondary
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Balance card
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                        border = BorderStroke(1.dp, AppColors.border),
-                        elevation = CardDefaults.cardElevation(0.dp)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(AppColors.sectionHeaderBg),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(18.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Cash & Bank balance",
-                                    fontSize = 12.sp,
-color = AppColors.textSecondary,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = Utils.formatIndianCurrency(balanceSnapshot.cashBalance + balanceSnapshot.bankBalance),
-                                    fontSize = 28.sp,
-fontWeight = FontWeight.Bold,
-                                    color = AppColors.textPrimary
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "FY ${headerState.fyLabel} \u00B7 Updated today",
-                                    fontSize = 11.sp,
-                                    color = AppColors.textTertiary
-                                )
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .background(AppColors.primaryLight, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Receipt,
-                                    contentDescription = null,
-tint = AppColors.primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = "Notifications",
+                            tint = AppColors.textPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
-            }
 
-            if (lowStockProducts.isNotEmpty()) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
-                    border = BorderStroke(1.dp, Color(0xFFF59E0B)),
-                    shape = RoundedCornerShape(14.dp)
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = headerState.businessName.ifBlank { "Mavo" },
+                    fontSize = 31.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.textPrimary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = profile?.gstin
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { "GSTIN: $it" }
+                        ?: "Non-GST business",
+                    fontSize = 16.sp,
+                    color = AppColors.textSecondary
+                )
+                Text(
+                    text = "Financial Year: FY ${headerState.fyLabel}",
+                    fontSize = 16.sp,
+                    color = AppColors.textSecondary
+                )
+
+                Spacer(modifier = Modifier.height(22.dp))
+
+                val pendingDues = vouchers.count { it.outstandingAmount > 0 }
+                val alertText = when {
+                    lowStockProducts.isNotEmpty() ->
+                        "${lowStockProducts.size} product(s) at or below stock threshold. Tap to review."
+                    pendingDues > 0 ->
+                        "$pendingDues voucher(s) with payment pending. Tap to review."
+                    else -> "Books up to date for FY ${headerState.fyLabel}."
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(AppColors.screenBg)
+                        .border(1.dp, ScreenBorder, RoundedCornerShape(14.dp))
+                        .then(
+                            when {
+                                lowStockProducts.isNotEmpty() -> Modifier.clickable { onQuickAction("LOW_STOCK") }
+                                pendingDues > 0 -> Modifier.clickable { onQuickAction("VOUCHERS") }
+                                else -> Modifier
+                            }
+                        )
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .background(Color(0xFFF59E0B), CircleShape)
-                        )
-                        Text(
-                            "${lowStockProducts.size} product(s) at or below threshold",
-                            color = Color(0xFF92400E),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(AppColors.textPrimary)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = alertText,
+                        fontSize = 15.sp,
+                        color = AppColors.textPrimary
+                    )
                 }
             }
+
+            HorizontalDivider(color = ScreenBorder)
+
+            // ========== CONTENT ==========
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(AppColors.screenBg)
+                    .padding(horizontal = if (isTablet) 24.dp else 16.dp)
+                    .padding(top = 16.dp, bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                SearchField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = "Search vouchers, items, contacts"
+                )
 
             // ========== KPI CARDS SECTION ==========
             val cardList = buildList {
@@ -551,60 +511,6 @@ tint = AppColors.primary,
             Spacer(modifier = Modifier.height(4.dp))
 
             // ========== BOTTOM SECTION ==========
-            // Universal Search Bar (pill-shaped, liquid glass)
-            AnimatedVisibility(
-                visible = !isSearchContracted,
-                enter = fadeIn(tween(200)),
-                exit = fadeOut(tween(150))
-            ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = {
-                        Text(
-                            "Search vouchers, ledger, or stock...",
-                            fontSize = 13.sp,
-                            color = AppColors.textTertiary
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = AppColors.textTertiary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(20.dp)) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = AppColors.textTertiary)
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester)
-                        .clickable {
-                            focusRequester.requestFocus()
-                            keyboardController?.show()
-                        },
-                    shape = RoundedCornerShape(50.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = AppColors.textPrimary,
-                        unfocusedTextColor = AppColors.textPrimary,
-                        focusedBorderColor = AppColors.border,
-                        unfocusedBorderColor = AppColors.border,
-                        focusedContainerColor = AppColors.cardBg,
-                        unfocusedContainerColor = AppColors.cardBg,
-                        cursorColor = AppColors.primary
-                    ),
-                    singleLine = true,
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
-                    enabled = true
-                )
-            }
-
             // Search Results Overlay
             if (searchQuery.isNotBlank()) {
                 val foundVouchers = searchResults.vouchers
@@ -731,283 +637,104 @@ tint = AppColors.primary,
                     }
                 }
 
-                // Quick Access Grid
-                Card(
+                // ========== QUICK ACTIONS ==========
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, AppColors.border)
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Column(
-                        modifier = Modifier.padding(if (isTablet) 16.dp else 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            "Quick Access",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AppColors.textPrimary,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                        val quickActions = listOf(
-                            Triple("Quick Sale", Icons.Default.Bolt, Color(0xFF1A5C4B)) to "QUICK_SALE",
-                            Triple("Receipt", Icons.Default.Payments, Color(0xFF1A5C4B)) to "RECEIPT",
-                            Triple("Payments", Icons.Default.Add, Color(0xFF1A5C4B)) to "PAYMENT",
-                            Triple("Reports", Icons.AutoMirrored.Filled.Assignment, Color(0xFF1A5C4B)) to "REPORTS",
-                            Triple("Expenses", Icons.AutoMirrored.Filled.TrendingUp, Color(0xFF1A5C4B)) to "EXPENSES"
-                        )
-                        val gridColumns = if (isTablet) 5 else quickActions.size
-                        val chunks = quickActions.chunked(gridColumns)
-                        chunks.forEach { row ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                row.forEach { (triple, action) ->
-                                    val (label, icon, color) = triple
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .premiumClickable { onQuickAction(action) }
-                                            .padding(4.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(if (isTablet) 52.dp else 46.dp)
-                                                .background(color.copy(alpha = 0.1f), RoundedCornerShape(14.dp)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = icon,
-                                                contentDescription = label,
-                                                tint = color,
-                                                modifier = Modifier.size(if (isTablet) 24.dp else 20.dp)
-                                            )
-                                        }
-                                        Text(
-                                            text = label,
-                                            fontSize = if (isTablet) 12.sp else 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = AppColors.textPrimary
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    HomeQuickAction("Sale", Icons.AutoMirrored.Outlined.ReceiptLong) { onQuickAction("SALE") }
+                    HomeQuickAction("Purchase", Icons.Outlined.ShoppingCart) { onQuickAction("PURCHASE") }
+                    HomeQuickAction("Receipt", Icons.Outlined.SouthWest) { onQuickAction("RECEIPT") }
+                    HomeQuickAction("Payment", Icons.Outlined.NorthEast) { onQuickAction("PAYMENT") }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    HomeQuickAction("Quick Sale", Icons.Default.Bolt) { onQuickAction("QUICK_SALE") }
+                    HomeQuickAction("Reports", Icons.AutoMirrored.Filled.Assignment) { onQuickAction("REPORTS") }
+                    HomeQuickAction("Expenses", Icons.AutoMirrored.Filled.TrendingUp) { onQuickAction("EXPENSES") }
                 }
 
-                // Recent Transactions
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    border = BorderStroke(1.dp, AppColors.border),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                // ========== RECENT TRANSACTIONS ==========
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
-                        modifier = Modifier.padding(if (isTablet) 16.dp else 14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Text(
+                        text = "Recent Transactions",
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppColors.textPrimary
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = "See all",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = AppColors.textSecondary,
+                        modifier = Modifier.clickable { onQuickAction("VOUCHERS") }
+                    )
+                }
+
+                if (recentTransactions.isEmpty()) {
+                    ZbCard {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text("Recent Transactions", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Box {
-                                    OutlinedButton(
-                                        onClick = { showTransactionFilterMenu = true },
-                                        shape = RoundedCornerShape(8.dp),
-                                        modifier = Modifier.height(32.dp),
-                                        contentPadding = PaddingValues(horizontal = 8.dp)
-                                    ) {
-                                        Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(14.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Filter", fontSize = 11.sp)
-                                    }
-                                    DropdownMenu(expanded = showTransactionFilterMenu, onDismissRequest = { showTransactionFilterMenu = false }) {
-                                        val filterOptions = if (showGstCard) listOf("All Transactions", "Sales", "Purchase", "Receipt", "Payment", "Income", "Expense", "Receivable", "Payable", "Due", "Cancelled", "Draft", "GST Transactions") else listOf("All Transactions", "Sales", "Purchase", "Receipt", "Payment", "Income", "Expense", "Receivable", "Payable", "Due", "Cancelled", "Draft")
-                                        filterOptions.forEach { option ->
-                                            DropdownMenuItem(text = { Text(option, fontSize = 12.sp) }, onClick = { activeTransactionFilter = option; showTransactionFilterMenu = false })
-                                        }
-                                    }
-                                }
-                                Box {
-                                    OutlinedButton(
-                                        onClick = { showTransactionSortMenu = true },
-                                        shape = RoundedCornerShape(8.dp),
-                                        modifier = Modifier.height(32.dp),
-                                        contentPadding = PaddingValues(horizontal = 8.dp)
-                                    ) {
-                                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null, modifier = Modifier.size(14.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Sort", fontSize = 11.sp)
-                                    }
-                                    DropdownMenu(expanded = showTransactionSortMenu, onDismissRequest = { showTransactionSortMenu = false }) {
-                                        listOf("Newest First", "Oldest First", "Amount (High -> Low)", "Amount (Low -> High)", "Voucher Number (Ascending)", "Voucher Number (Descending)", "Party Name (A -> Z)", "Party Name (Z -> A)").forEach { option ->
-                                            DropdownMenuItem(text = { Text(option, fontSize = 12.sp) }, onClick = { activeTransactionSort = option; showTransactionSortMenu = false })
-                                        }
-                                    }
-                                }
-                            }
+                            Text(
+                                text = "No transactions yet.",
+                                fontSize = 14.sp,
+                                color = AppColors.textTertiary
+                            )
                         }
-
-                        Text(
-                            "${recentTransactions.size} recent transaction${if (recentTransactions.size != 1) "s" else ""}",
-                            fontSize = 12.sp,
-                            color = AppColors.textTertiary
-                        )
-
-                        if (recentTransactions.isEmpty()) {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                                contentAlignment = Alignment.Center
+                    }
+                } else {
+                    ZbCard(contentPadding = 0) {
+                        recentTransactions.forEachIndexed { index, voucher ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = voucher.partyId ?: "Cash",
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = AppColors.textPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = "${dashboardTypeLabel(voucher.type)} · " +
+                                            "${voucher.voucherNo.ifBlank { "\u2014" }} · " +
+                                            Utils.formatDate(voucher.date),
+                                        fontSize = 14.sp,
+                                        color = AppColors.textSecondary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    "No matching transactions yet.",
-                                    fontSize = 12.sp,
-                                    color = AppColors.textTertiary
+                                    text = "${dashboardAmountSign(voucher.type)}${Utils.formatIndianCurrency(voucher.netAmount)}",
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.textPrimary
                                 )
                             }
-                        } else {
-                            recentTransactions.forEachIndexed { index, voucher ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 6.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        modifier = Modifier.weight(1f),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(38.dp)
-                                                .background(
-                                                    when (voucher.type) {
-                                                        "SALE" -> Color(0xFFE8F8F0)
-                                                        "PURCHASE" -> Color(0xFFFEF0F0)
-                                                        "RECEIPT" -> Color(0xFFFFF7E6)
-                                                        "PAYMENT" -> Color(0xFFFFF7E6)
-                                                        else -> Color(0xFFEEF2FF)
-                                                    },
-                                                    RoundedCornerShape(10.dp)
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = when (voucher.type) {
-                                                    "SALE" -> Icons.Default.ArrowUpward
-                                                    "PURCHASE" -> Icons.Default.ArrowDownward
-                                                    "RECEIPT" -> Icons.Default.Payments
-                                                    "PAYMENT" -> Icons.Default.Add
-                                                    else -> Icons.Default.Receipt
-                                                },
-                                                contentDescription = voucher.type,
-                                                tint = when (voucher.type) {
-                                                    "SALE" -> Color(0xFF22A06B)
-                                                    "PURCHASE" -> Color(0xFFE24B4A)
-                                                    "RECEIPT" -> Color(0xFFD97706)
-                                                    "PAYMENT" -> Color(0xFFD97706)
-                                                    else -> Color(0xFF6366F1)
-                                                },
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                voucher.type,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = AppColors.textTertiary
-                                            )
-                                            Text(
-                                                voucher.voucherNo.ifBlank { voucher.type },
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = AppColors.textPrimary
-                                            )
-                                            Text(
-                                                "${voucher.partyId ?: "Cash"} . ${Utils.formatDate(voucher.date)}",
-                                                fontSize = 10.sp,
-                                                color = AppColors.textTertiary
-                                            )
-                                        }
-                                    }
-                                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Text(
-                                            Utils.formatIndianCurrency(voucher.netAmount),
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (voucher.type in listOf("SALE", "RECEIPT")) Color(0xFF22A06B) else Color(0xFFE24B4A)
-                                        )
-                                        Text(
-                                            deriveTransactionStatus(voucher),
-                                            fontSize = 10.sp,
-                                            color = when (deriveTransactionStatus(voucher)) {
-                                                "Paid" -> AppColors.credit
-                                                "Due" -> AppColors.debit
-                                                "Partially Paid" -> AppColors.warning
-                                                else -> AppColors.textTertiary
-                                            }
-                                        )
-                                    }
-                                }
-                                if (index < recentTransactions.lastIndex) {
-                                    HorizontalDivider(color = AppColors.divider, thickness = 0.5.dp)
-                                }
-                            }
-                        }
-
-                        if (recentTransactions.isNotEmpty()) {
-                            TextButton(
-                                onClick = { onQuickAction("VOUCHERS") },
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
-                            ) {
-                                Text("View All Transactions", color = AppColors.primary, fontWeight = FontWeight.SemiBold)
+                            if (index < recentTransactions.lastIndex) {
+                                HorizontalDivider(color = ScreenBorder, thickness = 1.dp)
                             }
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
-        // Floating Search FAB (when contracted)
-        AnimatedVisibility(
-            visible = isSearchContracted && searchQuery.isBlank(),
-            enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 },
-            exit = fadeOut(tween(150)) + slideOutVertically(tween(150)) { it / 2 },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 100.dp)
-                .zIndex(10f)
-        ) {
-            FloatingActionButton(
-                onClick = {
-                    coroutineScope.launch {
-                        scrollState.animateScrollTo(0)
-                    }
-                    searchFocused = true
-                    focusRequester.requestFocus()
-                    keyboardController?.show()
-                },
-                containerColor = AppColors.primary,
-                contentColor = AppColors.textOnPrimary,
-                shape = CircleShape,
-                elevation = FloatingActionButtonDefaults.elevation(6.dp)
-            ) {
-                Icon(Icons.Default.Search, contentDescription = "Search", modifier = Modifier.size(22.dp))
-            }
         }
 
         // KPI Analytics Popup (centered modal overlay)
@@ -1053,6 +780,52 @@ tint = AppColors.primary,
     }
 }
 
+private fun dashboardTypeLabel(type: String): String = when (type) {
+    "SALE" -> "Sale"
+    "PURCHASE" -> "Purchase"
+    "RECEIPT" -> "Receipt"
+    "PAYMENT" -> "Payment"
+    "JOURNAL" -> "Journal"
+    "INCOME" -> "Income"
+    "EXPENSE" -> "Expense"
+    else -> type.lowercase().replaceFirstChar { it.uppercase() }
+}
+
+private fun dashboardAmountSign(type: String): String = when (type) {
+    "SALE", "RECEIPT", "INCOME" -> "+ "
+    "PURCHASE", "PAYMENT", "EXPENSE" -> "\u2212 "
+    else -> ""
+}
+
+@Composable
+private fun RowScope.HomeQuickAction(
+    label: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .weight(1f)
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = AppColors.textPrimary,
+            modifier = Modifier.size(26.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = AppColors.textPrimary
+        )
+    }
+}
+
 // =================== KPI ANIMATION MODES ===================
 
 @Composable
@@ -1062,64 +835,21 @@ private fun KpiStandardHorizontal(
     onCardClick: (KpiDetails) -> Unit
 ) {
     val listState = rememberLazyListState()
-    val dotAlpha = remember { Animatable(1f) }
+    val cardWidthDp = if (isTablet) 300.dp else 170.dp
 
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress) {
-            delay(1500)
-            dotAlpha.animateTo(0f, tween(400))
-        } else {
-            dotAlpha.snapTo(1f)
-        }
-    }
-
-    val currentIndex by remember {
-        derivedStateOf {
-            val info = listState.layoutInfo
-            val visible = info.visibleItemsInfo
-            if (visible.isEmpty()) 0
-            else {
-                val center = (info.viewportStartOffset + info.viewportEndOffset) / 2
-                visible.minByOrNull { kotlin.math.abs(it.offset + it.size / 2 - center) }?.index ?: 0
-            }
-        }
-    }
-
-    val cardWidthDp = if (isTablet) 320.dp else 260.dp
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        LazyRow(
-            state = listState,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = if (isTablet) 40.dp else 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            itemsIndexed(cards) { _, card ->
-                KpiPremiumCard(
-                    details = card,
-                    modifier = Modifier.width(cardWidthDp),
-                    isTablet = isTablet,
-                    onClick = { onCardClick(card) }
-                )
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .graphicsLayer { alpha = dotAlpha.value },
-            horizontalArrangement = Arrangement.Center
-        ) {
-            repeat(cards.size) { index ->
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(if (index == currentIndex) 8.dp else 5.dp)
-                        .background(
-                            if (index == currentIndex) AppColors.primary else AppColors.border,
-                            CircleShape
-                        )
-                )
-            }
+    LazyRow(
+        state = listState,
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 0.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        itemsIndexed(cards) { _, card ->
+            KpiPremiumCard(
+                details = card,
+                modifier = Modifier.width(cardWidthDp),
+                isTablet = isTablet,
+                onClick = { onCardClick(card) }
+            )
         }
     }
 }
@@ -1309,88 +1039,38 @@ private fun KpiPremiumCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(if (isTablet) 140.dp else 120.dp)
-            .shadow(
-                elevation = 2.dp,
-                shape = RoundedCornerShape(16.dp),
-                clip = false
-            )
+            .height(if (isTablet) 120.dp else 100.dp)
             .premiumClickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-        border = BorderStroke(1.dp, details.highlight.copy(alpha = 0.12f))
+        border = BorderStroke(1.dp, ScreenBorder),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                details.highlight.copy(alpha = 0.04f),
-                                Color.Transparent
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                        )
-                    )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(if (isTablet) 18.dp else 16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = details.title,
+                fontSize = if (isTablet) 15.sp else 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = AppColors.textSecondary
             )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(if (isTablet) 20.dp else 16.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = details.title.uppercase(),
-                    fontSize = if (isTablet) 12.sp else 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.textTertiary,
-                    letterSpacing = 0.8.sp
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = details.amount,
-                        fontSize = if (isTablet) 26.sp else 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AppColors.textPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (details.subt.isNotBlank()) {
-                        Text(
-                            text = details.subt,
-                            fontSize = if (isTablet) 12.sp else 11.sp,
-                            color = AppColors.textTertiary
-                        )
-                    }
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .size(6.dp)
-                    .background(details.highlight, CircleShape)
+            Text(
+                text = details.amount,
+                fontSize = if (isTablet) 26.sp else 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
 }
 
 // =================== KPI ANALYTICS POPUP ===================
-
-private fun kpiGenericTitle(title: String): String = when {
-    title.contains("Sales", ignoreCase = true) -> "Sales"
-    title.contains("Purchases", ignoreCase = true) -> "Purchases"
-    title.contains("Net Profit", ignoreCase = true) -> "Net Profit"
-    title.contains("Receivables", ignoreCase = true) -> "Receivables"
-    title.contains("Payables", ignoreCase = true) -> "Payables"
-    title.contains("Cash", ignoreCase = true) -> "Cash Flow"
-    title.contains("Bank", ignoreCase = true) -> "Bank Flow"
-    title.contains("Inventory", ignoreCase = true) -> "Inventory"
-    title.contains("GST", ignoreCase = true) -> "GST"
-    else -> title
-}
 
 @Composable
 private fun KpiAnalyticsPopup(
@@ -1414,19 +1094,17 @@ private fun KpiAnalyticsPopup(
     val highestValue = analyticsSeries.maxOrNull() ?: 0.0
     val lowestValue = analyticsSeries.minOrNull() ?: 0.0
     val averageValue = if (analyticsSeries.isNotEmpty()) analyticsSeries.average() else 0.0
-    val trendSummary = when {
-        currentValue > previousValue -> "Momentum is trending upward"
-        currentValue < previousValue -> "Momentum is easing slightly"
-        else -> "Performance is stable"
-    }
 
-    var showFilterMenu by remember { mutableStateOf(false) }
-    val genericTitle = remember(card.title) { kpiGenericTitle(card.title) }
-
-    val animProgress = remember { Animatable(0f) }
-    LaunchedEffect(Unit) {
-        animProgress.animateTo(1f, animationSpec = tween(600, easing = FastOutSlowInEasing))
-    }
+    // ponytail: mockup 11 is a bottom sheet; custom-date filters bucket like "Month" and had
+    // no real picker behind the old dropdown, so the chip row falls back to Month for them.
+    val periods = listOf(
+        AnalyticsFilter.TODAY to "Today",
+        AnalyticsFilter.THIS_WEEK to "Week",
+        AnalyticsFilter.THIS_MONTH to "Month",
+        AnalyticsFilter.THIS_QUARTER to "Quarter",
+        AnalyticsFilter.THIS_YEAR to "Year"
+    )
+    val periodIndex = periods.indexOfFirst { it.first == analyticsFilter }.let { if (it < 0) 2 else it }
 
     Box(
         modifier = Modifier
@@ -1436,122 +1114,70 @@ private fun KpiAnalyticsPopup(
                 detectTapGestures { onDismiss() }
             }
             .zIndex(100f),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.BottomCenter
     ) {
-        Card(
+        Column(
             modifier = Modifier
-                .fillMaxWidth(if (LocalConfiguration.current.screenWidthDp >= 600) 0.7f else 0.92f)
-                .heightIn(max = LocalConfiguration.current.screenHeightDp.dp * 0.8f)
+                .fillMaxWidth()
+                .heightIn(max = LocalConfiguration.current.screenHeightDp.dp * 0.92f)
+                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .background(AppColors.screenBg)
+                .navigationBarsPadding()
                 .pointerInput(Unit) { detectTapGestures { } }
-                .zIndex(101f),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-            elevation = CardDefaults.cardElevation(16.dp)
+                .zIndex(101f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(genericTitle, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
-                        Text("Business insight", fontSize = 12.sp, color = AppColors.textTertiary)
+                        Text("Metric", fontSize = 13.sp, color = AppColors.textTertiary)
+                        Text(
+                            card.title,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.textPrimary
+                        )
                     }
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = AppColors.textTertiary)
-                    }
+                    CircleIconButton(
+                        icon = Icons.Default.Close,
+                        contentDescription = "Close",
+                        onClick = onDismiss
+                    )
                 }
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.screenBg),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(Utils.formatIndianCurrency(currentValue), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
-                            Box {
-                                IconButton(onClick = { showFilterMenu = true }, modifier = Modifier.size(32.dp)) {
-                                    Icon(Icons.Default.FilterList, contentDescription = "Filter", tint = AppColors.textSecondary, modifier = Modifier.size(18.dp))
-                                }
-                                DropdownMenu(expanded = showFilterMenu, onDismissRequest = { showFilterMenu = false }) {
-                                    AnalyticsFilter.entries.forEach { filter ->
-                                        DropdownMenuItem(
-                                            text = {
-                                                Text(
-                                                    filter.label,
-                                                    fontSize = 12.sp,
-                                                    color = if (analyticsFilter == filter) AppColors.primary else AppColors.textPrimary
-                                                )
-                                            },
-                                            onClick = {
-                                                onFilterChange(filter)
-                                                showFilterMenu = false
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        if (growth >= 0) AppColors.successBg else AppColors.errorBg,
-                                        RoundedCornerShape(999.dp)
-                                    )
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    "${if (growth >= 0) "+" else ""}${String.format(Locale.US, "%.1f", growth)}%",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (growth >= 0) AppColors.success else AppColors.error
-                                )
-                            }
-                            Text("growth", fontSize = 12.sp, color = AppColors.textTertiary)
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(analyticsFilter.label, fontSize = 11.sp, color = AppColors.textTertiary)
-                        }
-                    }
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        Utils.formatIndianCurrency(currentValue),
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = AppColors.textPrimary
+                    )
+                    Text(
+                        "${if (growth >= 0) "+" else ""}${String.format(Locale.US, "%.1f", growth)}% vs ${analyticsFilter.label.lowercase()}",
+                        fontSize = 15.sp,
+                        color = AppColors.textSecondary
+                    )
                 }
+                ChoiceChipRow(
+                    options = periods.map { it.second },
+                    selectedIndex = periodIndex,
+                    onSelect = { onFilterChange(periods[it].first) }
+                )
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.screenBg),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ZbCard(contentPadding = 12) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp)
+                                .height(220.dp)
                                 .clip(RoundedCornerShape(12.dp))
                         ) {
                             Canvas(modifier = Modifier.fillMaxSize()) {
-                                val tileSize = 20f
-                                for (x in 0..size.width.toInt() step tileSize.toInt()) {
-                                    for (y in 0..size.height.toInt() step tileSize.toInt()) {
-                                        val isEven = ((x / tileSize.toInt()) + (y / tileSize.toInt())) % 2 == 0
-                                        drawRect(
-                                            color = if (isEven) Color(0xFFF8F9FA) else Color(0xFFF0F2F5),
-                                            topLeft = Offset(x.toFloat(), y.toFloat()),
-                                            size = Size(tileSize, tileSize)
-                                        )
-                                    }
-                                }
-
                                 if (analyticsSeries.isNotEmpty() && chartType != ChartType.PIE) {
                                     val maxValue = (analyticsSeries.maxOrNull() ?: 1.0).coerceAtLeast(1.0)
                                     val padding = 16f
@@ -1638,13 +1264,18 @@ private fun KpiAnalyticsPopup(
                                 }
                             }
                         }
+                    }
+                }
 
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            AnalyticsStat("Highest", Utils.formatIndianCurrency(highestValue))
-                            AnalyticsStat("Lowest", Utils.formatIndianCurrency(lowestValue))
-                            AnalyticsStat("Average", Utils.formatIndianCurrency(averageValue))
-                        }
-                        Text(trendSummary, fontSize = 12.sp, color = AppColors.textTertiary)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ZbCard(modifier = Modifier.weight(1f), contentPadding = 12) {
+                        AnalyticsStat("Highest", Utils.formatIndianCurrency(highestValue))
+                    }
+                    ZbCard(modifier = Modifier.weight(1f), contentPadding = 12) {
+                        AnalyticsStat("Lowest", Utils.formatIndianCurrency(lowestValue))
+                    }
+                    ZbCard(modifier = Modifier.weight(1f), contentPadding = 12) {
+                        AnalyticsStat("Average", Utils.formatIndianCurrency(averageValue))
                     }
                 }
 
@@ -1675,7 +1306,6 @@ private fun KpiAnalyticsPopup(
                         )
                     }
                 }
-            }
         }
     }
 }
@@ -1805,12 +1435,9 @@ private fun computeAnalyticsSeries(
 
 @Composable
 fun AnalyticsStat(label: String, value: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(label, fontSize = 10.sp, color = AppColors.textTertiary)
-        Text(value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, fontSize = 12.sp, color = AppColors.textSecondary)
+        Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
     }
 }
 

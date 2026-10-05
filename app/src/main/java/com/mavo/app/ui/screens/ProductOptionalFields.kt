@@ -37,7 +37,8 @@ fun ProductOptionalFields(
     expiryDate: String = "",
     onExpiryDateChange: (String) -> Unit = {},
     serialEnabled: Boolean = false,
-    onSerialEnabledChange: (Boolean) -> Unit = {}
+    onSerialEnabledChange: (Boolean) -> Unit = {},
+    showHsn: Boolean = true
 ) {
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedTextColor = AppColors.textPrimary,
@@ -46,28 +47,30 @@ fun ProductOptionalFields(
         unfocusedBorderColor = Surface.inputBorder
     )
 
-    Text("HSN/SAC Code (optional)", color = AppColors.labelText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-    OutlinedTextField(
-        value = hsnCode,
-        onValueChange = { onHsnChange(it.filter { c -> c.isDigit() }.take(8)) },
-        placeholder = { Text("4 to 8 digit HSN code", color = AppColors.inputPlaceholder) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        supportingText = {
-            Text("Optional. Required for GST invoices above Rs 5 Lakhs", fontSize = 11.sp, color = AppColors.textTertiary)
-        },
-        modifier = Modifier.fillMaxWidth(),
-        colors = fieldColors
-    )
-    Spacer(Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End
-    ) {
-        OutlinedButton(onClick = onFindHsn) {
-            Text("Find HSN")
+    if (showHsn) {
+        Text("HSN/SAC Code (optional)", color = AppColors.labelText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        OutlinedTextField(
+            value = hsnCode,
+            onValueChange = { onHsnChange(it.filter { c -> c.isDigit() }.take(8)) },
+            placeholder = { Text("4 to 8 digit HSN code", color = AppColors.inputPlaceholder) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            supportingText = {
+                Text("Optional. Required for GST invoices above Rs 5 Lakhs", fontSize = 11.sp, color = AppColors.textTertiary)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            OutlinedButton(onClick = onFindHsn) {
+                Text("Find HSN")
+            }
         }
+        Spacer(Modifier.height(12.dp))
     }
-    Spacer(Modifier.height(12.dp))
 
     Row(
         modifier = Modifier.fillMaxWidth(),

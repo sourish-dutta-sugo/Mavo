@@ -55,7 +55,7 @@ app/src/main/java/com/mavo/app/
 ├── ui/
 │   ├── AppViewModel.kt       # Main ViewModel (DB init, all state)
 │   ├── DashboardViewModel.kt # Dashboard-specific ViewModel
-│   ├── screens/              # 24 Compose screen files incl. FirstRunFlow (see ../design/SCREENS.md)
+│   ├── screens/              # 26 Compose screen files incl. FirstRunFlow (see ../design/SCREENS.md)
 │   ├── components/           # Shared composables (LoadingIndicator)
 │   ├── theme/                # Design system (see ../design/DESIGN_SYSTEM.md)
 │   ├── animation/            # Animation utilities

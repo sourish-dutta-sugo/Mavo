@@ -75,7 +75,7 @@ object AppPreferences {
     }
 
     suspend fun getKpiAnimationMode(context: Context): String =
-        context.dataStore.data.first()[kpiAnimationModeKey] ?: "WALLET_STACK"
+        context.dataStore.data.first()[kpiAnimationModeKey] ?: "STANDARD_HORIZONTAL"
 
     suspend fun setKpiAnimationMode(context: Context, mode: String) {
         context.dataStore.edit { prefs ->

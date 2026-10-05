@@ -29,7 +29,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,14 +36,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.R
 import com.mavo.app.data.Utils
+import com.mavo.app.ui.components.CircleIconButton
+import com.mavo.app.ui.components.StepProgress
+import com.mavo.app.ui.components.WizardTitle
+import com.mavo.app.ui.components.ZbField
 import com.mavo.app.ui.theme.AppColors
-import com.mavo.app.ui.theme.mavoInputColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -119,35 +120,23 @@ fun RetailTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     isError: Boolean = false,
-    supportingText: @Composable (() -> Unit)? = null
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = {
-            Text(
-                text = label,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = AppColors.labelText
-            )
-        },
-        placeholder = placeholder?.let {
-            { Text(text = it, fontSize = 14.sp, color = AppColors.inputPlaceholder) }
-        },
-        modifier = modifier.fillMaxWidth(),
-        readOnly = readOnly,
-        singleLine = singleLine,
-        textStyle = TextStyle(color = AppColors.inputText, fontSize = 14.sp),
-        trailingIcon = trailingIcon,
-        keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        shape = RoundedCornerShape(12.dp),
-        isError = isError,
-        supportingText = supportingText,
-        colors = mavoInputColors()
-    )
-}
+    supportingText: @Composable (() -> Unit)? = null,
+    fieldModifier: Modifier = Modifier
+) = ZbField(
+    value = value,
+    onValueChange = onValueChange,
+    label = label,
+    modifier = modifier,
+    placeholder = placeholder,
+    readOnly = readOnly,
+    singleLine = singleLine,
+    trailingIcon = trailingIcon,
+    keyboardOptions = keyboardOptions,
+    keyboardActions = keyboardActions,
+    isError = isError,
+    supportingText = supportingText,
+    fieldModifier = fieldModifier
+)
 
 /**
  * Shared chrome for the first-run wizard: header, scrollable body, pinned footer button.
@@ -162,6 +151,7 @@ fun WizardScaffold(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     stepLabel: String? = null,
+    stepProgress: Int? = null,
     onBack: (() -> Unit)? = null,
     nextEnabled: Boolean = true,
     hint: String? = null,
@@ -175,45 +165,30 @@ fun WizardScaffold(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+        if (onBack != null || stepLabel != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (onBack != null) {
+                    CircleIconButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = AppColors.textPrimary
+                        onClick = onBack
+                    )
+                } else {
+                    Spacer(modifier = Modifier.width(44.dp))
+                }
+                if (stepLabel != null) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = stepLabel,
+                        fontSize = 15.sp,
+                        color = AppColors.textSecondary
                     )
                 }
-            } else {
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-            Image(
-                painter = painterResource(R.drawable.logo_transparent),
-                contentDescription = "Mavo",
-                modifier = Modifier.size(30.dp),
-                contentScale = ContentScale.Fit
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Mavo",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = AppColors.textPrimary
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            if (stepLabel != null) {
-                Text(
-                    text = stepLabel,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = AppColors.textTertiary
-                )
-                Spacer(modifier = Modifier.width(12.dp))
             }
         }
 
@@ -226,20 +201,11 @@ fun WizardScaffold(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = title,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = AppColors.textPrimary
-            )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    fontSize = 14.sp,
-                    color = AppColors.textSecondary,
-                    lineHeight = 20.sp
-                )
+            if (stepProgress != null) {
+                StepProgress(step = stepProgress)
+                Spacer(modifier = Modifier.height(24.dp))
             }
+            WizardTitle(text = title, subtitle = subtitle)
             content()
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -265,8 +231,8 @@ fun WizardScaffold(
                 enabled = nextEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary)
             ) {
                 Text(

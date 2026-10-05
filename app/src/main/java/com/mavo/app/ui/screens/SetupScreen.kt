@@ -170,10 +170,11 @@ fun SetupBasicScreen(
     val isTablet = LocalConfiguration.current.screenWidthDp >= 600
     val missing = missingFieldsFor(SetupStep.Basic, draft.businessName, draft.address, draft.pin)
 
-    WizardScaffold(
-        title = "Tell us about your business",
-        subtitle = "These details appear on your invoices, reports and receipts.",
-        stepLabel = "Step 1 of 3",
+WizardScaffold(
+title = "Basic details",
+subtitle = "Business Profile Setup",
+stepLabel = "Step 1 of 3",
+stepProgress = 1,
         onBack = onBack,
         onNext = onNext,
         nextEnabled = missing.isEmpty(),
@@ -272,10 +273,11 @@ fun SetupLocationScreen(
         }
     }
 
-    WizardScaffold(
-        title = "Where are you?",
-        subtitle = "Your location decides the GST state code printed on invoices.",
-        stepLabel = "Step 2 of 3",
+WizardScaffold(
+title = "Where you are",
+subtitle = "Business Profile Setup",
+stepLabel = "Step 2 of 3",
+stepProgress = 2,
         onBack = onBack,
         onNext = onNext,
         nextEnabled = missing.isEmpty(),
@@ -388,10 +390,11 @@ fun SetupTaxBankScreen(
     var ifscMessage by remember { mutableStateOf("") }
     var askForSampleData by remember { mutableStateOf(false) }
 
-    WizardScaffold(
-        title = "Tax & bank details",
-        subtitle = "Optional — you can complete these later from Settings.",
-        stepLabel = "Step 3 of 3",
+WizardScaffold(
+title = "Tax & bank",
+subtitle = "Business Profile Setup",
+stepLabel = "Step 3 of 3",
+stepProgress = 3,
         onBack = onBack,
         onNext = { askForSampleData = true },
         nextLabel = "Finish Setup",

@@ -34,22 +34,22 @@ object Semantic {
 }
 
 object Surface {
-    val background = Color(0xFFF8F7F4)
+    val background = Color(0xFFF7F7F7)
     val card = Color(0xFFFFFFFF)
-    val cardBorder = Color(0xFFE0E4EA)
+    val cardBorder = Color(0xFFECECEC)
     val input = Color(0xFFFFFFFF)
-    val inputBorder = Color(0xFFE0E4EA)
-    val inputBorderFocus = Color(0xFF1A5C4B)
-    val divider = Color(0xFFE0E4EA)
-    val border = Color(0xFFE0E4EA)
-    val borderLight = Color(0xFFF3F2EF)
-    val shimmer = Color(0xFFE8F5F1)
+    val inputBorder = Color(0xFFE5E5E5)
+    val inputBorderFocus = Color(0xFF0A0A0A)
+    val divider = Color(0xFFF0F0F0)
+    val border = Color(0xFFE6E6E6)
+    val borderLight = Color(0xFFF2F2F2)
+    val shimmer = Color(0xFFEFEFEF)
 
-    val sectionHeaderBg = Color(0xFFE8F5F1)
-    val sectionHeaderText = Color(0xFF1A5C4B)
-    val tableHeaderText = Color(0xFF1A5C4B)
+    val sectionHeaderBg = Color(0xFFF2F2F2)
+    val sectionHeaderText = Color(0xFF0F172A)
+    val tableHeaderText = Color(0xFF64748B)
     val tableRowEven = Color(0xFFFFFFFF)
-    val tableRowOdd = Color(0xFFF8F7F4)
+    val tableRowOdd = Color(0xFFFAFAFA)
 }
 
 object TextColors {
@@ -82,6 +82,7 @@ object Badge {
 }
 
 object ThemeNames {
+    const val ZERO = "ZERO"
     const val SAFFRON = "SAFFRON"
     const val SLATE = "SLATE"
     const val INK = "INK"

@@ -22,13 +22,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.R
 import com.mavo.app.ui.animation.PremiumFadeSpec
 import com.mavo.app.ui.animation.PremiumSpringSpec
+import com.mavo.app.ui.theme.AppColors
 import kotlinx.coroutines.delay
 
 @Composable
@@ -56,7 +56,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1A5C4B)),
+            .background(AppColors.screenBg),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -69,30 +69,24 @@ fun SplashScreen(
         ) {
             Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color(0x1FFFFFFF)),
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(AppColors.primary),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(R.drawable.logo_transparent),
                     contentDescription = null,
-                    modifier = Modifier.size(44.dp)
+                    modifier = Modifier.size(54.dp)
                 )
             }
             Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = "Mavo",
-                fontSize = 28.sp,
+                fontSize = 30.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
+                color = AppColors.textPrimary,
                 letterSpacing = (-0.5).sp
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "Smart accounting for Indian retail",
-                fontSize = 13.sp,
-                color = Color(0xFF9CA3AF)
             )
         }
     }

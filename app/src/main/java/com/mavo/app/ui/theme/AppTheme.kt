@@ -34,6 +34,21 @@ data class AppTheme(
     val isDark: Boolean = false
 ) {
     companion object {
+        // ZeroBook monochrome: black CTAs, neutral grays, navy-black text.
+        val ZERO = AppTheme(
+            name = ThemeNames.ZERO,
+            backgroundPrimary = Color(0xFFF7F7F7),
+            backgroundSecondary = Color(0xFFFFFFFF),
+            backgroundTertiary = Color(0xFFFFFFFF),
+            accentPrimary = Color(0xFF0A0A0A),
+            accentLight = Color(0xFFEDEDED),
+            textPrimary = Color(0xFF0F172A),
+            textSecondary = Color(0xFF64748B),
+            textTertiary = Color(0xFF94A3B8),
+            statusBarColor = Color(0xFFF7F7F7),
+            statusBarDarkIcons = true
+        )
+
         val SAFFRON = AppTheme(
             name = ThemeNames.SAFFRON,
             backgroundPrimary = Color(0xFFF8F7F4),
@@ -111,7 +126,8 @@ data class AppTheme(
             ThemeNames.INK, "PURPLE", "DARK" -> INK
             ThemeNames.NIGHT -> NIGHT
             ThemeNames.SAFFRON, "BEACH", "TEAL" -> SAFFRON
-            else -> SAFFRON
+            ThemeNames.ZERO -> ZERO
+            else -> ZERO
         }
     }
 }
@@ -122,8 +138,8 @@ private object ThemeStorage {
 
     fun load(context: Context): String {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_SELECTED_THEME, AppTheme.SAFFRON.name)
-            ?: AppTheme.SAFFRON.name
+            .getString(KEY_SELECTED_THEME, AppTheme.ZERO.name)
+            ?: AppTheme.ZERO.name
     }
 
     fun save(context: Context, name: String) {
@@ -135,7 +151,7 @@ private object ThemeStorage {
 }
 
 object ThemeRuntime {
-    val currentTheme = mutableStateOf(AppTheme.SAFFRON)
+    val currentTheme = mutableStateOf(AppTheme.ZERO)
 
     fun apply(theme: AppTheme) {
         currentTheme.value = theme
@@ -143,11 +159,11 @@ object ThemeRuntime {
 }
 
 val LocalAppTheme = staticCompositionLocalOf {
-    AppTheme.SAFFRON
+    AppTheme.ZERO
 }
 
 class ThemeViewModel(application: Application) : AndroidViewModel(application) {
-    private val _currentTheme = MutableStateFlow(AppTheme.SAFFRON)
+    private val _currentTheme = MutableStateFlow(AppTheme.ZERO)
     val currentTheme: StateFlow<AppTheme> = _currentTheme.asStateFlow()
 
     init {
@@ -216,14 +232,14 @@ fun themedInputColors(): TextFieldColors {
         focusedLabelColor = theme.accentPrimary,
         unfocusedLabelColor = theme.textSecondary,
         cursorColor = theme.accentPrimary,
-        focusedContainerColor = theme.backgroundTertiary,
-        unfocusedContainerColor = theme.backgroundTertiary,
+        focusedContainerColor = theme.backgroundSecondary,
+        unfocusedContainerColor = theme.backgroundSecondary,
         errorTextColor = theme.textPrimary,
         errorBorderColor = Semantic.error,
-        errorContainerColor = theme.backgroundTertiary,
+        errorContainerColor = theme.backgroundSecondary,
         errorLabelColor = Semantic.error,
         errorPlaceholderColor = theme.textTertiary,
-        disabledContainerColor = theme.backgroundTertiary,
+        disabledContainerColor = theme.backgroundSecondary,
         disabledBorderColor = Surface.inputBorder
     )
 }

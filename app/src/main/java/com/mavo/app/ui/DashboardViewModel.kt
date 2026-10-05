@@ -38,7 +38,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             initialValue = DashboardHeaderState()
         )
 
-    private val _kpiAnimationMode = MutableStateFlow("WALLET_STACK")
+    private val _kpiAnimationMode = MutableStateFlow("STANDARD_HORIZONTAL")
     val kpiAnimationMode: StateFlow<String> = _kpiAnimationMode.asStateFlow()
 
     init {

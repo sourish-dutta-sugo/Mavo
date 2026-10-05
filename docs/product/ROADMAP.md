@@ -76,5 +76,5 @@ Mavo is evolving from a single-device native Android billing app into an omnicha
 
 ## 🐛 Known Issues & Backlog
 
-- **Known Bugs:** Zero active bugs blocking v2.2.3. Shared API and BillingScreen compilation errors are fixed.
+- **Known Bugs:** Zero active bugs blocking v2.2.3. Shared API and BillingScreen compilation errors are fixed. Voucher bill types (Quotation, Challan, Orders, Proforma, GRN, Debit/Credit/Material/Rejection notes) were unsavable — validation demanded line items but no Add Item UI existed for them; fixed 2026-10-05 with the all-types 3-step wizard.
 - **Verification Checklist:** Unit tests (`./gradlew testDebugUnitTest`) pass with 0 warnings.

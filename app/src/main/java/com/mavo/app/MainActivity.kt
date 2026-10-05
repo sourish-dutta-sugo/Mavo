@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -24,26 +25,31 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.People
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -90,6 +96,7 @@ import com.mavo.app.data.AppPreferences
 import com.mavo.app.data.ChangelogData
 import com.mavo.app.data.ChangelogLoader
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.components.ScreenBorder
 import com.mavo.app.ui.DashboardViewModel
 import com.mavo.app.ui.animation.NavBarContent
 import com.mavo.app.ui.animation.clickableScale
@@ -103,6 +110,7 @@ import com.mavo.app.ui.screens.DashboardScreen
 import com.mavo.app.ui.screens.ExpensesScreen
 import com.mavo.app.ui.screens.InvoiceScreen
 import com.mavo.app.ui.screens.LedgerListScreen
+import com.mavo.app.ui.screens.LowStockScreen
 import com.mavo.app.ui.screens.NewVoucherScreen
 import com.mavo.app.ui.screens.PartiesScreen
 import com.mavo.app.ui.screens.PartyDetailScreen
@@ -112,6 +120,7 @@ import com.mavo.app.ui.screens.ReportsScreen
 import com.mavo.app.ui.screens.SettingsScreen
 import com.mavo.app.ui.screens.FirstRunFlow
 import com.mavo.app.ui.screens.SplashScreen
+import com.mavo.app.ui.screens.VoucherDetailScreen
 import com.mavo.app.ui.screens.VouchersScreen
 import com.mavo.app.ui.theme.AppColors
 import com.mavo.app.ui.theme.LocalAppTheme
@@ -130,10 +139,12 @@ private object Routes {
     const val Expenses = "expenses"
     const val CounterSale = "counter_sale"
     const val Products = "products"
+    const val LowStock = "lowstock"
     const val BankCash = "bank_cash"
     const val NewVoucher = "new_voucher?voucherId={voucherId}"
     const val NewVoucherBase = "new_voucher"
     const val Invoice = "invoice/{voucherId}"
+    const val VoucherDetail = "voucher_detail/{voucherId}"
     const val PartyDetail = "party_detail/{partyId}"
 }
 
@@ -145,16 +156,18 @@ private data class TopLevelDestination(
 )
 
 private val topLevelDestinations = listOf(
-    TopLevelDestination(Routes.Dashboard, "Home", Icons.Default.Home),
-    TopLevelDestination(Routes.Vouchers, "Vouchers", Icons.AutoMirrored.Filled.Assignment),
-    TopLevelDestination(Routes.Parties, "Parties", Icons.Default.Group),
-    TopLevelDestination(Routes.Settings, "Settings", Icons.Default.Settings)
+    TopLevelDestination(Routes.Dashboard, "Home", Icons.Outlined.Home),
+    TopLevelDestination(Routes.Vouchers, "Vouchers", Icons.Outlined.Description),
+    TopLevelDestination(Routes.Parties, "Parties", Icons.Outlined.People),
+    TopLevelDestination(Routes.Settings, "Settings", Icons.Outlined.Settings)
 )
 
 private fun newVoucherRoute(voucherId: String? = null): String =
     voucherId?.let { "${Routes.NewVoucherBase}?voucherId=$it" } ?: Routes.NewVoucherBase
 
-private fun invoiceRoute(voucherId: String): String = "invoice/$voucherId"
+    private fun invoiceRoute(voucherId: String): String = "invoice/$voucherId"
+
+    private fun voucherDetailRoute(voucherId: String): String = "voucher_detail/$voucherId"
 
 private fun partyDetailRoute(partyId: String): String = "party_detail/$partyId"
 
@@ -325,22 +338,45 @@ private fun AppContent(
 
             when {
                 !setupStatusResolved -> {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(AppColors.screenBg),
-                        contentAlignment = Alignment.Center
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = AppColors.primary)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = "Preparing Mavo...",
-                                fontSize = 14.sp,
-                                color = AppColors.textPrimary,
-                                fontWeight = FontWeight.Medium
+                        Box(
+                            modifier = Modifier
+                                .size(84.dp)
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(AppColors.primary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(R.drawable.logo_transparent),
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "INITIALIZING",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 3.sp,
+                            color = AppColors.textSecondary
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        // ponytail: no real init progress % (DB open + status checks) — indeterminate bar.
+                        // upgrade path: surface DAO migration progress via Flow.
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .width(200.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp)),
+                            color = AppColors.primary,
+                            trackColor = AppColors.border
+                        )
                     }
                 }
 
@@ -373,95 +409,11 @@ private fun AppContent(
                         containerColor = AppColors.screenBg,
                         bottomBar = {
                             if (isTopLevel) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp)
-                                        .padding(bottom = 8.dp)
-                                ) {
-                                    NavigationBar(
-                                        containerColor = AppColors.bottomBarBg,
-                                        tonalElevation = 0.dp,
-                                        modifier = Modifier
-                                            .height(72.dp)
-                                            .shadow(8.dp, RoundedCornerShape(24.dp))
-                                            .background(AppColors.bottomBarBg, RoundedCornerShape(24.dp)),
-                                    ) {
-                                        val destinationsWithFab = listOf(
-                                            topLevelDestinations[0],
-                                            topLevelDestinations[1],
-                                            topLevelDestinations[2],
-                                            topLevelDestinations[3]
-                                        )
-                                        destinationsWithFab.forEach { destination ->
-                                            val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
-                                            NavigationBarItem(
-                                                selected = selected,
-                                                enabled = true,
-                                                onClick = {
-                                                    if (selected) return@NavigationBarItem
-                                                    navController.navigateToTopLevel(destination.route)
-                                                },
-                                                icon = {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(28.dp)
-                                                            .then(
-                                                                if (selected) Modifier.background(
-                                                                    AppColors.primaryLight,
-                                                                    RoundedCornerShape(10.dp)
-                                                                ) else Modifier
-                                                            ),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = destination.icon,
-                                                            contentDescription = destination.label,
-                                                            modifier = Modifier.size(20.dp),
-                                                            tint = if (selected) AppColors.primary else AppColors.textTertiary
-                                                        )
-                                                    }
-                                                },
-                                                label = {
-                                                    Text(
-                                                        text = destination.label,
-                                                        fontSize = 10.sp,
-                                                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                                                        color = if (selected) AppColors.primary else AppColors.textTertiary
-                                                    )
-                                                },
-                                                alwaysShowLabel = true,
-                                                colors = NavigationBarItemDefaults.colors(
-                                                    selectedIconColor = AppColors.primary,
-                                                    unselectedIconColor = AppColors.textTertiary,
-                                                    selectedTextColor = AppColors.primary,
-                                                    unselectedTextColor = AppColors.textTertiary,
-                                                    indicatorColor = Color.Transparent
-                                                )
-                                            )
-                                        }
-                                    }
-                                    // Center FAB
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.TopCenter)
-                                            .offset(y = (-18).dp)
-                                            .size(56.dp)
-                                            .background(AppColors.primary, CircleShape)
-                                            .shadow(8.dp, CircleShape)
-                                            .clickable {
-                                                navController.navigate(newVoucherRoute())
-                                            },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Add,
-                                            contentDescription = "New Voucher",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                }
+                                ZeroBottomBar(
+                                    currentRoute = currentDestination?.route,
+                                    onNavigate = { navController.navigateToTopLevel(it) },
+                                    onCreate = { navController.navigate(newVoucherRoute()) }
+                                )
                             }
                         }
                     ) { innerPadding ->
@@ -559,6 +511,7 @@ private fun MavoNavHost(
                         "SALE", "PURCHASE" -> navController.navigate(newVoucherRoute())
                         "RECEIPT", "PAYMENT" -> navController.navigate(Routes.BankCash)
                         "REPORTS" -> navController.navigate(Routes.Reports)
+                        "LOW_STOCK" -> navController.navigate(Routes.LowStock)
                         "QUICK_SALE" -> navController.navigate(Routes.CounterSale)
                         "EXPENSES" -> navController.navigate(Routes.Expenses)
                         "PARTY" -> navController.navigateToTopLevel(Routes.Parties)
@@ -573,7 +526,7 @@ private fun MavoNavHost(
                 viewModel = viewModel,
                 isDesktop = false,
                 navigateToNewVoucher = { id -> navController.navigate(newVoucherRoute(id)) },
-                navigateToInvoice = { id -> navController.navigate(invoiceRoute(id)) }
+                navigateToVoucherDetail = { id -> navController.navigate(voucherDetailRoute(id)) }
             )
         }
 
@@ -592,6 +545,7 @@ private fun MavoNavHost(
                 isDesktop = false,
                 navigateToProducts = { navController.navigate(Routes.Products) },
                 navigateToLedgerBooks = { navController.navigate(Routes.LedgerBooks) },
+                navigateToParties = { navController.navigate(Routes.Parties) },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -610,7 +564,27 @@ private fun MavoNavHost(
         composable(Routes.Products) {
             ProductsScreen(
                 viewModel = viewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLowStock = { navController.navigate(Routes.LowStock) }
+            )
+        }
+
+        composable(Routes.LowStock) {
+            val products by viewModel.products.collectAsState()
+            LowStockScreen(
+                products = products,
+                onBack = { navController.popBackStack() },
+                onReorder = {
+                    viewModel.setVoucherPrefillRequest(
+                        AppViewModel.VoucherPrefillRequest(
+                            voucherType = "PURCHASE",
+                            partyId = null,
+                            invoiceId = null,
+                            amount = null
+                        )
+                    )
+                    navController.navigate(newVoucherRoute())
+                }
             )
         }
 
@@ -685,6 +659,20 @@ private fun MavoNavHost(
             )
         }
 
+        composable(
+            route = Routes.VoucherDetail,
+            arguments = listOf(navArgument("voucherId") { type = NavType.StringType })
+        ) { entry ->
+            val voucherId = entry.arguments?.getString("voucherId").orEmpty()
+            VoucherDetailScreen(
+                viewModel = viewModel,
+                voucherId = voucherId,
+                onBack = { navController.popBackStack() },
+                onEdit = { navController.navigate(newVoucherRoute(voucherId)) },
+                onOpenInvoice = { navController.navigate(invoiceRoute(voucherId)) }
+            )
+        }
+
         composable(Routes.LedgerBooks) {
             LedgerListScreen(
                 viewModel = viewModel,
@@ -712,6 +700,101 @@ private fun NavHostController.navigateToTopLevel(route: String) {
         }
         launchSingleTop = true
         restoreState = true
+    }
+}
+
+@Composable
+private fun ZeroBottomBar(
+    currentRoute: String?,
+    onNavigate: (String) -> Unit,
+    onCreate: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(AppColors.bottomBarBg)
+    ) {
+        HorizontalDivider(color = ScreenBorder)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(78.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomTab(topLevelDestinations[0], currentRoute, onNavigate)
+            BottomTab(topLevelDestinations[1], currentRoute, onNavigate)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(AppColors.primary)
+                        .shadow(6.dp, CircleShape)
+                        .clickable(onClick = onCreate),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "New Voucher",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+            BottomTab(topLevelDestinations[2], currentRoute, onNavigate)
+            BottomTab(topLevelDestinations[3], currentRoute, onNavigate)
+        }
+    }
+}
+
+@Composable
+private fun RowScope.BottomTab(
+    destination: TopLevelDestination,
+    currentRoute: String?,
+    onNavigate: (String) -> Unit
+) {
+    val selected = currentRoute == destination.route
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .clickable { if (!selected) onNavigate(destination.route) },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(width = 40.dp, height = 3.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(if (selected) AppColors.primary else Color.Transparent)
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Box(
+            modifier = Modifier
+                .size(width = 46.dp, height = 36.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (selected) AppColors.primary else Color.Transparent),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = destination.icon,
+                contentDescription = destination.label,
+                modifier = Modifier.size(22.dp),
+                tint = if (selected) Color.White else AppColors.textTertiary
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = destination.label,
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            color = if (selected) AppColors.textPrimary else AppColors.textTertiary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

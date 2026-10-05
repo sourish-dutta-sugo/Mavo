@@ -17,19 +17,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.outlined.Business
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -38,15 +42,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,6 +64,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -72,6 +72,11 @@ import com.mavo.app.data.BusinessProfile
 import com.mavo.app.data.DEFAULT_TERMS_AND_CONDITIONS
 import com.mavo.app.data.Utils
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.components.CircleIconButton
+import com.mavo.app.ui.components.PrimaryButton
+import com.mavo.app.ui.components.ScreenBorder
+import com.mavo.app.ui.components.SecondaryButton
+import com.mavo.app.ui.components.ZbField
 import com.mavo.app.ui.theme.AppColors
 import com.mavo.app.ui.theme.GstinValidationFeedback
 import com.mavo.app.ui.theme.TextDark
@@ -255,41 +260,117 @@ fun BusinessProfileSettingsSection(
         }
     }
 
-    Scaffold(
-        containerColor = AppColors.screenBg,
-        topBar = {
-            TopAppBar(
-                title = { Text("Business Profile", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
-                navigationIcon = {
-                    if (!isDesktop) {
-                        IconButton(onClick = onBackToMenu) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = AppColors.textPrimary
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColors.screenBg)
+    ) {
+        // Modal header (mockup 16): back, centered section title, edit shortcut.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (!isDesktop) {
+                CircleIconButton(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    onClick = onBackToMenu
+                )
+            } else {
+                Spacer(modifier = Modifier.width(44.dp))
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "Master data",
+                fontSize = 16.sp,
+                color = AppColors.textSecondary
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            // ponytail: the form is always editable, so the pencil just jumps to the
+            // first field instead of toggling a separate read-only mode.
+            CircleIconButton(
+                icon = Icons.Outlined.Edit,
+                contentDescription = "Edit",
+                onClick = { profileScope.launch { formScroll.animateScrollTo(0) } }
             )
         }
-    ) { innerPadding ->
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(AppColors.screenBg)
+                .weight(1f)
+                .fillMaxWidth()
                 .verticalScroll(formScroll)
                 .imePadding()
-                .padding(innerPadding)
-                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Business identity block (mockup 16)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(AppColors.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Business,
+                        contentDescription = null,
+                        tint = AppColors.textOnPrimary,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = profile?.businessName?.ifBlank { "Business profile" } ?: "Business profile",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppColors.textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = listOfNotNull(
+                            profile?.city?.ifBlank { null },
+                            profile?.state?.ifBlank { null }
+                        ).joinToString(", ").ifBlank {
+                            profile?.address?.ifBlank { null } ?: "Address not set"
+                        },
+                        fontSize = 15.sp,
+                        color = AppColors.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = if (profile?.gstin.isNullOrBlank()) "Non-GST" else "GSTIN ${profile?.gstin}",
+                        fontSize = 15.sp,
+                        color = AppColors.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            HorizontalDivider(color = ScreenBorder)
+
+            Column(
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
             Column(modifier = Modifier.bringIntoViewRequester(businessNameBringIntoViewRequester)) {
-                RetailTextField(
+                ZbField(
                     value = businessName,
                     onValueChange = { businessName = it },
-                    label = "Business Name *",
+                    label = "Legal Name",
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(businessNameFocusRequester)
@@ -305,17 +386,17 @@ fun BusinessProfileSettingsSection(
                 )
             }
 
-            RetailTextField(
+            ZbField(
                 value = ownerName,
                 onValueChange = { ownerName = it },
-                label = "Owner / Proprietor"
+                label = "Proprietor"
             )
 
             Column(modifier = Modifier.bringIntoViewRequester(addressBringIntoViewRequester)) {
-                RetailTextField(
+                ZbField(
                     value = address,
                     onValueChange = { address = it },
-                    label = "Business Address *",
+                    label = "Registered Address",
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(addressFocusRequester),
@@ -339,10 +420,10 @@ fun BusinessProfileSettingsSection(
                         .weight(1f)
                         .bringIntoViewRequester(pinBringIntoViewRequester)
                 ) {
-                    RetailTextField(
+                    ZbField(
                         value = pinCode,
                         onValueChange = { pinCode = it.filter(Char::isDigit).take(6) },
-                        label = "PIN Code *",
+                        label = "PIN Code",
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(pinFocusRequester),
@@ -363,7 +444,7 @@ fun BusinessProfileSettingsSection(
                     )
                 }
 
-                RetailTextField(
+                ZbField(
                     value = city,
                     onValueChange = { city = it },
                     label = "City / District",
@@ -385,7 +466,7 @@ fun BusinessProfileSettingsSection(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Box(modifier = Modifier.weight(1f)) {
-                    RetailTextField(
+                    ZbField(
                         value = "${selectedStateInfo.first} (${selectedStateInfo.second})",
                         onValueChange = {},
                         label = "State & GST Code",
@@ -450,14 +531,14 @@ fun BusinessProfileSettingsSection(
                 )
             }
 
-            RetailTextField(
+            ZbField(
                 value = phone,
                 onValueChange = { phone = it },
                 label = "Phone Number",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
 
-            RetailTextField(
+            ZbField(
                 value = email,
                 onValueChange = { email = it },
                 label = "Email Address",
@@ -501,7 +582,7 @@ fun BusinessProfileSettingsSection(
                 selectedStateInfo.second
             )
 
-            RetailTextField(
+            ZbField(
                 value = pan,
                 onValueChange = { pan = it.uppercase() },
                 label = "PAN Card Number"
@@ -510,14 +591,14 @@ fun BusinessProfileSettingsSection(
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             Text("BANK DETAILS SETUP", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
 
-            RetailTextField(
+            ZbField(
                 value = accountNo,
                 onValueChange = { accountNo = it.filter(Char::isDigit) },
                 label = "Account Number",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            RetailTextField(
+            ZbField(
                 value = ifsc,
                 onValueChange = { input ->
                     val uppercaseInput = input.uppercase().replace("\\s".toRegex(), "")
@@ -556,13 +637,13 @@ fun BusinessProfileSettingsSection(
                 Text(ifscVerifiedMessage, color = AppColors.primary, fontSize = 12.sp)
             }
 
-            RetailTextField(
+            ZbField(
                 value = bankName,
                 onValueChange = { bankName = it },
                 label = "Bank Name"
             )
 
-            RetailTextField(
+            ZbField(
                 value = bankBranch,
                 onValueChange = { bankBranch = it },
                 label = "Bank Branch"
@@ -672,7 +753,7 @@ fun BusinessProfileSettingsSection(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             Text("INVOICE SETTINGS", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
-            RetailTextField(
+            ZbField(
                 value = termsAndConditions,
                 onValueChange = { termsAndConditions = it },
                 label = "Terms & Conditions / Declaration",
@@ -691,47 +772,70 @@ fun BusinessProfileSettingsSection(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    submitAttempted = true
-                    val firstInvalidField = missingFields.firstOrNull()
-                    if (firstInvalidField != null) {
-                        focusFirstInvalidField(firstInvalidField)
-                    } else {
-                        val nextProfile = resolvedProfile.copy(
-                            businessName = businessName,
-                            ownerName = ownerName,
-                            address = address,
-                            city = city,
-                            pin = pinCode,
-                            state = selectedStateInfo.first,
-                            stateCode = selectedStateInfo.second,
-                            phone = phone,
-                            email = email,
-                            gstin = gstin,
-                            pan = pan,
-                            bankName = bankName,
-                            accountNo = accountNo,
-                            ifsc = ifsc,
-                            branchName = bankBranch,
-                            logoPath = logoPath,
-                            signaturePath = uploadedSignaturePath,
-                            termsAndConditions = termsAndConditions.ifBlank { DEFAULT_TERMS_AND_CONDITIONS }
-                        )
-                        viewModel.updateProfile(nextProfile) {
-                            Toast.makeText(context, "Business Profile successfully updated!", Toast.LENGTH_SHORT).show()
-                            onBackToMenu()
-                        }
-                    }
-                },
+            } // end form fields
+
+        } // end scrollable body
+
+        // Bottom bar (mockup 16): Cancel + Save profile
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(AppColors.cardBg)
+        ) {
+            HorizontalDivider(color = ScreenBorder)
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
-                    .testTag("save_business_profile"),
-                shape = RoundedCornerShape(8.dp)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text("Save Alterations Settings", fontWeight = FontWeight.Bold)
+                SecondaryButton(
+                    label = "Cancel",
+                    onClick = onBackToMenu,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(2f)
+                        .testTag("save_business_profile")
+                ) {
+                    PrimaryButton(
+                        label = "Save profile",
+                        onClick = {
+                            submitAttempted = true
+                            val firstInvalidField = missingFields.firstOrNull()
+                            if (firstInvalidField != null) {
+                                focusFirstInvalidField(firstInvalidField)
+                            } else {
+                                val nextProfile = resolvedProfile.copy(
+                                    businessName = businessName,
+                                    ownerName = ownerName,
+                                    address = address,
+                                    city = city,
+                                    pin = pinCode,
+                                    state = selectedStateInfo.first,
+                                    stateCode = selectedStateInfo.second,
+                                    phone = phone,
+                                    email = email,
+                                    gstin = gstin,
+                                    pan = pan,
+                                    bankName = bankName,
+                                    accountNo = accountNo,
+                                    ifsc = ifsc,
+                                    branchName = bankBranch,
+                                    logoPath = logoPath,
+                                    signaturePath = uploadedSignaturePath,
+                                    termsAndConditions = termsAndConditions.ifBlank { DEFAULT_TERMS_AND_CONDITIONS }
+                                )
+                                viewModel.updateProfile(nextProfile) {
+                                    Toast.makeText(context, "Business Profile successfully updated!", Toast.LENGTH_SHORT).show()
+                                    onBackToMenu()
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
     }

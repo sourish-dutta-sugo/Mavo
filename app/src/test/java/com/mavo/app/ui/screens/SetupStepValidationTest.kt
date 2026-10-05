@@ -38,7 +38,6 @@ class SetupStepValidationTest {
         val steps = listOf(
             SetupStep.Onboarding1,
             SetupStep.Onboarding2,
-            SetupStep.Onboarding3,
             SetupStep.Terms,
             SetupStep.Permission,
             SetupStep.TaxBank

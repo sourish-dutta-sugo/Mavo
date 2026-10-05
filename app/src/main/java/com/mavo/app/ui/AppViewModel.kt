@@ -12,6 +12,7 @@ import com.mavo.app.data.BankCashTransaction
 import com.mavo.app.data.BillReceivable
 import com.mavo.app.data.BusinessProfile
 import com.mavo.app.data.Expense
+import com.mavo.app.data.FinancialYearAuditLog
 import com.mavo.app.data.FinancialYearUtils
 import com.mavo.app.data.LedgerAccount
 import com.mavo.app.data.LedgerEntry
@@ -28,6 +29,7 @@ import com.mavo.app.services.ExportStorageManager
 import com.mavo.app.services.ExportTarget
 import com.mavo.app.services.InvoiceGenerator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -470,6 +472,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             false
         }
     }
+
+    fun auditLogsForYear(financialYearCode: String): Flow<List<FinancialYearAuditLog>> =
+        AppDatabase.getDatabase(getApplication()).financialYearAuditLogDao().getLogsForYear(financialYearCode)
 
     fun fetchPinCodeDetails(pincode: String, onResult: (city: String?, state: String?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
