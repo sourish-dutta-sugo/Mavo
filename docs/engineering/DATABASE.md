@@ -1,19 +1,19 @@
 # DATABASE.md — Mavo
 
-> Last updated: 2026-09-29  
-> DB file: `Mavo.db` (SQLite via Room)  
-> Current schema version: **15** (in `AppDatabase.kt`)
+> Last updated: 2026-10-05
+> DB file: `Mavo.db` (SQLite via Room)
+> Current schema version: **16** (in `AppDatabase.kt`)
 
 ## Version tracking
 
 | Concept | Where | Current |
 |---------|-------|---------|
 | App version | `app/build.gradle.kts` → `versionName` | `2.2.1` |
-| DB schema version | `AppDatabase.kt` → `@Database(version = N)` | `15` |
+| DB schema version | `AppDatabase.kt` → `@Database(version = N)` | `16` |
 
 **These are independent.** An app version bump does NOT require a schema bump, and vice versa.
 
-## Tables (20 entities)
+## Tables (21 entities)
 
 ### `financial_years`
 
@@ -119,6 +119,18 @@
 | discountType | TEXT | | PERCENT/AMOUNT |
 | taxableAmount, gstRate, cgstAmount, sgstAmount, igstAmount, totalAmount | REAL | | |
 | financialYearCode | TEXT | | |
+
+### `journal_draft_lines`
+
+Stores editable Journal rows only while the parent voucher is a draft. Posting
+removes these rows and writes the balanced entries to `ledger_entries`.
+
+| Column | Type | PK | Notes |
+|--------|------|----|-------|
+| voucherId | TEXT | ✅ | Parent voucher id |
+| position | INTEGER | ✅ | Original row order |
+| accountHead | TEXT | | Selected ledger account |
+| debit, credit | REAL | | Draft amounts |
 
 ### `ledger_entries`
 
@@ -228,7 +240,7 @@ Each has: opening balance/stock, balance type, createdAt, updatedAt.
 ## Migration rules
 
 1. All migrations live in `Migrations.kt`
-2. Named migrations: `MIGRATION_4_5` through `MIGRATION_13_14`
+2. Named migrations: `MIGRATION_4_5` through `MIGRATION_15_16`
 3. Defensive `ensureColumn` / `ensureTable` functions run on both `onCreate` and `onOpen`
 4. Pattern: check if column exists via `PRAGMA table_info`, add only if missing
 5. **Never** destructive-migrate. Never `fallbackToDestructiveMigration()`.

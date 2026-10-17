@@ -33,7 +33,8 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
-    onTimeout: () -> Unit
+    onTimeout: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var visible by remember { mutableStateOf(false) }
 
@@ -54,7 +55,7 @@ fun SplashScreen(
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg),
         contentAlignment = Alignment.Center

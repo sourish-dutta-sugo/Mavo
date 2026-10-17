@@ -22,7 +22,7 @@ object AppColors {
     val textSecondary get() = theme.textSecondary
     val textTertiary get() = theme.textTertiary
     val textHint get() = theme.textTertiary
-    val textOnPrimary = Color(0xFFFFFFFF)
+    val textOnPrimary get() = if (theme.isDark) Color(0xFF082018) else Color(0xFFFFFFFF)
     val textOnDark = Color(0xFFFFFFFF)
     val textDisabled = Color(0xFFB0B0B0)
 

@@ -140,6 +140,16 @@ class AppRepository(private val db: AppDatabase) {
 
     suspend fun getVoucherById(id: String) = db.voucherDao().getVoucherById(id)
 
+    suspend fun getJournalLinesForVoucher(voucherId: String): List<JournalLine> {
+        val draftLines = db.journalDraftLineDao().getLinesForVoucher(voucherId)
+        if (draftLines.isNotEmpty()) {
+            return draftLines.map { JournalLine(it.accountHead, it.debit, it.credit) }
+        }
+        return db.ledgerDao().getLedgerEntriesByVoucherId(voucherId)
+            .sortedBy { it.createdAt }
+            .map { JournalLine(it.accountHead, it.debit, it.credit) }
+    }
+
     suspend fun getPartyById(id: String) = db.partyDao().getPartyById(id)
 
     suspend fun getProductById(id: String) = db.productDao().getProductById(id)
@@ -575,15 +585,22 @@ class AppRepository(private val db: AppDatabase) {
             ensureFinancialYearExists(resolvedFinancialYearCode)
             val yearState = db.financialYearDao().getFinancialYearByCode(resolvedFinancialYearCode)
             require(yearState?.isLocked != true) { "Financial year $resolvedFinancialYearCode is locked." }
+            if (voucher.status == "POSTED" && voucher.type in setOf("INCOME", "EXPENSE")) {
+                require(voucher.referenceNo.isNotBlank()) { "Choose an income or expense category before posting." }
+                require(voucher.netAmount > 0.0) { "Enter an amount greater than zero before posting." }
+            }
             val resolvedVoucher = voucher.copy(financialYearCode = resolvedFinancialYearCode)
 
             // 1. Delete if existing
             db.voucherDao().deleteVoucher(resolvedVoucher.id)
             db.voucherItemDao().deleteItemsForVoucher(resolvedVoucher.id)
+            db.journalDraftLineDao().deleteLinesForVoucher(resolvedVoucher.id)
             db.ledgerDao().deleteLedgerEntriesForVoucher(resolvedVoucher.id)
             db.bankCashDao().deleteTransactionsByVoucher(resolvedVoucher.id)
             db.receiptAllocationDao().deleteAllocationsByReceipt(resolvedVoucher.id)
             db.billReceivableDao().deleteBillByVoucherId(resolvedVoucher.id)
+            db.expenseDao().deleteExpense(resolvedVoucher.id)
+            db.incomeDao().deleteIncome(resolvedVoucher.id)
 
             // 2. Insert Voucher & Items
             db.voucherDao().insertVoucher(resolvedVoucher)
@@ -603,6 +620,62 @@ class AppRepository(private val db: AppDatabase) {
                 resolvedVoucher.type !in setOf("QUOTATION", "DELIVERY_CHALLAN", "SALES_ORDER", "PURCHASE_ORDER", "INQUIRY", "PROFORMA")
 
             if (shouldPostAccounts) when (resolvedVoucher.type) {
+                "EXPENSE" -> {
+                    val category = resolvedVoucher.referenceNo
+                    val description = resolvedVoucher.narration.orEmpty()
+                    ledgerList.add(
+                        LedgerEntry(
+                            id = UUID.randomUUID().toString(),
+                            accountHead = "$category Expense Account",
+                            voucherId = resolvedVoucher.id,
+                            date = resolvedVoucher.date,
+                            debit = resolvedVoucher.netAmount,
+                            credit = 0.0,
+                            narration = description.ifBlank { "Expense entry" },
+                            createdAt = System.currentTimeMillis()
+                        )
+                    )
+                    ledgerList.add(
+                        LedgerEntry(
+                            id = UUID.randomUUID().toString(),
+                            accountHead = if (resolvedVoucher.paymentMode == "CASH") "Cash" else "Bank",
+                            voucherId = resolvedVoucher.id,
+                            date = resolvedVoucher.date,
+                            debit = 0.0,
+                            credit = resolvedVoucher.netAmount,
+                            narration = description.ifBlank { "Expense payment" },
+                            createdAt = System.currentTimeMillis()
+                        )
+                    )
+                }
+                "INCOME" -> {
+                    val category = resolvedVoucher.referenceNo
+                    val description = resolvedVoucher.narration.orEmpty()
+                    ledgerList.add(
+                        LedgerEntry(
+                            id = UUID.randomUUID().toString(),
+                            accountHead = if (resolvedVoucher.paymentMode == "CASH") "Cash" else "Bank",
+                            voucherId = resolvedVoucher.id,
+                            date = resolvedVoucher.date,
+                            debit = resolvedVoucher.netAmount,
+                            credit = 0.0,
+                            narration = description.ifBlank { "Income receipt" },
+                            createdAt = System.currentTimeMillis()
+                        )
+                    )
+                    ledgerList.add(
+                        LedgerEntry(
+                            id = UUID.randomUUID().toString(),
+                            accountHead = "$category Income Account",
+                            voucherId = resolvedVoucher.id,
+                            date = resolvedVoucher.date,
+                            debit = 0.0,
+                            credit = resolvedVoucher.netAmount,
+                            narration = description.ifBlank { "Income entry" },
+                            createdAt = System.currentTimeMillis()
+                        )
+                    )
+                }
                 "SALE" -> {
                     if (resolvedVoucher.paymentMode == "PART PAYMENT") {
                         val paidHead = if (extras.partialPaymentSubmode == "CASH") "Cash" else "Bank"
@@ -1374,11 +1447,44 @@ class AppRepository(private val db: AppDatabase) {
                 )
             }
 
+            if (shouldPostAccounts) {
+                when (resolvedVoucher.type) {
+                    "EXPENSE" -> db.expenseDao().insertExpense(
+                        Expense(
+                            id = resolvedVoucher.id,
+                            date = resolvedVoucher.date,
+                            category = resolvedVoucher.referenceNo,
+                            description = resolvedVoucher.narration.orEmpty(),
+                            amount = resolvedVoucher.netAmount,
+                            paymentMode = resolvedVoucher.paymentMode,
+                            referenceNo = "",
+                            attachmentPath = resolvedVoucher.attachmentPath.orEmpty(),
+                            voucherNo = resolvedVoucher.voucherNo,
+                            fyLabel = resolvedFinancialYearCode
+                        )
+                    )
+                    "INCOME" -> db.incomeDao().insertIncome(
+                        Income(
+                            id = resolvedVoucher.id,
+                            date = resolvedVoucher.date,
+                            category = resolvedVoucher.referenceNo,
+                            description = resolvedVoucher.narration.orEmpty(),
+                            amount = resolvedVoucher.netAmount,
+                            paymentMode = resolvedVoucher.paymentMode,
+                            referenceNo = "",
+                            attachmentPath = resolvedVoucher.attachmentPath.orEmpty(),
+                            voucherNo = resolvedVoucher.voucherNo,
+                            fyLabel = resolvedFinancialYearCode
+                        )
+                    )
+                }
+            }
+
             saveVoucherExtras(resolvedVoucher.id, resolvedVoucher.paymentMode, extras)
 
             // 4. Auto-register Cash or Bank trans
-            val isReceipt = (resolvedVoucher.type == "RECEIPT" || resolvedVoucher.type == "SALE" || resolvedVoucher.type == "PURCHASE_RETURN")
-            val isPayment = (resolvedVoucher.type == "PAYMENT" || resolvedVoucher.type == "SALE_RETURN" || resolvedVoucher.type == "PETTY_CASH")
+            val isReceipt = (resolvedVoucher.type == "RECEIPT" || resolvedVoucher.type == "SALE" || resolvedVoucher.type == "PURCHASE_RETURN" || resolvedVoucher.type == "INCOME")
+            val isPayment = (resolvedVoucher.type == "PAYMENT" || resolvedVoucher.type == "SALE_RETURN" || resolvedVoucher.type == "PETTY_CASH" || resolvedVoucher.type == "EXPENSE")
             
             if (shouldPostAccounts && (isReceipt || isPayment) && resolvedVoucher.paymentMode != "CREDIT") {
                 val txType = if (isReceipt) "RECEIPT" else "PAYMENT"
@@ -1516,8 +1622,11 @@ class AppRepository(private val db: AppDatabase) {
             val voucher = db.voucherDao().getVoucherById(id)
             db.voucherDao().deleteVoucher(id)
             db.voucherItemDao().deleteItemsForVoucher(id)
+            db.journalDraftLineDao().deleteLinesForVoucher(id)
             db.ledgerDao().deleteLedgerEntriesForVoucher(id)
             db.bankCashDao().deleteTransactionsByVoucher(id)
+            db.expenseDao().deleteExpense(id)
+            db.incomeDao().deleteIncome(id)
             db.receiptAllocationDao().deleteAllocationsByReceipt(id)
             db.receiptAllocationDao().deleteAllocationsByInvoice(id)
             db.billReceivableDao().deleteBillByVoucherId(id)
@@ -1541,27 +1650,45 @@ class AppRepository(private val db: AppDatabase) {
 
             db.voucherDao().deleteVoucher(voucher.id)
             db.voucherItemDao().deleteItemsForVoucher(voucher.id)
+            db.journalDraftLineDao().deleteLinesForVoucher(voucher.id)
             db.ledgerDao().deleteLedgerEntriesForVoucher(voucher.id)
             db.bankCashDao().deleteTransactionsByVoucher(voucher.id)
 
-            db.voucherDao().insertVoucher(voucher.copy(type = "JOURNAL", financialYearCode = resolvedFinancialYearCode))
-            db.ledgerDao().insertLedgerEntries(
-                lines.flatMap { line ->
-                    listOf(
-                        LedgerEntry(
-                            id = UUID.randomUUID().toString(),
-                            accountHead = line.accountHead,
-                            voucherId = voucher.id,
-                            date = voucher.date,
-                            debit = line.debit,
-                            credit = line.credit,
-                            narration = voucher.narration.ifBlank { "Journal Entry ${voucher.voucherNo}" },
-                            financialYearCode = resolvedFinancialYearCode,
-                            createdAt = System.currentTimeMillis()
-                        )
+            val resolvedVoucher = voucher.copy(type = "JOURNAL", financialYearCode = resolvedFinancialYearCode)
+            db.voucherDao().insertVoucher(resolvedVoucher)
+            if (resolvedVoucher.status == "DRAFT") {
+                if (lines.isNotEmpty()) {
+                    db.journalDraftLineDao().insertLines(
+                        lines.mapIndexed { index, line ->
+                            JournalDraftLine(
+                                voucherId = resolvedVoucher.id,
+                                position = index,
+                                accountHead = line.accountHead,
+                                debit = line.debit,
+                                credit = line.credit
+                            )
+                        }
                     )
                 }
-            )
+            } else {
+                db.ledgerDao().insertLedgerEntries(
+                    lines.flatMap { line ->
+                        listOf(
+                            LedgerEntry(
+                                id = UUID.randomUUID().toString(),
+                                accountHead = line.accountHead,
+                                voucherId = resolvedVoucher.id,
+                                date = resolvedVoucher.date,
+                                debit = line.debit,
+                                credit = line.credit,
+                                narration = resolvedVoucher.narration.orEmpty().ifBlank { "Journal Entry ${resolvedVoucher.voucherNo}" },
+                                financialYearCode = resolvedFinancialYearCode,
+                                createdAt = System.currentTimeMillis()
+                            )
+                        )
+                    }
+                )
+            }
         }
     }
 
@@ -1575,7 +1702,7 @@ class AppRepository(private val db: AppDatabase) {
             .groupBy { it.productId }
             .mapValues { (_, productItems) ->
                 productItems.sumOf { item ->
-                    when (vouchersById[item.voucherId]?.type) {
+                        when (vouchersById[item.voucherId]?.takeIf { it.status == "POSTED" }?.type) {
                         "PURCHASE", "SALE_RETURN", "GOODS_RECEIPT_NOTE" -> item.qty
                         "SALE", "PURCHASE_RETURN", "DELIVERY_CHALLAN", "REJECTION_NOTE" -> -item.qty
                         else -> 0.0
@@ -1601,7 +1728,7 @@ class AppRepository(private val db: AppDatabase) {
     private suspend fun updatePartyAnalytics(financialYearCode: String) {
         val formatter = SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH)
         val saleVouchersByParty = db.voucherDao().getAllVouchersForYearSync(financialYearCode)
-            .filter { it.type == "SALE" && it.partyId != null }
+            .filter { it.status == "POSTED" && it.type == "SALE" && it.partyId != null }
             .groupBy { it.partyId.orEmpty() }
 
         db.partyDao().getAllPartiesSync().forEach { party ->

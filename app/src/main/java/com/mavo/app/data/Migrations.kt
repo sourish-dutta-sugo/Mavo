@@ -704,3 +704,20 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
         ensureEmailAutomationTables(db)
     }
 }
+
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS journal_draft_lines (
+                voucherId TEXT NOT NULL,
+                position INTEGER NOT NULL,
+                accountHead TEXT NOT NULL,
+                debit REAL NOT NULL,
+                credit REAL NOT NULL,
+                PRIMARY KEY(voucherId, position)
+            )
+            """.trimIndent()
+        )
+    }
+}

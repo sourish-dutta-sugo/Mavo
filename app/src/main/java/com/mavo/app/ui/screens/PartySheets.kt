@@ -49,6 +49,7 @@ import java.util.UUID
 @Composable
 fun CreatePartyInlineSheet(
     partyType: String = "CUSTOMER",
+    modifier: Modifier = Modifier,
     onSave: (Party) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -112,6 +113,7 @@ fun CreatePartyInlineSheet(
     }
 
     ModalBottomSheet(
+        modifier = modifier,
         onDismissRequest = onDismiss,
         containerColor = AppColors.cardBg
     ) {
@@ -408,6 +410,7 @@ fun BusinessImageUploadSection(
     title: String,
     subtitle: String,
     currentPath: String?,
+    modifier: Modifier = Modifier,
     onImageSelected: (Uri) -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -421,7 +424,7 @@ fun BusinessImageUploadSection(
     ) { uri -> uri?.let { onImageSelected(it) } }
 
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
         border = BorderStroke(1.dp, AppColors.border),
         shape = RoundedCornerShape(12.dp)

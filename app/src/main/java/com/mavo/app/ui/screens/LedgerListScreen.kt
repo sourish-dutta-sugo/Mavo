@@ -19,10 +19,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.data.LedgerAccount
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.LocalAppWindowSizeClass
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
+import com.mavo.app.ui.dashboardMaxWidthDp
 import com.mavo.app.ui.theme.AppColors
 import androidx.compose.foundation.border
 
@@ -30,10 +36,15 @@ import androidx.compose.foundation.border
 @Composable
 fun LedgerListScreen(
     viewModel: AppViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val ledgerAccounts by viewModel.ledgerAccounts.collectAsState()
-    val ledgerEntries by viewModel.ledgerEntries.collectAsState()
+    val windowSizeClass = LocalAppWindowSizeClass.current
+    val ledgerAccountsReadState by viewModel.ledgerAccountsUiState.collectAsState()
+    val ledgerEntriesReadState by viewModel.ledgerEntriesUiState.collectAsState()
+    val ledgerAccounts = ledgerAccountsReadState.valueOrEmpty()
+    val ledgerEntries = ledgerEntriesReadState.valueOrEmpty()
+    val contentBlocked = ledgerAccountsReadState.blocksContent() || ledgerEntriesReadState.blocksContent()
     var viewingLedger by remember { mutableStateOf<LedgerAccount?>(null) }
     var editingLedger by remember { mutableStateOf<LedgerAccount?>(null) }
 
@@ -48,7 +59,7 @@ fun LedgerListScreen(
     val showEmptyState = remember(ledgerAccounts) { ledgerAccounts.isEmpty() }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         containerColor = AppColors.screenBg,
         topBar = {
             TopAppBar(
@@ -75,7 +86,10 @@ fun LedgerListScreen(
         ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .widthIn(max = windowSizeClass.dashboardMaxWidthDp()?.dp ?: Dp.Unspecified)
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .align(Alignment.TopCenter)
                 .padding(start = 16.dp, end = 16.dp, bottom = 100.dp)
         ) {
             Text(
@@ -84,8 +98,12 @@ fun LedgerListScreen(
                 fontSize = 13.sp,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
+            UiLoadStateNotice(ledgerAccountsReadState, viewModel::retryFailedReads)
+            UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
 
-            if (showEmptyState) {
+            if (contentBlocked) {
+                Spacer(modifier = Modifier.weight(1f))
+            } else if (showEmptyState) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No ledger accounts configured yet.", color = AppColors.textSecondary)
                 }
@@ -192,14 +210,15 @@ private fun LedgerAccountRow(
     balance: Double,
     rowIndex: Int,
     onView: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val isDr = balance >= 0
     val absBal = kotlin.math.abs(balance)
     val rowBg = if (rowIndex % 2 == 0) AppColors.tableRowEven else AppColors.tableRowOdd
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(rowBg)
             .border(0.5.dp, AppColors.divider)
@@ -227,14 +246,15 @@ private fun EditableLedgerAccountRow(
     balance: Double,
     rowIndex: Int,
     onView: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val isDr = balance >= 0
     val absBal = kotlin.math.abs(balance)
     val rowBg = if (rowIndex % 2 == 0) AppColors.tableRowEven else AppColors.tableRowOdd
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(rowBg)
             .border(0.5.dp, AppColors.divider)
@@ -272,7 +292,8 @@ private fun EditableLedgerAccountRow(
 private fun EditLedgerSheet(
     ledger: LedgerAccount,
     onDismiss: () -> Unit,
-    onSave: (LedgerAccount) -> Unit
+    onSave: (LedgerAccount) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var ledgerName by remember(ledger.id) { mutableStateOf(ledger.name) }
     var groupName by remember(ledger.id) { mutableStateOf(ledger.groupName) }
@@ -283,6 +304,7 @@ private fun EditLedgerSheet(
     var address by remember(ledger.id) { mutableStateOf(ledger.address) }
 
     ModalBottomSheet(
+        modifier = modifier,
         onDismissRequest = onDismiss,
         containerColor = AppColors.cardBg
     ) {

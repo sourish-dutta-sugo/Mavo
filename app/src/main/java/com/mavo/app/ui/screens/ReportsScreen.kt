@@ -36,6 +36,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.data.*
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.UiLoadState
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
 import com.mavo.app.services.EmailComposer
 import com.mavo.app.ui.theme.AppColors
 import com.mavo.app.ui.theme.*
@@ -51,16 +55,21 @@ import java.util.Calendar
 fun ReportsScreen(
     viewModel: AppViewModel,
     isDesktop: Boolean = false,
+    modifier: Modifier = Modifier,
     navigateToLedgerBooks: () -> Unit,
     navigateToExpenses: () -> Unit = {},
     navigateToNewVoucher: (String?) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
-    val ledgerEntries by viewModel.ledgerEntries.collectAsState()
-    val parties by viewModel.parties.collectAsState()
-    val products by viewModel.products.collectAsState()
-    val vouchers by viewModel.vouchers.collectAsState()
+    val ledgerEntriesReadState by viewModel.ledgerEntriesUiState.collectAsState()
+    val partiesReadState by viewModel.partiesUiState.collectAsState()
+    val productsReadState by viewModel.productsUiState.collectAsState()
+    val vouchersReadState by viewModel.vouchersUiState.collectAsState()
+    val ledgerEntries = ledgerEntriesReadState.valueOrEmpty()
+    val parties = partiesReadState.valueOrEmpty()
+    val products = productsReadState.valueOrEmpty()
+    val vouchers = vouchersReadState.valueOrEmpty()
     val financialYear by viewModel.financialYear.collectAsState()
 
     var activeReport by remember { mutableStateOf(if (isDesktop) "TRIAL" else "MENU") }
@@ -155,6 +164,34 @@ fun ReportsScreen(
     val otherLiabilities = totalCreditors + liabilitiesDuties
     val balancingCapitalEquity = totalAssets - otherLiabilities
 
+    val reportReadStates = listOf(
+        ledgerEntriesReadState,
+        partiesReadState,
+        productsReadState,
+        vouchersReadState
+    )
+    val blockingReadStates = reportReadStates.filter { it.blocksContent() }
+    if (blockingReadStates.isNotEmpty()) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            blockingReadStates.forEach { state ->
+                UiLoadStateNotice(state, viewModel::retryFailedReads)
+            }
+        }
+        return
+    }
+
+    Column(modifier = modifier.fillMaxSize()) {
+        reportReadStates.filterIsInstance<UiLoadState.Error<*>>()
+            .filter { it.hasCachedValue }
+            .forEach { state ->
+                UiLoadStateNotice(state, viewModel::retryFailedReads)
+            }
+        Box(modifier = Modifier.weight(1f)) {
     if (isDesktop) {
         Row(modifier = Modifier.fillMaxSize()) {
             // Left menu pane
@@ -223,13 +260,13 @@ fun ReportsScreen(
                                         color = AppColors.textSecondary
                                     )
                                 }
+                                }
                             }
                         }
+                        }
                     }
-                }
-            }
 
-            // Right Detail view pane
+                    // Right Detail view pane
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -336,7 +373,9 @@ fun ReportsScreen(
 
                             "RECEIVABLES" -> {
                                 var mSelectedTab by remember { mutableStateOf("BILLS") } // "PARTIES" vs "BILLS"
-                                val billsReceivable by viewModel.billsReceivable.collectAsState()
+                                val billsReceivableReadState by viewModel.billsReceivableUiState.collectAsState()
+                                val billsReceivable = billsReceivableReadState.valueOrEmpty()
+                                val billsReceivableError = billsReceivableReadState as? UiLoadState.Error<*>
 
                                 Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                     TabRow(
@@ -356,12 +395,17 @@ fun ReportsScreen(
                                         )
                                     }
 
+                                    if (billsReceivableError?.hasCachedValue == true) {
+                                        UiLoadStateNotice(billsReceivableReadState, viewModel::retryFailedReads)
+                                    }
                                     if (mSelectedTab == "PARTIES") {
                                         DebtorsRemindersView(
                                             debtors = debtorsList,
                                             profile = profile,
                                             context = context
                                         )
+                                    } else if (billsReceivableReadState.blocksContent()) {
+                                        UiLoadStateNotice(billsReceivableReadState, viewModel::retryFailedReads)
                                     } else {
                                         AgedBillsListView(
                                             bills = billsReceivable,
@@ -592,7 +636,9 @@ fun ReportsScreen(
 
                         "RECEIVABLES" -> {
                             var mSelectedTab by remember { mutableStateOf("BILLS") } // "PARTIES" vs "BILLS"
-                            val billsReceivable by viewModel.billsReceivable.collectAsState()
+                            val billsReceivableReadState by viewModel.billsReceivableUiState.collectAsState()
+                            val billsReceivable = billsReceivableReadState.valueOrEmpty()
+                            val billsReceivableError = billsReceivableReadState as? UiLoadState.Error<*>
 
                             Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 TabRow(
@@ -612,12 +658,17 @@ fun ReportsScreen(
                                     )
                                 }
 
+                                if (billsReceivableError?.hasCachedValue == true) {
+                                    UiLoadStateNotice(billsReceivableReadState, viewModel::retryFailedReads)
+                                }
                                 if (mSelectedTab == "PARTIES") {
                                     DebtorsRemindersView(
                                         debtors = debtorsList,
                                         profile = profile,
                                         context = context
                                     )
+                                } else if (billsReceivableReadState.blocksContent()) {
+                                    UiLoadStateNotice(billsReceivableReadState, viewModel::retryFailedReads)
                                 } else {
                                     AgedBillsListView(
                                         bills = billsReceivable,
@@ -647,12 +698,15 @@ fun ReportsScreen(
         }
     }
 }
+}
+}
 
 @Composable
 fun PayablesBillsListView(
     vouchers: List<Voucher>,
     parties: List<Party>,
     viewModel: AppViewModel,
+    modifier: Modifier = Modifier,
     navigateToNewVoucher: (String?) -> Unit
 ) {
     val purchaseBills = remember(vouchers) {
@@ -667,13 +721,13 @@ fun PayablesBillsListView(
     }
 
     if (purchaseBills.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
             Text("No active supplier bills are awaiting payment.", fontSize = 13.sp, color = AppColors.textSecondary)
         }
     } else {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
+            modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)
         ) {
             items(purchaseBills) { bill ->
                 val party = parties.find { it.id == bill.partyId }
@@ -799,7 +853,8 @@ fun TrialBalanceView(
     igstPayable: Double,
     cgstRec: Double,
     sgstRec: Double,
-    igstRec: Double
+    igstRec: Double,
+    modifier: Modifier = Modifier
 ) {
     var expandedGroups by remember { mutableStateOf(setOf<String>()) }
     val listState = rememberScrollState()
@@ -830,7 +885,7 @@ fun TrialBalanceView(
     val difference = Math.abs(grandDr - grandCr)
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(listState)
             .border(1.dp, AppColors.border, RoundedCornerShape(8.dp))
@@ -851,9 +906,16 @@ fun TrialBalanceView(
 
         // Expanded Group helper
         @Composable
-        fun TrialGroupHeader(name: String, dr: Double, cr: Double, isExpanded: Boolean, onClick: () -> Unit) {
+        fun TrialGroupHeader(
+            name: String,
+            dr: Double,
+            cr: Double,
+            isExpanded: Boolean,
+            modifier: Modifier = Modifier,
+            onClick: () -> Unit
+        ) {
             Row(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxWidth()
                     .clickable { onClick() }
                     .padding(vertical = 12.dp, horizontal = 12.dp)
@@ -899,9 +961,16 @@ fun TrialBalanceView(
         }
 
         @Composable
-        fun TrialLedgerRow(name: String, balance: Double, isDr: Boolean, paddingLeft: Int = 24, rowIndex: Int = 0) {
+        fun TrialLedgerRow(
+            name: String,
+            balance: Double,
+            isDr: Boolean,
+            paddingLeft: Int = 24,
+            rowIndex: Int = 0,
+            modifier: Modifier = Modifier
+        ) {
             Row(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxWidth()
                     .background(if (rowIndex % 2 == 0) AppColors.tableRowEven else AppColors.tableRowOdd)
                     .padding(vertical = 8.dp, horizontal = 12.dp)
@@ -1110,12 +1179,13 @@ fun TradingAndPLView(
     currentStockValue: Double,
     grossProfit: Double,
     netProfit: Double,
-    roundOffValue: Double
+    roundOffValue: Double,
+    modifier: Modifier = Modifier
 ) {
     val scroll = rememberScrollState()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(scroll),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -1302,9 +1372,15 @@ fun TradingAndPLView(
 }
 
 @Composable
-fun PLColumnItem(name: String, amount: Double, highlight: Boolean = false, isProfit: Boolean = true) {
+fun PLColumnItem(
+    name: String,
+    amount: Double,
+    highlight: Boolean = false,
+    isProfit: Boolean = true,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(34.dp)
             .padding(horizontal = 6.dp),
@@ -1337,9 +1413,9 @@ fun PLColumnItem(name: String, amount: Double, highlight: Boolean = false, isPro
 }
 
 @Composable
-fun PLTotalItem(total: Double) {
+fun PLTotalItem(total: Double, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(AppColors.primary.copy(alpha = 0.08f))
             .padding(6.dp),
@@ -1372,13 +1448,14 @@ fun BalanceSheetView(
     assetsDuties: Double,
     balancingCapital: Double,
     netProfit: Double,
-    totalAssets: Double
+    totalAssets: Double,
+    modifier: Modifier = Modifier
 ) {
     val scroll = rememberScrollState()
     val totalLiabilities = balancingCapital + totalCreditors + (if (liabilitiesDuties > 0) liabilitiesDuties else 0.0)
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(scroll)
     ) {
@@ -1500,10 +1577,11 @@ fun GSTSummaryView(
     igstRec: Double,
     outputTotal: Double,
     inputTotal: Double,
-    netPayable: Double
+    netPayable: Double,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -1585,9 +1663,9 @@ fun GSTSummaryView(
 }
 
 @Composable
-fun ReportRow(label: String, amount: Double) {
+fun ReportRow(label: String, amount: Double, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label, fontSize = 11.sp, color = AppColors.textTertiary)
@@ -1603,14 +1681,15 @@ fun ReportRow(label: String, amount: Double) {
 fun DebtorsRemindersView(
     debtors: List<Pair<Party, Double>>,
     profile: BusinessProfile?,
-    context: Context
+    context: Context,
+    modifier: Modifier = Modifier
 ) {
     if (debtors.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No active outstanding debtor balances.", fontSize = 13.sp, color = AppColors.textSecondary)
         }
     } else {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxSize()) {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier.fillMaxSize()) {
             items(debtors) { (party, balance) ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -1700,13 +1779,13 @@ Phone: ${profile?.phone ?: ""}
 // OUTSTANDING CREDITORS LIST VIEW
 // ═══════════════════════════════════════════════════════
 @Composable
-fun CreditorsListView(creditors: List<Pair<Party, Double>>) {
+fun CreditorsListView(creditors: List<Pair<Party, Double>>, modifier: Modifier = Modifier) {
     if (creditors.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No active outstanding supplier liabilities.", fontSize = 13.sp, color = AppColors.textSecondary)
         }
     } else {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxSize()) {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier.fillMaxSize()) {
             items(creditors) { (party, balance) ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -1747,10 +1826,11 @@ fun ReportMenuCard(
     title: String,
     description: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .premiumClickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
@@ -1796,6 +1876,7 @@ fun AgedBillsListView(
     bills: List<com.mavo.app.data.BillReceivable>,
     parties: List<com.mavo.app.data.Party>,
     viewModel: com.mavo.app.ui.AppViewModel,
+    modifier: Modifier = Modifier,
     navigateToNewVoucher: (String?) -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -1810,13 +1891,13 @@ fun AgedBillsListView(
     var receiptDate by remember { mutableStateOf(System.currentTimeMillis()) }
 
     if (activeBills.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
             Text("All credit invoices have been fully paid off!", fontSize = 13.sp, color = AppColors.textSecondary)
         }
     } else {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
+            modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)
         ) {
             items(activeBills) { bill ->
                 Card(

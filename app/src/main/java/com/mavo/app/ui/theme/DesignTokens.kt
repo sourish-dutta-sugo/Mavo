@@ -34,32 +34,32 @@ object Semantic {
 }
 
 object Surface {
-    val background = Color(0xFFF7F7F7)
-    val card = Color(0xFFFFFFFF)
-    val cardBorder = Color(0xFFECECEC)
-    val input = Color(0xFFFFFFFF)
-    val inputBorder = Color(0xFFE5E5E5)
-    val inputBorderFocus = Color(0xFF0A0A0A)
-    val divider = Color(0xFFF0F0F0)
-    val border = Color(0xFFE6E6E6)
-    val borderLight = Color(0xFFF2F2F2)
-    val shimmer = Color(0xFFEFEFEF)
+    val background = Color(0xFFF7F5EF)
+    val card = Color(0xFFFFFCF7)
+    val cardBorder = Color(0xFFE5E0D6)
+    val input = Color(0xFFFFFCF7)
+    val inputBorder = Color(0xFFD2CEC5)
+    val inputBorderFocus = Color(0xFF006B5F)
+    val divider = Color(0xFFE8E3D9)
+    val border = Color(0xFFD2CEC5)
+    val borderLight = Color(0xFFEAE5DB)
+    val shimmer = Color(0xFFE9E4DA)
 
-    val sectionHeaderBg = Color(0xFFF2F2F2)
-    val sectionHeaderText = Color(0xFF0F172A)
-    val tableHeaderText = Color(0xFF64748B)
-    val tableRowEven = Color(0xFFFFFFFF)
-    val tableRowOdd = Color(0xFFFAFAFA)
+    val sectionHeaderBg = Color(0xFFF0ECE4)
+    val sectionHeaderText = Color(0xFF211F1A)
+    val tableHeaderText = Color(0xFF4D4A43)
+    val tableRowEven = Color(0xFFFFFCF7)
+    val tableRowOdd = Color(0xFFFAF7F0)
 }
 
 object TextColors {
-    val primary = Color(0xFF1A1A1A)
-    val secondary = Color(0xFF4A4A4A)
-    val tertiary = Color(0xFF888888)
+    val primary = Color(0xFF211F1A)
+    val secondary = Color(0xFF4D4A43)
+    val tertiary = Color(0xFF77736B)
     val onPrimary = Color(0xFFFFFFFF)
     val onDark = Color(0xFFFFFFFF)
-    val disabled = Color(0xFFBBBBBB)
-    val label = Color(0xFF6B7280)
+    val disabled = Color(0xFF77736B)
+    val label = Color(0xFF4D4A43)
 }
 
 object Badge {

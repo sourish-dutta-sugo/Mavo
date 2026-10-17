@@ -7,6 +7,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
@@ -20,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,14 +37,12 @@ import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -52,9 +52,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -95,6 +92,11 @@ import androidx.navigation.navArgument
 import com.mavo.app.data.AppPreferences
 import com.mavo.app.data.ChangelogData
 import com.mavo.app.data.ChangelogLoader
+import com.mavo.app.ui.AppNavigationDestination
+import com.mavo.app.ui.LocalAppWindowSizeClass
+import com.mavo.app.ui.components.AdaptiveNavigationBar
+import com.mavo.app.ui.components.AdaptiveNavigationRail
+import com.mavo.app.ui.usesTwoPaneLayout
 import com.mavo.app.ui.AppViewModel
 import com.mavo.app.ui.components.ScreenBorder
 import com.mavo.app.ui.DashboardViewModel
@@ -126,6 +128,7 @@ import com.mavo.app.ui.theme.AppColors
 import com.mavo.app.ui.theme.LocalAppTheme
 import com.mavo.app.ui.theme.MavoTheme
 import com.mavo.app.ui.theme.ThemeViewModel
+import com.mavo.app.ui.usesNavigationRail
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -148,18 +151,11 @@ private object Routes {
     const val PartyDetail = "party_detail/{partyId}"
 }
 
-@androidx.compose.runtime.Immutable
-private data class TopLevelDestination(
-    val route: String,
-    val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
-)
-
 private val topLevelDestinations = listOf(
-    TopLevelDestination(Routes.Dashboard, "Home", Icons.Outlined.Home),
-    TopLevelDestination(Routes.Vouchers, "Vouchers", Icons.Outlined.Description),
-    TopLevelDestination(Routes.Parties, "Parties", Icons.Outlined.People),
-    TopLevelDestination(Routes.Settings, "Settings", Icons.Outlined.Settings)
+    AppNavigationDestination(Routes.Dashboard, "Home", Icons.Outlined.Home),
+    AppNavigationDestination(Routes.Vouchers, "Vouchers", Icons.Outlined.Description),
+    AppNavigationDestination(Routes.Parties, "Parties", Icons.Outlined.People),
+    AppNavigationDestination(Routes.Settings, "More", Icons.Outlined.Settings)
 )
 
 private fun newVoucherRoute(voucherId: String? = null): String =
@@ -176,6 +172,7 @@ class MainActivity : ComponentActivity() {
     private val themeViewModel: ThemeViewModel by viewModels()
     private val dashboardViewModel: DashboardViewModel by viewModels()
 
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -183,6 +180,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val currentTheme by themeViewModel.currentTheme.collectAsState()
+            val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
             val windowInsetsController = remember(window) {
                 WindowInsetsControllerCompat(window, window.decorView)
             }
@@ -195,7 +193,10 @@ class MainActivity : ComponentActivity() {
                 windowInsetsController.isAppearanceLightNavigationBars = currentTheme.statusBarDarkIcons
             }
 
-            CompositionLocalProvider(LocalAppTheme provides currentTheme) {
+            CompositionLocalProvider(
+                LocalAppTheme provides currentTheme,
+                LocalAppWindowSizeClass provides windowSizeClass.widthSizeClass
+            ) {
                 MavoTheme(appTheme = currentTheme) {
                     MainAppEntry(viewModel, themeViewModel, dashboardViewModel)
                 }
@@ -208,7 +209,8 @@ class MainActivity : ComponentActivity() {
 fun MainAppEntry(
     viewModel: AppViewModel,
     themeViewModel: ThemeViewModel,
-    dashboardViewModel: DashboardViewModel
+    dashboardViewModel: DashboardViewModel,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val dbState by viewModel.dbInitState.collectAsState()
@@ -216,7 +218,7 @@ fun MainAppEntry(
     when (val state = dbState) {
         is AppViewModel.DbInitState.Loading -> {
             Box(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
                     .background(AppColors.screenBg),
                 contentAlignment = Alignment.Center
@@ -236,7 +238,7 @@ fun MainAppEntry(
 
         is AppViewModel.DbInitState.Error -> {
             Box(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
                     .background(AppColors.screenBg)
                     .padding(24.dp),
@@ -286,7 +288,8 @@ fun MainAppEntry(
             AppContent(
                 viewModel = viewModel,
                 themeViewModel = themeViewModel,
-                dashboardViewModel = dashboardViewModel
+                dashboardViewModel = dashboardViewModel,
+                modifier = modifier
             )
         }
     }
@@ -296,14 +299,20 @@ fun MainAppEntry(
 private fun AppContent(
     viewModel: AppViewModel,
     themeViewModel: ThemeViewModel,
-    dashboardViewModel: DashboardViewModel
+    dashboardViewModel: DashboardViewModel,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val windowWidthSizeClass = LocalAppWindowSizeClass.current
     val isSetupCompleted by viewModel.isSetupCompleted.collectAsState()
     val setupStatusResolved by viewModel.setupStatusResolved.collectAsState()
     var showSplash by remember { mutableStateOf(true) }
 
-    Crossfade(targetState = showSplash, animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)) { isSplash ->
+    Crossfade(
+        targetState = showSplash,
+        modifier = modifier,
+        animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing)
+    ) { isSplash ->
         if (isSplash) {
             SplashScreen(onTimeout = { showSplash = false })
         } else {
@@ -404,30 +413,44 @@ private fun AppContent(
                     Scaffold(
                         modifier = Modifier
                             .fillMaxSize()
-                            .statusBarsPadding()
-                            .navigationBarsPadding(),
+                            .statusBarsPadding(),
                         containerColor = AppColors.screenBg,
                         bottomBar = {
-                            if (isTopLevel) {
-                                ZeroBottomBar(
+                            if (isTopLevel && windowWidthSizeClass == WindowWidthSizeClass.Compact) {
+                                AdaptiveNavigationBar(
+                                    destinations = topLevelDestinations,
                                     currentRoute = currentDestination?.route,
                                     onNavigate = { navController.navigateToTopLevel(it) },
-                                    onCreate = { navController.navigate(newVoucherRoute()) }
+                                    onNewSale = { navController.navigate(newVoucherRoute()) }
                                 )
                             }
                         }
                     ) { innerPadding ->
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
                         ) {
-                            MavoNavHost(
-                                navController = navController,
-                                viewModel = viewModel,
-                                themeViewModel = themeViewModel,
-                                dashboardViewModel = dashboardViewModel
-                            )
+                            if (isTopLevel && windowWidthSizeClass.usesNavigationRail()) {
+                                AdaptiveNavigationRail(
+                                    destinations = topLevelDestinations,
+                                    currentRoute = currentDestination?.route,
+                                    onNavigate = { navController.navigateToTopLevel(it) },
+                                    onNewSale = { navController.navigate(newVoucherRoute()) }
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                            ) {
+                                MavoNavHost(
+                                    navController = navController,
+                                    viewModel = viewModel,
+                                    themeViewModel = themeViewModel,
+                                    dashboardViewModel = dashboardViewModel
+                                )
+                            }
                         }
                     }
 
@@ -491,11 +514,14 @@ private fun MavoNavHost(
     navController: NavHostController,
     viewModel: AppViewModel,
     themeViewModel: ThemeViewModel,
-    dashboardViewModel: DashboardViewModel
+    dashboardViewModel: DashboardViewModel,
+    modifier: Modifier = Modifier
 ) {
+    val useTwoPaneContent = LocalAppWindowSizeClass.current.usesTwoPaneLayout()
     NavHost(
         navController = navController,
         startDestination = Routes.Dashboard,
+        modifier = modifier,
         enterTransition = enterTransition(navigatingBack = false),
         exitTransition = exitTransition(navigatingBack = false),
         popEnterTransition = enterTransition(navigatingBack = true),
@@ -524,7 +550,7 @@ private fun MavoNavHost(
         composable(Routes.Vouchers) {
             VouchersScreen(
                 viewModel = viewModel,
-                isDesktop = false,
+                isDesktop = useTwoPaneContent,
                 navigateToNewVoucher = { id -> navController.navigate(newVoucherRoute(id)) },
                 navigateToVoucherDetail = { id -> navController.navigate(voucherDetailRoute(id)) }
             )
@@ -533,7 +559,7 @@ private fun MavoNavHost(
         composable(Routes.Parties) {
             PartiesScreen(
                 viewModel = viewModel,
-                isDesktop = false,
+                isDesktop = useTwoPaneContent,
                 onPartySelected = { id -> navController.navigate(partyDetailRoute(id)) }
             )
         }
@@ -542,7 +568,7 @@ private fun MavoNavHost(
             SettingsScreen(
                 viewModel = viewModel,
                 themeViewModel = themeViewModel,
-                isDesktop = false,
+                isDesktop = useTwoPaneContent,
                 navigateToProducts = { navController.navigate(Routes.Products) },
                 navigateToLedgerBooks = { navController.navigate(Routes.LedgerBooks) },
                 navigateToParties = { navController.navigate(Routes.Parties) },
@@ -553,7 +579,7 @@ private fun MavoNavHost(
         composable(Routes.Reports) {
             ReportsScreen(
                 viewModel = viewModel,
-                isDesktop = false,
+                isDesktop = useTwoPaneContent,
                 navigateToLedgerBooks = { navController.navigate(Routes.LedgerBooks) },
                 navigateToExpenses = { navController.navigate(Routes.Expenses) },
                 navigateToNewVoucher = { navController.navigate(newVoucherRoute(it)) },
@@ -704,110 +730,16 @@ private fun NavHostController.navigateToTopLevel(route: String) {
 }
 
 @Composable
-private fun ZeroBottomBar(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit,
-    onCreate: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AppColors.bottomBarBg)
-    ) {
-        HorizontalDivider(color = ScreenBorder)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(78.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BottomTab(topLevelDestinations[0], currentRoute, onNavigate)
-            BottomTab(topLevelDestinations[1], currentRoute, onNavigate)
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
-                        .background(AppColors.primary)
-                        .shadow(6.dp, CircleShape)
-                        .clickable(onClick = onCreate),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "New Voucher",
-                        tint = Color.White,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
-            }
-            BottomTab(topLevelDestinations[2], currentRoute, onNavigate)
-            BottomTab(topLevelDestinations[3], currentRoute, onNavigate)
-        }
-    }
-}
-
-@Composable
-private fun RowScope.BottomTab(
-    destination: TopLevelDestination,
-    currentRoute: String?,
-    onNavigate: (String) -> Unit
-) {
-    val selected = currentRoute == destination.route
-    Column(
-        modifier = Modifier
-            .weight(1f)
-            .fillMaxHeight()
-            .clickable { if (!selected) onNavigate(destination.route) },
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = 40.dp, height = 3.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(if (selected) AppColors.primary else Color.Transparent)
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Box(
-            modifier = Modifier
-                .size(width = 46.dp, height = 36.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (selected) AppColors.primary else Color.Transparent),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = destination.icon,
-                contentDescription = destination.label,
-                modifier = Modifier.size(22.dp),
-                tint = if (selected) Color.White else AppColors.textTertiary
-            )
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = destination.label,
-            fontSize = 11.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            color = if (selected) AppColors.textPrimary else AppColors.textTertiary
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-    }
-}
-
-@Composable
 fun PinLockScreen(
     correctPin: String,
-    onAuthentic: () -> Unit
+    onAuthentic: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var enteredText by remember { mutableStateOf("") }
     var hasError by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color(0xFF1A5C4B))
             .padding(32.dp),

@@ -86,6 +86,10 @@ import com.mavo.app.services.ExportTarget
 import com.mavo.app.services.InvoiceGenerator
 import com.mavo.app.services.configureInvoiceWebView
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.UiLoadState
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
 import com.mavo.app.ui.animation.premiumCombinedClickable
 import com.mavo.app.ui.components.ChipRow
 import com.mavo.app.ui.components.EmptyState
@@ -222,9 +226,8 @@ fun voucherTypeLabel(type: String): String = when (type) {
     else -> type.replace('_', ' ').replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 }
 
-// ponytail: these take a direct amount instead of product lines. Shared by validation and
-// the items panel so the two can't drift apart.
-private val itemlessVoucherTypes = setOf("RECEIPT", "PAYMENT", "INCOME", "EXPENSE", "PETTY_CASH", "INQUIRY")
+// These types use financial rows or one amount instead of inventory product rows.
+private val itemlessVoucherTypes = setOf("RECEIPT", "PAYMENT", "INCOME", "EXPENSE", "JOURNAL", "PETTY_CASH", "INQUIRY")
 
 private val voucherTypeFilterOptions = listOf(
     "ALL",
@@ -447,6 +450,100 @@ private data class JournalUiRow(
     val debitText: String = "",
     val creditText: String = ""
 )
+
+@Composable
+private fun JournalLinesEditor(
+    rows: MutableList<JournalUiRow>,
+    accounts: List<com.mavo.app.data.LedgerAccount>
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        rows.forEachIndexed { index, row ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                border = BorderStroke(1.dp, AppColors.border)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    var accountExpanded by remember(row.id) { mutableStateOf(false) }
+                    OutlinedTextField(
+                        value = row.accountHead,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Account name") },
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Choose account",
+                                modifier = Modifier.clickable { accountExpanded = true }
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    DropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false }
+                    ) {
+                        accounts.forEach { account ->
+                            DropdownMenuItem(
+                                text = { Text(account.name) },
+                                onClick = {
+                                    rows[index] = row.copy(accountHead = account.name)
+                                    accountExpanded = false
+                                }
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        RetailTextField(
+                            value = row.debitText,
+                            onValueChange = {
+                                rows[index] = row.copy(
+                                    debitText = filterDecimalInput(it),
+                                    creditText = if (it.isNotBlank()) "" else row.creditText
+                                )
+                            },
+                            label = "DR amount",
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.weight(1f)
+                        )
+                        RetailTextField(
+                            value = row.creditText,
+                            onValueChange = {
+                                rows[index] = row.copy(
+                                    creditText = filterDecimalInput(it),
+                                    debitText = if (it.isNotBlank()) "" else row.debitText
+                                )
+                            },
+                            label = "CR amount",
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+        OutlinedButton(
+            onClick = { rows.add(JournalUiRow()) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Add row")
+        }
+        Text(
+            "Total DR: ${Utils.formatIndianCurrency(rows.sumOf { it.debitText.toDoubleOrNull() ?: 0.0 })}",
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            "Total CR: ${Utils.formatIndianCurrency(rows.sumOf { it.creditText.toDoubleOrNull() ?: 0.0 })}",
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
 
 @Composable
 private fun transportFieldColors() = OutlinedTextFieldDefaults.colors(
@@ -884,9 +981,13 @@ fun VouchersScreen(
     navigateToNewVoucher: (String?) -> Unit,
     navigateToVoucherDetail: (String) -> Unit
 ) {
-    val vouchers by viewModel.vouchers.collectAsState()
-    val parties by viewModel.parties.collectAsState()
-    val ledgerEntries by viewModel.ledgerEntries.collectAsState()
+    val vouchersReadState by viewModel.vouchersUiState.collectAsState()
+    val partiesReadState by viewModel.partiesUiState.collectAsState()
+    val ledgerEntriesReadState by viewModel.ledgerEntriesUiState.collectAsState()
+    val vouchers = vouchersReadState.valueOrEmpty()
+    val parties = partiesReadState.valueOrEmpty()
+    val ledgerEntries = ledgerEntriesReadState.valueOrEmpty()
+    val cachedVoucherError = (vouchersReadState as? UiLoadState.Error<*>)?.hasCachedValue == true
     val context = LocalContext.current
     val partyNameById by remember(parties) {
         derivedStateOf { parties.associate { it.id to it.name } }
@@ -905,7 +1006,13 @@ fun VouchersScreen(
     val coroutineScope = rememberCoroutineScope()
     var deleteConfirmVoucherIds by remember { mutableStateOf<List<String>>(emptyList()) }
     var statusTab by remember { mutableStateOf(0) }
-    val profile by viewModel.profile.collectAsState()
+    val profileReadState by viewModel.profileUiState.collectAsState()
+    val profile = when (val state = profileReadState) {
+        is UiLoadState.Content -> state.value
+        is UiLoadState.Empty -> state.value
+        is UiLoadState.Error -> state.cachedValue
+        UiLoadState.Loading -> null
+    }
 
     val filteredVouchers by remember(vouchers, searchQuery, appliedFilterState, partyNameById) {
         derivedStateOf {
@@ -1294,8 +1401,19 @@ fun VouchersScreen(
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
+                        UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
+                        UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
+                        if (cachedVoucherError) {
+                            UiLoadStateNotice(vouchersReadState, viewModel::retryFailedReads)
+                        }
 
-                        if (displayedVouchers.isEmpty()) {
+                        if (vouchersReadState.blocksContent()) {
+                            UiLoadStateNotice(
+                                state = vouchersReadState,
+                                onRetry = viewModel::retryFailedReads,
+                                modifier = Modifier.padding(horizontal = 20.dp)
+                            )
+                        } else if (displayedVouchers.isEmpty()) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
                                     Icon(Icons.Default.FilterList, contentDescription = null, tint = AppColors.textTertiary, modifier = Modifier.size(48.dp))
@@ -1634,8 +1752,19 @@ fun VouchersScreen(
                 Spacer(modifier = Modifier.height(14.dp))
                 HorizontalDivider(color = ScreenBorder)
                 Spacer(modifier = Modifier.height(12.dp))
+                UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
+                UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
+                if (cachedVoucherError) {
+                    UiLoadStateNotice(vouchersReadState, viewModel::retryFailedReads)
+                }
 
-                if (vouchers.isEmpty()) {
+                if (vouchersReadState.blocksContent()) {
+                    UiLoadStateNotice(
+                        state = vouchersReadState,
+                        onRetry = viewModel::retryFailedReads,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                } else if (vouchers.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -1774,12 +1903,14 @@ fun NewVoucherScreen(
     // Voucher details
     var selectedType by remember { mutableStateOf("SALE") }
     var voucherNo by remember { mutableStateOf("") }
+    var existingVoucherStatus by remember { mutableStateOf("POSTED") }
     var voucherDate by remember { mutableStateOf(System.currentTimeMillis()) }
     var dateText by remember { mutableStateOf(Utils.formatDate(System.currentTimeMillis())) }
     var isDateEditing by remember { mutableStateOf(false) }
     var voucherNoTouched by remember { mutableStateOf(false) }
     var selectedParty by remember { mutableStateOf<Party?>(null) }
     var paymentMode by remember { mutableStateOf("CASH") }
+    var financialCategory by remember { mutableStateOf("") }
     var partialAmountPaidText by remember { mutableStateOf("") }
     var partialPaymentSubmode by remember { mutableStateOf("CASH") }
     var creditDueDateText by remember { mutableStateOf("") }
@@ -1818,6 +1949,7 @@ fun NewVoucherScreen(
     var pendingAdvanceReceiptVoucherId by remember { mutableStateOf<String?>(null) }
     var pendingAdvanceReceiptEmail by remember { mutableStateOf("") }
     var pendingAfterSaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var financialAmount by remember { mutableStateOf(0.0) }
     val journalRows = remember {
         mutableStateListOf(JournalUiRow(), JournalUiRow())
     }
@@ -1832,12 +1964,15 @@ fun NewVoucherScreen(
             val voucher = viewModel.getVoucherById(voucherId)
             if (voucher != null) {
                 selectedType = voucher.type
+                existingVoucherStatus = voucher.status
                 formStep = if (voucher.type == "SALE" || voucher.type == "PURCHASE") 3 else 1
                 voucherNo = voucher.voucherNo
                 voucherDate = voucher.date
                 dateText = Utils.formatDate(voucher.date)
                 selectedParty = parties.find { it.id == voucher.partyId }
                 paymentMode = voucher.paymentMode
+                financialCategory = voucher.referenceNo.orEmpty()
+                financialAmount = voucher.netAmount
                 narration = voucher.narration ?: ""
                 chequeNo = voucher.chequeNo.orEmpty()
                 chequeDate = voucher.chequeDate ?: voucher.date
@@ -1865,13 +2000,40 @@ fun NewVoucherScreen(
                 saleOtherReferences = otherReferences
                 
                 val items = viewModel.getItemsForVoucher(voucherId).firstOrNull()
-                if (items != null) {
+                if (voucher.type == "INCOME" || voucher.type == "EXPENSE") {
+                    lineItems.clear()
+                } else if (items != null) {
                     lineItems.clear()
                     lineItems.addAll(items)
+                }
+                if (voucher.type == "JOURNAL") {
+                    val lines = viewModel.getJournalLinesForVoucher(voucherId)
+                    journalRows.clear()
+                    journalRows.addAll(
+                        lines.map {
+                            JournalUiRow(
+                                accountHead = it.accountHead,
+                                debitText = it.debit.takeIf { amount -> amount > 0.0 }?.toString().orEmpty(),
+                                creditText = it.credit.takeIf { amount -> amount > 0.0 }?.toString().orEmpty()
+                            )
+                        }.ifEmpty { listOf(JournalUiRow(), JournalUiRow()) }
+                    )
                 }
                 additionalCharges.clear()
                 additionalCharges.addAll(InvoiceGenerator.parseAdditionalCharges(voucher.additionalChargesJson))
             }
+
+        }
+    }
+
+    LaunchedEffect(selectedType) {
+        val categories = when (selectedType) {
+            "INCOME" -> incomeCategories
+            "EXPENSE" -> expenseCategories
+            else -> emptyList()
+        }
+        if (categories.isNotEmpty() && financialCategory !in categories) {
+            financialCategory = categories.first()
         }
     }
 
@@ -1954,14 +2116,25 @@ fun NewVoucherScreen(
     var partySearchQuery by remember { mutableStateOf("") }
 
     // Calculations
-    val taxableAmount = remember { derivedStateOf { lineItems.sumOf { it.taxableAmount } } }
+    val isFinancialVoucher = selectedType == "INCOME" || selectedType == "EXPENSE"
+    val taxableAmount = remember(isFinancialVoucher) {
+        derivedStateOf {
+            if (isFinancialVoucher) financialAmount else lineItems.sumOf { it.taxableAmount }
+        }
+    }
     val cgst = remember { derivedStateOf { lineItems.sumOf { it.cgstAmount } } }
     val sgst = remember { derivedStateOf { lineItems.sumOf { it.sgstAmount } } }
     val igst = remember { derivedStateOf { lineItems.sumOf { it.igstAmount } } }
     val additionalChargesTotal = remember { derivedStateOf { additionalCharges.sumOf { it.amount } } }
-    val rawTotal = remember { derivedStateOf { taxableAmount.value + cgst.value + sgst.value + igst.value + additionalChargesTotal.value } }
-    val netAmount = remember { derivedStateOf { Math.round(rawTotal.value).toDouble() } }
-    val roundOff = remember { derivedStateOf { netAmount.value - rawTotal.value } }
+    val rawTotal = remember(taxableAmount, cgst, sgst, igst, additionalChargesTotal) {
+        derivedStateOf { taxableAmount.value + cgst.value + sgst.value + igst.value + additionalChargesTotal.value }
+    }
+    val netAmount = remember(isFinancialVoucher, rawTotal) {
+        derivedStateOf { if (isFinancialVoucher) rawTotal.value else Math.round(rawTotal.value).toDouble() }
+    }
+    val roundOff = remember(isFinancialVoucher, netAmount, rawTotal) {
+        derivedStateOf { if (isFinancialVoucher) 0.0 else netAmount.value - rawTotal.value }
+    }
 
     val isInterstate = remember(selectedParty, profile) {
         val pstate = selectedParty?.stateCode ?: ""
@@ -1969,10 +2142,7 @@ fun NewVoucherScreen(
         pstate.isNotEmpty() && pstate != bstate
     }
     val isCustomerVoucher = selectedType in setOf("SALE", "RECEIPT", "SALE_RETURN", "SALES_ORDER", "PROFORMA")
-    // ponytail: mockups 33-89 run every wizard voucher through 3 steps; edit mode is a
-    // single page with an EDITING header (mockup 19). Journal/income/expense/bills return
-    // to their dedicated screens before the wizard scaffold, so they are unaffected here.
-    // upgrade path: give those four types a real 3-step wizard if mockups 39-41 matter.
+    // Edit mode stays on one page; new vouchers use the three-step phone flow.
     val isThreeStepVoucher = !isEditMode
     val pagerState = rememberPagerState(initialPage = (formStep - 1).coerceIn(0, 2), pageCount = { 3 })
     val voucherTabs = remember(selectedType) {
@@ -2094,6 +2264,10 @@ fun NewVoucherScreen(
     }
 
     fun setDirectAmount(amount: Double) {
+        if (isFinancialVoucher) {
+            financialAmount = amount
+            return
+        }
         lineItems.clear()
         lineItems.add(
             VoucherItem(
@@ -2242,8 +2416,22 @@ fun NewVoucherScreen(
         if (selectedType == "JOURNAL") {
             val totalDr = journalRows.sumOf { it.debitText.toDoubleOrNull() ?: 0.0 }
             val totalCr = journalRows.sumOf { it.creditText.toDoubleOrNull() ?: 0.0 }
-            val hasValidRows = journalRows.count { it.accountHead.isNotBlank() } >= 2
-            if (!hasValidRows) {
+            val hasValidRows = journalRows.count { row ->
+                val debit = row.debitText.toDoubleOrNull() ?: 0.0
+                val credit = row.creditText.toDoubleOrNull() ?: 0.0
+                row.accountHead.isNotBlank() && ((debit > 0.0) xor (credit > 0.0))
+            } >= 2
+            val hasInvalidRows = journalRows.any { row ->
+                val debit = row.debitText.toDoubleOrNull() ?: 0.0
+                val credit = row.creditText.toDoubleOrNull() ?: 0.0
+                (debit > 0.0 && credit > 0.0) ||
+                    ((debit > 0.0 || credit > 0.0) && row.accountHead.isBlank())
+            }
+            if (voucherNo.trim().isBlank()) {
+                android.widget.Toast.makeText(context, "Cannot save: Voucher Number is missing!", android.widget.Toast.LENGTH_LONG).show()
+            } else if (hasInvalidRows) {
+                android.widget.Toast.makeText(context, "Each journal row needs an account and one amount.", android.widget.Toast.LENGTH_LONG).show()
+            } else if (!hasValidRows) {
                 android.widget.Toast.makeText(context, "Add at least two journal rows.", android.widget.Toast.LENGTH_LONG).show()
             } else if (totalDr <= 0.0 || totalCr <= 0.0 || kotlin.math.abs(totalDr - totalCr) > 0.009) {
                 android.widget.Toast.makeText(context, "Total DR must equal total CR.", android.widget.Toast.LENGTH_LONG).show()
@@ -2264,6 +2452,8 @@ fun NewVoucherScreen(
                 android.widget.Toast.makeText(context, "Cannot save: Invalid quantities!", android.widget.Toast.LENGTH_LONG).show()
             } else if (!isBill && netAmount.value <= 0.0) {
                 android.widget.Toast.makeText(context, "Cannot save: Invalid amount!", android.widget.Toast.LENGTH_LONG).show()
+            } else if (selectedType in setOf("INCOME", "EXPENSE") && financialCategory.isBlank()) {
+                android.widget.Toast.makeText(context, "Choose a category before posting.", android.widget.Toast.LENGTH_LONG).show()
             } else if (selectedType == "SALE" && paymentMode == "PART PAYMENT" && (partialAmountPaidText.toDoubleOrNull() ?: 0.0) <= 0.0) {
                 android.widget.Toast.makeText(context, "Cannot save: Enter part payment amount.", android.widget.Toast.LENGTH_LONG).show()
             } else if (selectedType == "SALE" && paymentMode == "PART PAYMENT" && (partialAmountPaidText.toDoubleOrNull() ?: 0.0) >= netAmount.value) {
@@ -2281,17 +2471,23 @@ fun NewVoucherScreen(
         }
     }
 
-    val saveTheVoucher: (Boolean) -> Unit = { shouldPrint ->
+    val saveTheVoucher: (Boolean, Boolean) -> Unit = { shouldPrint, saveAsDraft ->
         if (selectedType == "JOURNAL") {
             val finalId = voucherId?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
             val lines = journalRows.mapNotNull { row ->
-                if (row.accountHead.isBlank()) null else com.mavo.app.data.JournalLine(
-                    accountHead = row.accountHead,
-                    debit = row.debitText.toDoubleOrNull() ?: 0.0,
-                    credit = row.creditText.toDoubleOrNull() ?: 0.0
-                )
+                val debit = row.debitText.toDoubleOrNull() ?: 0.0
+                val credit = row.creditText.toDoubleOrNull() ?: 0.0
+                if (!saveAsDraft && (row.accountHead.isBlank() || debit == 0.0 && credit == 0.0)) {
+                    null
+                } else {
+                    com.mavo.app.data.JournalLine(
+                        accountHead = row.accountHead,
+                        debit = debit,
+                        credit = credit
+                    )
+                }
             }
-            val journalTotal = lines.sumOf { it.debit }
+            val journalTotal = maxOf(lines.sumOf { it.debit }, lines.sumOf { it.credit })
             viewModel.saveJournalVoucher(
                 voucher = Voucher(
                     id = finalId,
@@ -2311,7 +2507,7 @@ fun NewVoucherScreen(
                     chequeDate = null,
                     bankName = null,
                     isIgst = false,
-                    status = "POSTED"
+                    status = if (saveAsDraft) "DRAFT" else "POSTED"
                 ),
                 lines = lines
             ) {
@@ -2354,14 +2550,22 @@ fun NewVoucherScreen(
                 vehicleNo = transportVehicle,
                 transportGstin = transportGstin,
                 destination = transportDestination,
-                referenceNo = if (selectedType in setOf("SALE", "PURCHASE", "RECEIPT", "PAYMENT")) saleReferenceNo else "",
+                referenceNo = when (selectedType) {
+                    "INCOME", "EXPENSE" -> financialCategory
+                    "SALE", "PURCHASE", "RECEIPT", "PAYMENT" -> saleReferenceNo
+                    else -> ""
+                },
                 paymentMode = paymentMode,
                 chequeNo = if (paymentMode == "CHEQUE") chequeNo else null,
                 chequeDate = if (paymentMode == "CHEQUE") chequeDate else null,
                 bankName = if (paymentMode == "CHEQUE") bankName else null,
                 isIgst = isInterstate,
                 documentType = if (selectedType == "PROFORMA") "PROFORMA" else "",
-                status = if (selectedType in setOf("QUOTATION", "DELIVERY_CHALLAN", "SALES_ORDER", "PURCHASE_ORDER", "INQUIRY")) "DRAFT" else if (selectedType == "PROFORMA") "DRAFT" else "POSTED",
+                status = when {
+                    saveAsDraft -> "DRAFT"
+                    selectedType in setOf("QUOTATION", "DELIVERY_CHALLAN", "SALES_ORDER", "PURCHASE_ORDER", "INQUIRY", "PROFORMA") -> "DRAFT"
+                    else -> "POSTED"
+                },
                 receiptImagePath = null,
                 attachmentPath = savedAttachmentPath,
                 bankIfsc = if (paymentMode == "BANK") bankIfsc else null,
@@ -2401,49 +2605,53 @@ fun NewVoucherScreen(
                         onNavigateBack()
                     }
                 }
-                if (selectedType in setOf("SALE", "PURCHASE", "RECEIPT", "PAYMENT", "PROFORMA", "SALES_ORDER", "PURCHASE_ORDER")) {
-                    viewModel.syncSaleVoucherReferenceFields(finalId, saleReferenceNo, saleOtherReferences)
-                }
-                if (
-                    selectedType == "SALE" &&
-                    paymentMode in listOf("CREDIT", "PART PAYMENT") &&
-                    creditDueDateText.isNotBlank()
-                ) {
-                    viewModel.scheduleDueReminder(finalId, creditDueDateText)
-                }
-                if (selectedType == "RECEIPT" || selectedType == "PAYMENT") {
-                    var remainingAllocation = netAmount.value
-                    pendingInvoices
-                        .filter { pendingInvoiceChecks[it.id] != false }
-                        .forEach { invoice ->
-                            if (remainingAllocation > 0.0) {
-                                val allocated = minOf(remainingAllocation, invoice.outstandingAmount)
-                                if (allocated > 0.0) {
-                                    viewModel.insertAllocation(
-                                        ReceiptAllocation(
-                                            id = UUID.randomUUID().toString(),
-                                            receiptId = finalId,
-                                            invoiceId = invoice.id,
-                                            allocatedAmount = allocated,
-                                            createdAt = System.currentTimeMillis()
+                if (saveAsDraft) {
+                    onNavigateBack()
+                } else {
+                    if (selectedType in setOf("SALE", "PURCHASE", "RECEIPT", "PAYMENT", "PROFORMA", "SALES_ORDER", "PURCHASE_ORDER")) {
+                        viewModel.syncSaleVoucherReferenceFields(finalId, saleReferenceNo, saleOtherReferences)
+                    }
+                    if (
+                        selectedType == "SALE" &&
+                        paymentMode in listOf("CREDIT", "PART PAYMENT") &&
+                        creditDueDateText.isNotBlank()
+                    ) {
+                        viewModel.scheduleDueReminder(finalId, creditDueDateText)
+                    }
+                    if (selectedType == "RECEIPT" || selectedType == "PAYMENT") {
+                        var remainingAllocation = netAmount.value
+                        pendingInvoices
+                            .filter { pendingInvoiceChecks[it.id] != false }
+                            .forEach { invoice ->
+                                if (remainingAllocation > 0.0) {
+                                    val allocated = minOf(remainingAllocation, invoice.outstandingAmount)
+                                    if (allocated > 0.0) {
+                                        viewModel.insertAllocation(
+                                            ReceiptAllocation(
+                                                id = UUID.randomUUID().toString(),
+                                                receiptId = finalId,
+                                                invoiceId = invoice.id,
+                                                allocatedAmount = allocated,
+                                                createdAt = System.currentTimeMillis()
+                                            )
                                         )
-                                    )
-                                    remainingAllocation -= allocated
+                                        remainingAllocation -= allocated
+                                    }
                                 }
                             }
-                        }
-                }
-                if (
-                    selectedType == "RECEIPT" &&
-                    isAdvanceReceipt &&
-                    !selectedParty?.email.isNullOrBlank()
-                ) {
-                    pendingAdvanceReceiptVoucherId = finalId
-                    pendingAdvanceReceiptEmail = selectedParty?.email.orEmpty()
-                    pendingAfterSaveAction = completeSaveFlow
-                    showAdvanceReceiptEmailDialog = true
-                } else {
-                    completeSaveFlow()
+                    }
+                    if (
+                        selectedType == "RECEIPT" &&
+                        isAdvanceReceipt &&
+                        !selectedParty?.email.isNullOrBlank()
+                    ) {
+                        pendingAdvanceReceiptVoucherId = finalId
+                        pendingAdvanceReceiptEmail = selectedParty?.email.orEmpty()
+                        pendingAfterSaveAction = completeSaveFlow
+                        showAdvanceReceiptEmailDialog = true
+                    } else {
+                        completeSaveFlow()
+                    }
                 }
             }
         }
@@ -2584,14 +2792,6 @@ fun NewVoucherScreen(
         }
     } else {
         // Step 2: Main Entry layout
-        if (selectedType == "EXPENSE") {
-            ExpensesScreen(viewModel = viewModel, onNavigateBack = { step = 1 })
-            return
-        }
-        if (selectedType == "INCOME") {
-            IncomeScreen(viewModel = viewModel, onNavigateBack = { step = 1 })
-            return
-        }
         if (selectedType == "BILLS_RECEIVABLE") {
             val billsReceivable by viewModel.billsReceivable.collectAsState()
             Scaffold(
@@ -2643,7 +2843,7 @@ fun NewVoucherScreen(
             }
             return
         }
-        if (selectedType == "JOURNAL") {
+        if (selectedType == "JOURNAL" && isEditMode) {
             Scaffold(
                 containerColor = AppColors.screenBg,
                 topBar = {
@@ -2941,14 +3141,18 @@ fun NewVoucherScreen(
             bottomBar = {
                 if (!isDesktop) {
                     if (isThreeStepVoucher && formStep < 3) {
-                        // ponytail: mockup shows "Save Draft" here, but no user-triggered draft
-                        // save exists (status is type-driven), so Back keeps navigation honest.
                         Surface(
                             color = AppColors.cardBg,
                             modifier = Modifier.fillMaxWidth().navigationBarsPadding()
                         ) {
                             Column {
                                 HorizontalDivider(color = ScreenBorder)
+                                TextButton(
+                                    onClick = { saveTheVoucher(false, true) },
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                ) {
+                                    Text(if (isEditMode) "Update Draft" else "Save Draft")
+                                }
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -2977,6 +3181,9 @@ fun NewVoucherScreen(
                     } else {
                         StickyBottomBar(
                             selectedType = selectedType,
+                            onSaveDraft = if (isThreeStepVoucher) {
+                                { saveTheVoucher(false, true) }
+                            } else null,
                             saveButtonLabel = if (selectedType in setOf("QUOTATION", "DELIVERY_CHALLAN", "SALES_ORDER", "PURCHASE_ORDER", "INQUIRY", "PROFORMA")) {
                                 if (isEditMode) "Update Draft" else "Save Draft"
                             } else {
@@ -3263,6 +3470,40 @@ fun NewVoucherScreen(
                         }
                     }
 
+                    if (selectedType == "INCOME" || selectedType == "EXPENSE") {
+                        val categories = if (selectedType == "INCOME") incomeCategories else expenseCategories
+                        var categoryExpanded by remember(selectedType) { mutableStateOf(false) }
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = financialCategory,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text(if (selectedType == "INCOME") "Income category" else "Expense category") },
+                                trailingIcon = {
+                                    Icon(
+                                        Icons.Default.KeyboardArrowDown,
+                                        contentDescription = "Choose category",
+                                        modifier = Modifier.clickable { categoryExpanded = true }
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            DropdownMenu(
+                                expanded = categoryExpanded,
+                                onDismissRequest = { categoryExpanded = false }
+                            ) {
+                                categories.forEach { category ->
+                                    DropdownMenuItem(
+                                        text = { Text(category) },
+                                        onClick = {
+                                            financialCategory = category
+                                            categoryExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    } else if (selectedType != "JOURNAL") {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3366,6 +3607,7 @@ fun NewVoucherScreen(
                                 }
                             }
                         }
+                    }
                     }
 
                     val isPurchaseType = selectedType == "PURCHASE" || selectedType == "PURCHASE_RETURN"
@@ -3490,7 +3732,7 @@ fun NewVoucherScreen(
                     RetailTextField(
                         value = narration,
                         onValueChange = { narration = it },
-                        label = "Narration"
+                        label = if (selectedType == "INCOME" || selectedType == "EXPENSE") "Description" else "Narration"
                     )
                     }
 
@@ -3834,31 +4076,36 @@ fun NewVoucherScreen(
                                 }
                             }
                         }
-                        if (selectedType == "RECEIPT" && isAdvanceReceipt) {
+                        if (selectedType == "JOURNAL") {
+                            JournalLinesEditor(journalRows, ledgerAccounts)
+                        }
+                        if (selectedType != "JOURNAL") {
+                            if (selectedType == "RECEIPT" && isAdvanceReceipt) {
+                                RetailTextField(
+                                    value = advanceForText,
+                                    onValueChange = { advanceForText = it },
+                                    label = "For",
+                                    placeholder = "What is this advance for?"
+                                )
+                            }
                             RetailTextField(
-                                value = advanceForText,
-                                onValueChange = { advanceForText = it },
-                                label = "For",
-                                placeholder = "What is this advance for?"
+                                value = netAmount.value.toString(),
+                                onValueChange = {
+                                    val valueDouble = filterDecimalInput(it).toDoubleOrNull() ?: 0.0
+                                    setDirectAmount(valueDouble)
+                                },
+                                label = if (selectedType == "RECEIPT" && isAdvanceReceipt) "Advance Amount (₹) *" else "Amount (₹) *",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("direct_amount_input"),
+                                fieldModifier = Modifier.onFocusChanged { focusState ->
+                                    if (!focusState.isFocused && netAmount.value == 0.0) {
+                                        setDirectAmount(0.0)
+                                    }
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                             )
                         }
-                        RetailTextField(
-                            value = netAmount.value.toString(),
-                            onValueChange = {
-                                val valueDouble = filterDecimalInput(it).toDoubleOrNull() ?: 0.0
-                                setDirectAmount(valueDouble)
-                            },
-                            label = if (selectedType == "RECEIPT" && isAdvanceReceipt) "Advance Amount (₹) *" else "Amount (₹) *",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("direct_amount_input"),
-                            fieldModifier = Modifier.onFocusChanged { focusState ->
-                                if (!focusState.isFocused && netAmount.value == 0.0) {
-                                    setDirectAmount(0.0)
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                        )
                         if ((selectedType == "RECEIPT" && !isAdvanceReceipt) || selectedType == "PAYMENT") {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 listOf(25, 50, 75, 100).forEach { percent ->
@@ -4464,18 +4711,30 @@ fun NewVoucherScreen(
                                 when (selectedType) {
                                     "SALE" -> "Check party, payment mode, items, and final total before posting the sale."
                                     "PURCHASE" -> "Check supplier, bill attachment, items, and final total before posting the purchase."
+                                    "JOURNAL" -> "Confirm that each account is correct and total debits equal total credits."
+                                    "INCOME", "EXPENSE" -> "Review the category, payment account, and amount before posting."
                                     else -> "Review the voucher details before saving."
                                 },
                                 fontSize = 12.sp,
                                 color = AppColors.textSecondary
                             )
-                            Text("Party: ${selectedParty?.name ?: "Cash / Walk-in Customer"}", fontSize = 12.sp, color = AppColors.textPrimary)
-                            Text("Mode: $paymentMode", fontSize = 12.sp, color = AppColors.textPrimary)
-                            Text("Items: ${lineItems.size}", fontSize = 12.sp, color = AppColors.textPrimary)
+                            if (selectedType == "JOURNAL") {
+                                Text("Total DR: ${Utils.formatIndianCurrency(journalRows.sumOf { it.debitText.toDoubleOrNull() ?: 0.0 })}", fontSize = 12.sp, color = AppColors.textPrimary)
+                                Text("Total CR: ${Utils.formatIndianCurrency(journalRows.sumOf { it.creditText.toDoubleOrNull() ?: 0.0 })}", fontSize = 12.sp, color = AppColors.textPrimary)
+                                Text("Ledger rows: ${journalRows.count { it.accountHead.isNotBlank() }}", fontSize = 12.sp, color = AppColors.textPrimary)
+                            } else if (selectedType == "INCOME" || selectedType == "EXPENSE") {
+                                Text("Category: $financialCategory", fontSize = 12.sp, color = AppColors.textPrimary)
+                                Text("Mode: $paymentMode", fontSize = 12.sp, color = AppColors.textPrimary)
+                                Text("Amount: ${Utils.formatIndianCurrency(netAmount.value)}", fontSize = 12.sp, color = AppColors.textPrimary)
+                            } else {
+                                Text("Party: ${selectedParty?.name ?: "Cash / Walk-in Customer"}", fontSize = 12.sp, color = AppColors.textPrimary)
+                                Text("Mode: $paymentMode", fontSize = 12.sp, color = AppColors.textPrimary)
+                                Text("Items: ${lineItems.size}", fontSize = 12.sp, color = AppColors.textPrimary)
+                            }
                         }
                     }
 
-                    if (!isDesktop) {
+                    if (!isDesktop && selectedType !in setOf("JOURNAL", "INCOME", "EXPENSE")) {
                         LiveInvoicePreview(
                             profile = profile,
                             party = selectedParty,
@@ -4513,6 +4772,29 @@ fun NewVoucherScreen(
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("Summary", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             }
+                            if (selectedType == "JOURNAL") {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Total DR:", fontSize = 12.sp, color = AppColors.textSecondary)
+                                    Text(Utils.formatIndianCurrency(journalRows.sumOf { it.debitText.toDoubleOrNull() ?: 0.0 }), fontSize = 12.sp, color = AppColors.textSecondary)
+                                }
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Total CR:", fontSize = 12.sp, color = AppColors.textSecondary)
+                                    Text(Utils.formatIndianCurrency(journalRows.sumOf { it.creditText.toDoubleOrNull() ?: 0.0 }), fontSize = 12.sp, color = AppColors.textSecondary)
+                                }
+                            } else if (selectedType == "INCOME" || selectedType == "EXPENSE") {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Category:", fontSize = 12.sp, color = AppColors.textSecondary)
+                                    Text(financialCategory, fontSize = 12.sp, color = AppColors.textPrimary)
+                                }
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Payment account:", fontSize = 12.sp, color = AppColors.textSecondary)
+                                    Text(paymentMode, fontSize = 12.sp, color = AppColors.textPrimary)
+                                }
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Amount:", fontSize = 12.sp, color = AppColors.textSecondary)
+                                    Text(Utils.formatIndianCurrency(netAmount.value), fontSize = 12.sp, color = AppColors.textPrimary)
+                                }
+                            } else {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("Taxable Amount:", fontSize = 11.sp, color = AppColors.textSecondary)
                                 Text(Utils.formatIndianCurrency(taxableAmount.value), fontSize = 11.sp, color = AppColors.textSecondary)
@@ -4555,6 +4837,7 @@ fun NewVoucherScreen(
                                 Text("Net Total Owed:", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                                 Text(Utils.formatIndianCurrency(netAmount.value), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
                             }
+                            }
                         }
                     }
                 }
@@ -4569,6 +4852,9 @@ fun NewVoucherScreen(
                 ) {
                     StickyBottomBar(
                         selectedType = selectedType,
+                        onSaveDraft = if (isThreeStepVoucher) {
+                            { saveTheVoucher(false, true) }
+                        } else null,
                         saveButtonLabel = if (selectedType == "QUOTATION" || selectedType == "DELIVERY_CHALLAN") {
                             if (isEditMode) "Update Draft" else "Save Draft"
                         } else {
@@ -4696,7 +4982,7 @@ fun NewVoucherScreen(
             // Step 5: Save and Auto-trigger print
             delay(1200)
             showUpiPaymentDialog = false
-            saveTheVoucher(true)
+            saveTheVoucher(true, false)
         }
 
         AlertDialog(
@@ -4849,7 +5135,7 @@ fun NewVoucherScreen(
                 TextButton(onClick = {
                     showUpiPaymentDialog = false
                     // Backup manual confirm override
-                    saveTheVoucher(true)
+                    saveTheVoucher(true, false)
                 }) {
                     Text("Manual Code Override (Bypass)", color = AppColors.primary, fontWeight = FontWeight.Bold)
                 }
@@ -5074,7 +5360,7 @@ fun NewVoucherScreen(
                     if (saveShouldPrint && paymentMode == "UPI" && isSaleOrReturn) {
                         showUpiPaymentDialog = true
                     } else {
-                        saveTheVoucher(saveShouldPrint)
+                        saveTheVoucher(saveShouldPrint, false)
                     }
                 }) {
                     Text(if (isEditMode) "Update" else "Save", color = AppColors.primary, fontWeight = FontWeight.Bold)
@@ -5933,7 +6219,8 @@ private fun ParsedBillItemsDialog(
 fun StickyBottomBar(
     selectedType: String,
     saveButtonLabel: String,
-    onSaveClick: (shouldPrint: Boolean) -> Unit
+    onSaveClick: (shouldPrint: Boolean) -> Unit,
+    onSaveDraft: (() -> Unit)? = null
 ) {
     Surface(
         color = AppColors.cardBg,
@@ -5943,12 +6230,18 @@ fun StickyBottomBar(
     ) {
         Column {
             HorizontalDivider(color = ScreenBorder)
+            if (onSaveDraft != null) {
+                TextButton(
+                    onClick = onSaveDraft,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text("Save Draft", color = AppColors.primary)
+                }
+            }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // ponytail: mockups show "Save Draft" + "Post X"; drafts are type-driven so the
-                // secondary keeps saveButtonLabel and the primary keeps the wired print action.
                 val isSaleOrReturn = selectedType == "SALE" || selectedType == "SALE_RETURN"
                 if (isSaleOrReturn) {
                     SecondaryButton(

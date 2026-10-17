@@ -43,7 +43,8 @@ import com.mavo.app.ui.theme.AppColors
 fun HsnSearchDialog(
     onDismiss: () -> Unit,
     onSelect: (HsnResult) -> Unit,
-    initialQuery: String = ""
+    initialQuery: String = "",
+    modifier: Modifier = Modifier
 ) {
     var query by remember { mutableStateOf(initialQuery.trim()) }
     val results = remember(query) { HsnLookup.search(query) }
@@ -51,6 +52,7 @@ fun HsnSearchDialog(
     val selectedResult = selected
 
     AlertDialog(
+        modifier = modifier,
         onDismissRequest = onDismiss,
         confirmButton = {},
         containerColor = AppColors.cardBg,

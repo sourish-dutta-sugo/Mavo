@@ -77,6 +77,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.zIndex
@@ -87,6 +88,9 @@ import com.mavo.app.data.Utils
 import com.mavo.app.data.Voucher
 import com.mavo.app.ui.AppViewModel
 import com.mavo.app.ui.DashboardViewModel
+import com.mavo.app.ui.LocalAppWindowSizeClass
+import com.mavo.app.ui.UiLoadState
+import com.mavo.app.ui.dashboardMaxWidthDp
 import com.mavo.app.ui.animation.m3SpringPress
 import com.mavo.app.ui.components.ChoiceChipRow
 import com.mavo.app.ui.components.CircleIconButton
@@ -95,6 +99,8 @@ import com.mavo.app.ui.components.SearchField
 import com.mavo.app.ui.components.ZbCard
 import com.mavo.app.ui.animation.premiumClickable
 import com.mavo.app.ui.theme.AppColors
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import com.mavo.app.ui.usesNavigationRail
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -148,12 +154,55 @@ fun DashboardScreen(
     viewModel: AppViewModel,
     dashboardViewModel: DashboardViewModel,
     isDesktop: Boolean = false,
+    modifier: Modifier = Modifier,
     onQuickAction: (String) -> Unit
 ) {
-    val vouchers by viewModel.vouchers.collectAsState()
-    val ledgerEntries by viewModel.ledgerEntries.collectAsState()
-    val products by viewModel.products.collectAsState()
-    val profile by viewModel.profile.collectAsState()
+    val vouchersReadState by viewModel.vouchersUiState.collectAsState()
+    val ledgerEntriesReadState by viewModel.ledgerEntriesUiState.collectAsState()
+    val productsReadState by viewModel.productsUiState.collectAsState()
+    val profileReadState by viewModel.profileUiState.collectAsState()
+    val vouchers = when (val state = vouchersReadState) {
+        is UiLoadState.Content -> state.value
+        is UiLoadState.Empty -> state.value
+        is UiLoadState.Error -> state.cachedValue.orEmpty()
+        UiLoadState.Loading -> emptyList()
+    }
+    val ledgerEntries = when (val state = ledgerEntriesReadState) {
+        is UiLoadState.Content -> state.value
+        is UiLoadState.Empty -> state.value
+        is UiLoadState.Error -> state.cachedValue.orEmpty()
+        UiLoadState.Loading -> emptyList()
+    }
+    val products = when (val state = productsReadState) {
+        is UiLoadState.Content -> state.value
+        is UiLoadState.Empty -> state.value
+        is UiLoadState.Error -> state.cachedValue.orEmpty()
+        UiLoadState.Loading -> emptyList()
+    }
+    val profile = when (val state = profileReadState) {
+        is UiLoadState.Content -> state.value
+        is UiLoadState.Empty -> state.value
+        is UiLoadState.Error -> state.cachedValue
+        UiLoadState.Loading -> null
+    }
+    val readStates = listOf(
+        vouchersReadState,
+        ledgerEntriesReadState,
+        productsReadState,
+        profileReadState
+    )
+    val isInitialLoading = readStates.any { it == UiLoadState.Loading }
+    val hasUncachedError = readStates.any {
+        it is UiLoadState.Error && !it.hasCachedValue
+    }
+    val hasCachedError = readStates.any {
+        it is UiLoadState.Error && it.hasCachedValue
+    }
+    val isVoucherDataUnavailable = when (val state = vouchersReadState) {
+        UiLoadState.Loading -> true
+        is UiLoadState.Error -> !state.hasCachedValue
+        else -> false
+    }
     val headerState by dashboardViewModel.headerState.collectAsState()
     val kpiAnimationMode by dashboardViewModel.kpiAnimationMode.collectAsState()
 
@@ -171,9 +220,8 @@ fun DashboardScreen(
 
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val configuration = LocalConfiguration.current
-    val density = LocalDensity.current
-    val isTablet = configuration.screenWidthDp >= 600
+    val windowWidthSizeClass = LocalAppWindowSizeClass.current
+    val isTablet = windowWidthSizeClass.usesNavigationRail()
 
     val calendar = Calendar.getInstance()
     calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -330,10 +378,13 @@ fun DashboardScreen(
     BackHandler(enabled = searchQuery.isNotBlank()) { searchQuery = "" }
     BackHandler(enabled = selectedAnalyticsCard != null) { selectedAnalyticsCard = null }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .widthIn(max = windowWidthSizeClass.dashboardMaxWidthDp()?.dp ?: Dp.Unspecified)
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .align(Alignment.TopCenter)
                 .verticalScroll(scrollState)
         ) {
 
@@ -414,6 +465,8 @@ fun DashboardScreen(
 
                 val pendingDues = vouchers.count { it.outstandingAmount > 0 }
                 val alertText = when {
+                    isInitialLoading -> "Loading business activity..."
+                    hasUncachedError -> "Some records are unavailable. Retry to check alerts."
                     lowStockProducts.isNotEmpty() ->
                         "${lowStockProducts.size} product(s) at or below stock threshold. Tap to review."
                     pendingDues > 0 ->
@@ -467,6 +520,13 @@ fun DashboardScreen(
                     onValueChange = { searchQuery = it },
                     placeholder = "Search vouchers, items, contacts"
                 )
+                if (hasCachedError || hasUncachedError) {
+                    DashboardReadStateCard(
+                        isLoading = false,
+                        hasCachedValue = hasCachedError,
+                        onRetry = viewModel::retryFailedReads
+                    )
+                }
 
             // ========== KPI CARDS SECTION ==========
             val cardList = buildList {
@@ -484,27 +544,35 @@ fun DashboardScreen(
                 }
             }
 
-            when (kpiAnimationMode) {
-                "STANDARD_HORIZONTAL" -> {
-                    KpiStandardHorizontal(
-                        cards = cardList,
-                        isTablet = isTablet,
-                        onCardClick = { selectedAnalyticsCard = it }
-                    )
-                }
-                "SPOTLIGHT_CAROUSEL" -> {
-                    KpiSpotlightCarousel(
-                        cards = cardList,
-                        isTablet = isTablet,
-                        onCardClick = { selectedAnalyticsCard = it }
-                    )
-                }
-                else -> {
-                    KpiWalletStack(
-                        cards = cardList,
-                        isTablet = isTablet,
-                        onCardClick = { selectedAnalyticsCard = it }
-                    )
+            if (isInitialLoading || hasUncachedError) {
+                DashboardReadStateCard(
+                    isLoading = isInitialLoading,
+                    hasCachedValue = false,
+                    onRetry = viewModel::retryFailedReads
+                )
+            } else {
+                when (kpiAnimationMode) {
+                    "STANDARD_HORIZONTAL" -> {
+                        KpiStandardHorizontal(
+                            cards = cardList,
+                            isTablet = isTablet,
+                            onCardClick = { selectedAnalyticsCard = it }
+                        )
+                    }
+                    "SPOTLIGHT_CAROUSEL" -> {
+                        KpiSpotlightCarousel(
+                            cards = cardList,
+                            isTablet = isTablet,
+                            onCardClick = { selectedAnalyticsCard = it }
+                        )
+                    }
+                    else -> {
+                        KpiWalletStack(
+                            cards = cardList,
+                            isTablet = isTablet,
+                            onCardClick = { selectedAnalyticsCard = it }
+                        )
+                    }
                 }
             }
 
@@ -645,15 +713,15 @@ fun DashboardScreen(
                     HomeQuickAction("Sale", Icons.AutoMirrored.Outlined.ReceiptLong) { onQuickAction("SALE") }
                     HomeQuickAction("Purchase", Icons.Outlined.ShoppingCart) { onQuickAction("PURCHASE") }
                     HomeQuickAction("Receipt", Icons.Outlined.SouthWest) { onQuickAction("RECEIPT") }
-                    HomeQuickAction("Payment", Icons.Outlined.NorthEast) { onQuickAction("PAYMENT") }
+                    HomeQuickAction("Expense", Icons.AutoMirrored.Filled.TrendingUp) { onQuickAction("EXPENSES") }
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     HomeQuickAction("Quick Sale", Icons.Default.Bolt) { onQuickAction("QUICK_SALE") }
+                    HomeQuickAction("Payment", Icons.Outlined.NorthEast) { onQuickAction("PAYMENT") }
                     HomeQuickAction("Reports", Icons.AutoMirrored.Filled.Assignment) { onQuickAction("REPORTS") }
-                    HomeQuickAction("Expenses", Icons.AutoMirrored.Filled.TrendingUp) { onQuickAction("EXPENSES") }
                 }
 
                 // ========== RECENT TRANSACTIONS ==========
@@ -677,7 +745,13 @@ fun DashboardScreen(
                     )
                 }
 
-                if (recentTransactions.isEmpty()) {
+                if (isVoucherDataUnavailable) {
+                    DashboardReadStateCard(
+                        isLoading = vouchersReadState == UiLoadState.Loading,
+                        hasCachedValue = false,
+                        onRetry = viewModel::retryFailedReads
+                    )
+                } else if (recentTransactions.isEmpty()) {
                     ZbCard {
                         Box(
                             modifier = Modifier
@@ -780,6 +854,60 @@ fun DashboardScreen(
     }
 }
 
+@Composable
+private fun DashboardReadStateCard(
+    isLoading: Boolean,
+    hasCachedValue: Boolean,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = when {
+                isLoading -> MaterialTheme.colorScheme.surfaceContainerLow
+                hasCachedValue -> MaterialTheme.colorScheme.secondaryContainer
+                else -> MaterialTheme.colorScheme.errorContainer
+            }
+        ),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp
+                )
+            }
+            Text(
+                modifier = Modifier.weight(1f),
+                text = when {
+                    isLoading -> "Loading your books…"
+                    hasCachedValue -> "Showing saved data. Some records could not refresh."
+                    else -> "Some records are unavailable. Retry to load them."
+                },
+                color = if (isLoading || hasCachedValue) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onErrorContainer
+                },
+                style = MaterialTheme.typography.bodyMedium
+            )
+            if (!isLoading) {
+                TextButton(onClick = onRetry) {
+                    Text("Retry")
+                }
+            }
+        }
+    }
+}
+
 private fun dashboardTypeLabel(type: String): String = when (type) {
     "SALE" -> "Sale"
     "PURCHASE" -> "Purchase"
@@ -801,11 +929,12 @@ private fun dashboardAmountSign(type: String): String = when (type) {
 private fun RowScope.HomeQuickAction(
     label: String,
     icon: ImageVector,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .weight(1f)
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp)
@@ -832,6 +961,7 @@ private fun RowScope.HomeQuickAction(
 private fun KpiStandardHorizontal(
     cards: List<KpiDetails>,
     isTablet: Boolean,
+    modifier: Modifier = Modifier,
     onCardClick: (KpiDetails) -> Unit
 ) {
     val listState = rememberLazyListState()
@@ -839,7 +969,7 @@ private fun KpiStandardHorizontal(
 
     LazyRow(
         state = listState,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 0.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -858,6 +988,7 @@ private fun KpiStandardHorizontal(
 private fun KpiWalletStack(
     cards: List<KpiDetails>,
     isTablet: Boolean,
+    modifier: Modifier = Modifier,
     onCardClick: (KpiDetails) -> Unit
 ) {
     val listState = rememberLazyListState()
@@ -887,7 +1018,10 @@ private fun KpiWalletStack(
     val cardWidthDp = if (isTablet) 320.dp else 260.dp
     val overlapDp = (-8).dp
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         LazyRow(
             state = listState,
             modifier = Modifier.fillMaxWidth(),
@@ -945,6 +1079,7 @@ private fun KpiWalletStack(
 private fun KpiSpotlightCarousel(
     cards: List<KpiDetails>,
     isTablet: Boolean,
+    modifier: Modifier = Modifier,
     onCardClick: (KpiDetails) -> Unit
 ) {
     val listState = rememberLazyListState()
@@ -974,7 +1109,10 @@ private fun KpiSpotlightCarousel(
 
     val cardWidthDp = if (isTablet) 320.dp else 260.dp
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         LazyRow(
             state = listState,
             modifier = Modifier.fillMaxWidth(),
@@ -1082,6 +1220,7 @@ private fun KpiAnalyticsPopup(
     chartType: ChartType,
     onFilterChange: (AnalyticsFilter) -> Unit,
     onChartTypeChange: (ChartType) -> Unit,
+    modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
     val analyticsSeries = remember(card.title, analyticsFilter, vouchers, products, ledgerEntries) {
@@ -1107,7 +1246,7 @@ private fun KpiAnalyticsPopup(
     val periodIndex = periods.indexOfFirst { it.first == analyticsFilter }.let { if (it < 0) 2 else it }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.5f))
             .pointerInput(Unit) {
@@ -1434,8 +1573,15 @@ private fun computeAnalyticsSeries(
 }
 
 @Composable
-fun AnalyticsStat(label: String, value: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+fun AnalyticsStat(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         Text(label, fontSize = 12.sp, color = AppColors.textSecondary)
         Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
     }
@@ -1471,12 +1617,13 @@ fun QuickActionItem(
     icon: ImageVector,
     backgroundColor: Color,
     iconColor: Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier
+        modifier = modifier
             .premiumClickable(onClick = onClick)
             .padding(4.dp)
     ) {
@@ -1506,10 +1653,11 @@ fun QuickActionItem(
 fun KpiCard(
     details: KpiDetails,
     isSelected: Boolean = false,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .shadow(2.dp, RoundedCornerShape(16.dp))
             .border(

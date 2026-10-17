@@ -38,7 +38,8 @@ import com.google.mlkit.vision.common.InputImage
 @Composable
 fun BarcodeScannerDialog(
     onDismiss: () -> Unit,
-    onScanned: (String) -> Unit
+    onScanned: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -59,6 +60,7 @@ fun BarcodeScannerDialog(
 
     if (!hasPermission) {
         AlertDialog(
+            modifier = modifier,
             onDismissRequest = onDismiss,
             confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
             title = { Text("Camera permission needed") },
@@ -74,6 +76,7 @@ fun BarcodeScannerDialog(
     }
 
     AlertDialog(
+        modifier = modifier,
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
         title = { Text("Scan barcode") },

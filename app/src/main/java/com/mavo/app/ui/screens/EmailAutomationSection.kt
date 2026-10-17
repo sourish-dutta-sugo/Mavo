@@ -65,7 +65,10 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun EmailAutomationSection(viewModel: AppViewModel) {
+fun EmailAutomationSection(
+    viewModel: AppViewModel,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     val profile by viewModel.profile.collectAsState()
     val parties by viewModel.parties.collectAsState(initial = emptyList())
@@ -121,7 +124,7 @@ fun EmailAutomationSection(viewModel: AppViewModel) {
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
@@ -377,8 +380,11 @@ fun EmailAutomationSection(viewModel: AppViewModel) {
 }
 
 @Composable
-private fun IconButtonDelete(onClick: () -> Unit) {
-    TextButton(onClick = onClick) {
+private fun IconButtonDelete(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TextButton(modifier = modifier, onClick = onClick) {
         Icon(Icons.Default.Delete, contentDescription = null, tint = AppColors.error)
     }
 }

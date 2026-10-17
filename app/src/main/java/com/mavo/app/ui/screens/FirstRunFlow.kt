@@ -58,7 +58,10 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
  * walks these steps and never touches the rest of the app.
  */
 @Composable
-fun FirstRunFlow(viewModel: AppViewModel) {
+fun FirstRunFlow(
+    viewModel: AppViewModel,
+    modifier: Modifier = Modifier
+) {
     var stepIndex by rememberSaveable { mutableStateOf(0) }
     var draft by rememberSaveable(stateSaver = DraftSaver) { mutableStateOf(SetupDraft()) }
     val step = SetupStep.entries[stepIndex]
@@ -76,7 +79,8 @@ fun FirstRunFlow(viewModel: AppViewModel) {
             title = "Your business, in a single ledger.",
             body = "Mavo is a fast, offline-first accounting companion built for shopkeepers, traders and small businesses in India.",
             pageIndex = 0,
-            onNext = { goTo(stepIndex + 1) }
+            onNext = { goTo(stepIndex + 1) },
+            modifier = modifier
         )
 
         SetupStep.Onboarding2 -> OnboardingPage(
@@ -84,18 +88,21 @@ fun FirstRunFlow(viewModel: AppViewModel) {
             title = "Post vouchers. Print invoices. Done.",
             body = "Sales, purchase, receipts, payments and journals \u2014 all posted to the correct ledger automatically with GST, PDF export and party ledgers.",
             pageIndex = 1,
-            onNext = { goTo(stepIndex + 1) }
+            onNext = { goTo(stepIndex + 1) },
+            modifier = modifier
         )
 
         SetupStep.Terms -> TermsPage(
-            onNext = { goTo(stepIndex + 1) }
+            onNext = { goTo(stepIndex + 1) },
+            modifier = modifier
         )
 
         SetupStep.Permission -> PermissionStep(
             onDetected = { detected ->
                 draft = draft.copy(state = detected.first, stateCode = detected.second)
             },
-            onNext = { goTo(stepIndex + 1) }
+            onNext = { goTo(stepIndex + 1) },
+            modifier = modifier
         )
 
         SetupStep.Basic -> SetupBasicScreen(
@@ -134,10 +141,11 @@ private fun OnboardingPage(
     title: String,
     body: String,
     pageIndex: Int,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
             .statusBarsPadding()
@@ -147,6 +155,8 @@ private fun OnboardingPage(
         Spacer(modifier = Modifier.height(72.dp))
         Box(
             modifier = Modifier
+
+                .padding(bottom = 24.dp)
                 .size(130.dp)
                 .clip(RoundedCornerShape(34.dp))
                 .background(AppColors.cardBg)
@@ -189,12 +199,15 @@ private fun OnboardingPage(
 }
 
 @Composable
-private fun TermsPage(onNext: () -> Unit) {
+private fun TermsPage(
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     var accepted by rememberSaveable { mutableStateOf(false) }
     var showDocumentText by rememberSaveable { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
             .statusBarsPadding()
@@ -284,9 +297,13 @@ private fun TermsPage(onNext: () -> Unit) {
 }
 
 @Composable
-private fun DocumentRow(label: String, onClick: () -> Unit) {
+private fun DocumentRow(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(AppColors.cardBg)
@@ -311,8 +328,13 @@ private fun DocumentRow(label: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun OnboardingDots(activeIndex: Int, count: Int) {
+private fun OnboardingDots(
+    activeIndex: Int,
+    count: Int,
+    modifier: Modifier = Modifier
+) {
     Row(
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -340,10 +362,11 @@ private fun PillButton(
     label: String,
     showChevron: Boolean,
     onClick: () -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(28.dp))
             .background(if (enabled) AppColors.primary else AppColors.primary.copy(alpha = 0.35f))
             .clickable(enabled = enabled, onClick = onClick)
@@ -369,8 +392,14 @@ private fun PillButton(
 }
 
 @Composable
-private fun TermsBody() {
-    Text(text = "Terms & Conditions", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = AppColors.primary)
+private fun TermsBody(modifier: Modifier = Modifier) {
+    Text(
+        modifier = modifier,
+        text = "Terms & Conditions",
+        fontSize = 15.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = AppColors.primary
+    )
     Text(
         text = "1. Mavo is a tool for recording your own business transactions. You stay responsible for the accuracy of what you enter.\n" +
             "2. Invoices, ledgers and reports produced by Mavo reflect the data you provide.\n" +
@@ -396,7 +425,8 @@ private fun TermsBody() {
 @Composable
 private fun PermissionStep(
     onDetected: (Pair<String, String>) -> Unit,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val permissionsState = rememberMultiplePermissionsState(
@@ -416,7 +446,7 @@ private fun PermissionStep(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
             .statusBarsPadding()

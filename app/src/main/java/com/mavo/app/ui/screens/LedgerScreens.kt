@@ -7,14 +7,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -60,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import com.mavo.app.data.Expense
 import com.mavo.app.data.Income
 import com.mavo.app.data.Utils
@@ -67,6 +72,12 @@ import com.mavo.app.data.filterDecimalInput
 import com.mavo.app.services.ExportStorageManager
 import com.mavo.app.services.ExportTarget
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.LocalAppWindowSizeClass
+import com.mavo.app.ui.UiLoadState
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
+import com.mavo.app.ui.dashboardMaxWidthDp
 import com.mavo.app.ui.animation.premiumFabEntrance
 import com.mavo.app.ui.animation.pressScale
 import com.mavo.app.ui.theme.AppColors
@@ -74,13 +85,13 @@ import java.io.File
 import java.util.Calendar
 import java.util.UUID
 
-private val incomeCategories = listOf(
+internal val incomeCategories = listOf(
     "Sales Commission", "Interest Received", "Rental Income", "Freelance Services",
     "Consulting Fees", "Investment Returns", "Grants", "Donations",
     "Refunds Received", "Other Income"
 )
 
-private val expenseCategories = listOf(
+internal val expenseCategories = listOf(
     "Rent", "Electricity", "Water", "Telephone", "Internet",
     "Staff Salary", "Transport", "Packaging", "Maintenance",
     "Office Supplies", "Advertising", "Insurance", "Bank Charges",
@@ -184,19 +195,23 @@ private fun Expense.toLedgerRow() = LedgerRow(id, date, category, description, a
 @Composable
 fun IncomeScreen(
     viewModel: AppViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val incomes by viewModel.incomes.collectAsState()
-    LedgerListScreen(IncomeKind, incomes.map { it.toLedgerRow() }, viewModel, onNavigateBack)
+    val incomeReadState by viewModel.incomesUiState.collectAsState()
+    val incomes = incomeReadState.valueOrEmpty()
+    LedgerListScreen(IncomeKind, incomes.map { it.toLedgerRow() }, incomeReadState, viewModel, onNavigateBack, modifier)
 }
 
 @Composable
 fun ExpensesScreen(
     viewModel: AppViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val expenses by viewModel.expenses.collectAsState()
-    LedgerListScreen(ExpenseKind, expenses.map { it.toLedgerRow() }, viewModel, onNavigateBack)
+    val expenseReadState by viewModel.expensesUiState.collectAsState()
+    val expenses = expenseReadState.valueOrEmpty()
+    LedgerListScreen(ExpenseKind, expenses.map { it.toLedgerRow() }, expenseReadState, viewModel, onNavigateBack, modifier)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -204,9 +219,12 @@ fun ExpensesScreen(
 private fun LedgerListScreen(
     kind: LedgerKind,
     rows: List<LedgerRow>,
+    readState: UiLoadState<*>,
     viewModel: AppViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val windowSizeClass = LocalAppWindowSizeClass.current
     var showForm by remember { mutableStateOf(false) }
     var activeFilter by remember { mutableStateOf("ALL") }
     val filteredRows = remember(rows, activeFilter) {
@@ -214,11 +232,17 @@ private fun LedgerListScreen(
     }
 
     if (showForm) {
-        LedgerEntryScreen(kind = kind, viewModel = viewModel, onDismiss = { showForm = false })
+        LedgerEntryScreen(
+            kind = kind,
+            viewModel = viewModel,
+            onDismiss = { showForm = false },
+            modifier = modifier
+        )
         return
     }
 
     Scaffold(
+        modifier = modifier,
         containerColor = AppColors.screenBg,
         topBar = {
             TopAppBar(
@@ -243,21 +267,26 @@ private fun LedgerListScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(AppColors.screenBg)
-                .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = windowSizeClass.dashboardMaxWidthDp()?.dp ?: Dp.Unspecified)
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .align(Alignment.TopCenter)
+                    .background(AppColors.screenBg)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 FilterChip(selected = activeFilter == "ALL", onClick = { activeFilter = "ALL" }, label = { Text("All") })
                 kind.categories.take(4).forEach { category ->
                     FilterChip(selected = activeFilter == category, onClick = { activeFilter = category }, label = { Text(category) })
                 }
             }
+            UiLoadStateNotice(readState, viewModel::retryFailedReads)
             Button(
+                enabled = !readState.blocksContent(),
                 onClick = {
                     val csv = buildString {
                         append("date,category,description,amount,payment_mode,reference\n")
@@ -278,27 +307,38 @@ private fun LedgerListScreen(
             ) {
                 Text("Export to CSV")
             }
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 120.dp)
-            ) {
-                items(filteredRows, key = { it.id }) { row ->
-                    Card(colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(row.category, fontWeight = FontWeight.Bold)
-                                Text(row.description.ifBlank { "No description" }, color = AppColors.textSecondary)
-                                Text("${Utils.formatDate(row.date)} | ${row.paymentMode}", color = AppColors.textSecondary)
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(Utils.formatIndianCurrency(row.amount), fontWeight = FontWeight.Bold, color = AppColors.primary)
-                                if (row.referenceNo.isNotBlank()) Text(row.referenceNo, color = AppColors.textSecondary)
+            if (readState.blocksContent()) {
+                Spacer(modifier = Modifier.weight(1f))
+            } else if (filteredRows.isEmpty()) {
+                Text(
+                    "No ${kind.title.lowercase()} records yet.",
+                    color = AppColors.textSecondary,
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 120.dp)
+                ) {
+                    items(filteredRows, key = { it.id }) { row ->
+                        Card(colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(row.category, fontWeight = FontWeight.Bold)
+                                    Text(row.description.ifBlank { "No description" }, color = AppColors.textSecondary)
+                                    Text("${Utils.formatDate(row.date)} | ${row.paymentMode}", color = AppColors.textSecondary)
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(Utils.formatIndianCurrency(row.amount), fontWeight = FontWeight.Bold, color = AppColors.primary)
+                                    if (row.referenceNo.isNotBlank()) Text(row.referenceNo, color = AppColors.textSecondary)
+                                    }
+                                }
                             }
                         }
                     }
@@ -313,7 +353,8 @@ private fun LedgerListScreen(
 private fun LedgerEntryScreen(
     kind: LedgerKind,
     viewModel: AppViewModel,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var date by remember { mutableStateOf(System.currentTimeMillis()) }
@@ -339,6 +380,7 @@ private fun LedgerEntryScreen(
     }
 
     Scaffold(
+        modifier = modifier,
         containerColor = AppColors.screenBg,
         topBar = {
             TopAppBar(

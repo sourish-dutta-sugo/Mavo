@@ -40,6 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.data.*
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
 import com.mavo.app.ui.animation.m3SpringPress
 import com.mavo.app.ui.animation.premiumCombinedClickable
 import com.mavo.app.ui.animation.premiumFabEntrance
@@ -64,10 +67,14 @@ import java.util.UUID
 fun PartiesScreen(
     viewModel: AppViewModel,
     isDesktop: Boolean = false,
+    modifier: Modifier = Modifier,
     onPartySelected: (String) -> Unit
 ) {
-    val parties by viewModel.parties.collectAsState()
-    val ledgerEntries by viewModel.ledgerEntries.collectAsState()
+    val partiesReadState by viewModel.partiesUiState.collectAsState()
+    val ledgerEntriesReadState by viewModel.ledgerEntriesUiState.collectAsState()
+    val parties = partiesReadState.valueOrEmpty()
+    val ledgerEntries = ledgerEntriesReadState.valueOrEmpty()
+    val partyContentBlocked = partiesReadState.blocksContent() || ledgerEntriesReadState.blocksContent()
     val partiesById by remember(parties) {
         derivedStateOf { parties.associateBy { it.id } }
     }
@@ -122,7 +129,7 @@ fun PartiesScreen(
     }
 
     if (isDesktop) {
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = modifier.fillMaxSize()) {
             // Master Pane (Parties List)
             Box(modifier = Modifier.width(360.dp).fillMaxHeight()) {
                 Scaffold(
@@ -204,7 +211,11 @@ fun PartiesScreen(
                             }
                         }
 
-                        if (filteredParties.isEmpty()) {
+                        UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
+                        UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
+                        if (partyContentBlocked) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        } else if (filteredParties.isEmpty()) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Text("No matching parties found.", color = AppColors.textSecondary, fontSize = 14.sp)
                             }
@@ -367,7 +378,7 @@ fun PartiesScreen(
             )
         } else {
             Scaffold(
-                modifier = Modifier.fillMaxSize(),
+                modifier = modifier.fillMaxSize(),
                 snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                 topBar = {
                     if (selectionController.isSelectionActive) {
@@ -499,7 +510,11 @@ fun PartiesScreen(
                     }
                     HorizontalDivider(color = ScreenBorder)
 
-                    if (parties.isEmpty()) {
+                    UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
+                    UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
+                    if (partyContentBlocked) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    } else if (parties.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -656,6 +671,7 @@ fun PartiesScreen(
 @Composable
 fun AddPartyForm(
     viewModel: AppViewModel,
+    modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
@@ -703,7 +719,7 @@ fun AddPartyForm(
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         containerColor = AppColors.screenBg,
         topBar = {
             TopAppBar(
@@ -983,10 +999,11 @@ fun AddPartyForm(
 fun EditPartyForm(
     viewModel: AppViewModel,
     party: Party?,
+    modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
     if (party == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Party not found", color = AppColors.textSecondary)
         }
         return
@@ -1034,7 +1051,7 @@ fun EditPartyForm(
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         containerColor = AppColors.screenBg,
         topBar = {
             TopAppBar(
@@ -1147,6 +1164,7 @@ fun EditPartyForm(
 fun PartyDetailScreen(
     viewModel: AppViewModel,
     partyId: String,
+    modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -1158,7 +1176,7 @@ fun PartyDetailScreen(
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         containerColor = AppColors.screenBg,
         topBar = {
             TopAppBar(
@@ -1358,9 +1376,12 @@ fun PartyDetailScreen(
 
 
 @Composable
-private fun PartyDetailSkeleton(innerPadding: PaddingValues) {
+private fun PartyDetailSkeleton(
+    innerPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
             .padding(innerPadding)

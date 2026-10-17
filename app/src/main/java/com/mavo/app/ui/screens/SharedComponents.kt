@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -29,11 +28,11 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,9 +48,6 @@ import com.mavo.app.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
-
-private val TextDark = Color(0xFF1A1A1A)
-private val MenuWhite = Color(0xFFFFFFFF)
 
 data class PinLookupResult(
     val city: String,
@@ -83,25 +79,18 @@ fun StateDropdownMenu(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
-        modifier = modifier
-            .fillMaxWidth(0.92f)
-            .height(280.dp)
-            .background(MenuWhite)
+        modifier = modifier.fillMaxWidth(0.92f).height(280.dp)
     ) {
         Utils.INDIAN_STATES.forEach { statePair ->
             DropdownMenuItem(
                 text = {
                     Text(
                         "${statePair.first} (Code ${statePair.second})",
-                        color = TextDark
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
-                onClick = { onStateSelected(statePair) },
-                colors = MenuDefaults.itemColors(
-                    textColor = TextDark,
-                    leadingIconColor = TextDark,
-                    trailingIconColor = TextDark
-                )
+                onClick = { onStateSelected(statePair) }
             )
         }
     }
@@ -232,14 +221,14 @@ fun WizardScaffold(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 Text(
                     text = nextLabel,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.textOnPrimary
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
         }

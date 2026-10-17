@@ -19,7 +19,7 @@ Status key: ✅ Done · 🟡 Partial · 📋 Planned
 | Quotation | ✅ | Non-posting voucher |
 | Proforma Invoice | ✅ | Non-posting voucher |
 | Delivery Challan | ✅ | |
-| Journal Entry | ✅ | Multi-line DR/CR |
+| Journal Entry | ✅ | Multi-line DR/CR; unposted rows persist with draft vouchers |
 | Bills Receivable / Payable | ✅ | Auto-created from sale/purchase vouchers |
 | Sales Order | ✅ | |
 | Purchase Order | ✅ | |
@@ -27,14 +27,14 @@ Status key: ✅ Done · 🟡 Partial · 📋 Planned
 | Material Note | ✅ | |
 | Rejection Note | ✅ | |
 | Petty Cash | ✅ | |
-| Income voucher | ✅ | Full voucher type |
-| Expense voucher | ✅ | Full voucher type |
+| Income voucher | ✅ | Full voucher type; category, payment account, description, and amount in the phone wizard |
+| Expense voucher | ✅ | Full voucher type; category, payment account, description, and amount in the phone wizard |
 | Quick Sale (counter sale) | 🟡 | Screen exists, minimal implementation |
 | Additional charges on vouchers | ✅ | JSON-serialized in voucher |
 | Transport details on vouchers | ✅ | Transporter name, LR no, vehicle, GSTIN, destination |
 | Round-off calculation | ✅ | Automatic |
 | Voucher numbering (auto-increment) | ✅ | Per type, per FY |
-| Voucher draft / posted status | ✅ | |
+| Voucher draft / posted status | ✅ | Save Draft is available throughout the new phone wizard; draft data is stored without ledger, bank/cash, or stock posting |
 | Voucher entry 3-step wizard | ✅ | Details → Items → Review for every voucher type on phones; edit opens as a single page with an "EDITING" header |
 | Discount (percent / amount) | ✅ | Per line item |
 | Voucher detail screen | ✅ | Zero summary with totals, line items, Edit/Share/PDF/Print actions (phones) |

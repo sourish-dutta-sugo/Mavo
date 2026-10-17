@@ -31,13 +31,29 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.mavo.app.ui.animation.pressScale
 import androidx.compose.ui.text.TextStyle
@@ -60,28 +76,20 @@ fun CircleIconButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Int = 44,
+    size: Int = 48,
     tint: Color = AppColors.textPrimary
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    Box(
-        modifier = modifier
-            .pressScale(enabled = true, interactionSource = interactionSource)
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(AppColors.cardBg)
-            .border(1.dp, FieldBorder, CircleShape)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = LocalIndication.current,
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
+    FilledTonalIconButton(
+        onClick = onClick,
+        modifier = modifier.size(size.coerceAtLeast(48).dp),
+        colors = androidx.compose.material3.IconButtonDefaults.filledTonalIconButtonColors(
+            containerColor = AppColors.cardBg,
+            contentColor = tint
+        )
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = tint,
             modifier = Modifier.size(20.dp)
         )
     }
@@ -223,28 +231,16 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    Box(
-        modifier = modifier
-            .pressScale(enabled = enabled, interactionSource = interactionSource)
-            .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(if (enabled) AppColors.primary else AppColors.primary.copy(alpha = 0.35f))
-            .clickable(
-                enabled = enabled,
-                interactionSource = interactionSource,
-                indication = LocalIndication.current,
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = AppColors.textOnPrimary
+    Button(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth().height(56.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
         )
+    ) {
+        Text(text = label, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -255,29 +251,13 @@ fun SecondaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    Box(
-        modifier = modifier
-            .pressScale(enabled = enabled, interactionSource = interactionSource)
-            .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(AppColors.cardBg)
-            .border(1.dp, FieldBorder, RoundedCornerShape(28.dp))
-            .clickable(
-                enabled = enabled,
-                interactionSource = interactionSource,
-                indication = LocalIndication.current,
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth().height(56.dp),
+        enabled = enabled,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
-        Text(
-            text = label,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = if (enabled) AppColors.textPrimary else AppColors.textDisabled
-        )
+        Text(text = label, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -384,22 +364,19 @@ fun ZbCard(
     contentPadding: Int = 16,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val base = modifier
-        .fillMaxWidth()
-        .clip(RoundedCornerShape(16.dp))
-        .background(AppColors.cardBg)
-        .border(1.dp, ScreenBorder, RoundedCornerShape(16.dp))
-    val content2 = if (onClick != null) {
-        val interactionSource = remember { MutableInteractionSource() }
-        base.pressScale(interactionSource = interactionSource)
-            .clickable(interactionSource = interactionSource, indication = LocalIndication.current, onClick = onClick)
-    } else {
-        base
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(contentPadding.dp),
+            content = content
+        )
     }
-    Column(
-        modifier = content2.padding(contentPadding.dp),
-        content = content
-    )
 }
 
 @Composable
@@ -436,29 +413,16 @@ fun ChoiceChipRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         options.forEachIndexed { index, option ->
-            val selected = index == selectedIndex
-            val interactionSource = remember { MutableInteractionSource() }
-            Box(
-                modifier = Modifier
-                    .pressScale(interactionSource = interactionSource)
-                    .weight(1f)
-                    .height(36.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(if (selected) AppColors.primary else AppColors.cardBg)
-                    .border(1.dp, if (selected) AppColors.primary else FieldBorder, RoundedCornerShape(18.dp))
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = LocalIndication.current
-                    ) { onSelect(index) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = option,
-                    fontSize = 13.sp,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (selected) AppColors.textOnPrimary else AppColors.textSecondary
+            FilterChip(
+                selected = index == selectedIndex,
+                onClick = { onSelect(index) },
+                label = { Text(option, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                modifier = Modifier.weight(1f),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
                 )
-            }
+            )
         }
     }
 }
@@ -473,32 +437,14 @@ fun ChipRow(
     androidx.compose.foundation.lazy.LazyRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp)
+        contentPadding = PaddingValues(horizontal = 20.dp)
     ) {
         items(options.size) { index ->
-            val selected = index == selectedIndex
-            val interactionSource = remember { MutableInteractionSource() }
-            Box(
-                modifier = Modifier
-                    .pressScale(interactionSource = interactionSource)
-                    .height(36.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(if (selected) AppColors.primary else AppColors.cardBg)
-                    .border(1.dp, if (selected) AppColors.primary else FieldBorder, RoundedCornerShape(18.dp))
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = LocalIndication.current
-                    ) { onSelect(index) }
-                    .padding(horizontal = 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = options[index],
-                    fontSize = 13.sp,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (selected) AppColors.textOnPrimary else AppColors.textSecondary
-                )
-            }
+            FilterChip(
+                selected = index == selectedIndex,
+                onClick = { onSelect(index) },
+                label = { Text(options[index], maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            )
         }
     }
 }
@@ -510,35 +456,14 @@ fun SegmentedTabs(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(AppColors.sectionHeaderBg)
-            .padding(4.dp)
-    ) {
+    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
         options.forEachIndexed { index, option ->
-            val selected = index == selectedIndex
-            val interactionSource = remember { MutableInteractionSource() }
-            Box(
-                modifier = Modifier
-                    .pressScale(interactionSource = interactionSource)
-                    .weight(1f)
-                    .height(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(if (selected) AppColors.primary else Color.Transparent)
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = LocalIndication.current
-                    ) { onSelect(index) },
-                contentAlignment = Alignment.Center
+            SegmentedButton(
+                selected = index == selectedIndex,
+                onClick = { onSelect(index) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size)
             ) {
-                Text(
-                    text = option,
-                    fontSize = 13.sp,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (selected) AppColors.textOnPrimary else AppColors.textSecondary
-                )
+                Text(option, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -624,25 +549,8 @@ fun EmptyState(
         )
         if (actionLabel != null && onAction != null) {
             Spacer(modifier = Modifier.height(20.dp))
-            val interactionSource = remember { MutableInteractionSource() }
-            Box(
-                modifier = Modifier
-                    .pressScale(interactionSource = interactionSource)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(AppColors.primary)
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = LocalIndication.current,
-                        onClick = onAction
-                    )
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
-            ) {
-                Text(
-                    text = actionLabel,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = AppColors.textOnPrimary
-                )
+            TextButton(onClick = onAction) {
+                Text(actionLabel)
             }
         }
     }

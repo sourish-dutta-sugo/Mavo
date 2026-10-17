@@ -6,6 +6,23 @@
 
 ---
 
+## [2.2.1] — 2026-10-05
+
+### Added
+- Save Draft action throughout the phone voucher wizard, including partial Journal rows
+
+### Changed
+- App shell and screens now adapt to phone, medium, and expanded tablet windows with Material 3 navigation, panes, and width constraints
+- Room-backed lists reuse process-local cached snapshots and show distinct loading, empty, and retryable error states
+- New Journal, Income, and Expense vouchers use the shared Details → Items → Review flow with account/category-specific inputs and summaries
+
+### Fixed
+- Setting Android animator duration scale to zero now disables the custom motion system
+
+DB migration: yes (Journal draft lines, schema v15 → v16)
+
+---
+
 ## [2.2.3] — 2026-09-XX
 
 ### Added

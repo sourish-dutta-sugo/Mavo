@@ -38,7 +38,8 @@ fun ProductOptionalFields(
     onExpiryDateChange: (String) -> Unit = {},
     serialEnabled: Boolean = false,
     onSerialEnabledChange: (Boolean) -> Unit = {},
-    showHsn: Boolean = true
+    showHsn: Boolean = true,
+    modifier: Modifier = Modifier
 ) {
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedTextColor = AppColors.textPrimary,
@@ -48,7 +49,13 @@ fun ProductOptionalFields(
     )
 
     if (showHsn) {
-        Text("HSN/SAC Code (optional)", color = AppColors.labelText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        Text(
+            modifier = modifier,
+            text = "HSN/SAC Code (optional)",
+            color = AppColors.labelText,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
         OutlinedTextField(
             value = hsnCode,
             onValueChange = { onHsnChange(it.filter { c -> c.isDigit() }.take(8)) },
@@ -62,7 +69,7 @@ fun ProductOptionalFields(
         )
         Spacer(Modifier.height(8.dp))
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = if (showHsn) Modifier.fillMaxWidth() else modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
             OutlinedButton(onClick = onFindHsn) {

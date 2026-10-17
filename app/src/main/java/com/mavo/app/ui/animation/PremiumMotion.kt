@@ -5,8 +5,10 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -50,7 +52,8 @@ private const val SelectedNavScale = 1.02f
 private data class PremiumMotionPrefs(
     val reducedMotion: Boolean = false,
     val durationScale: Float = 1f,
-    val animationScale: Float = 1f
+    val animationScale: Float = 1f,
+    val animationsEnabled: Boolean = true
 )
 
 @Composable
@@ -79,35 +82,43 @@ private fun rememberPremiumMotionPrefs(): PremiumMotionPrefs {
         PremiumMotionPrefs(
             reducedMotion = reducedMotion,
             durationScale = durationScale,
-            animationScale = animationScale
+            animationScale = animationScale,
+            animationsEnabled = animationScale != 0f
         )
     }
 }
 
 private fun premiumDuration(baseDuration: Int, prefs: PremiumMotionPrefs): Int =
-    if (prefs.reducedMotion) {
+    if (!prefs.animationsEnabled) {
+        0
+    } else if (prefs.reducedMotion) {
         (baseDuration * 0.6f).roundToInt().coerceAtLeast(90)
     } else {
         (baseDuration * prefs.durationScale).roundToInt().coerceAtLeast(80)
     }
 
-private fun premiumSpringSpec(reducedMotion: Boolean) = spring<Float>(
-    dampingRatio = if (reducedMotion) 0.92f else 0.8f,
-    stiffness = if (reducedMotion) 420f else 320f
-)
+private fun premiumSpringSpec(prefs: PremiumMotionPrefs): FiniteAnimationSpec<Float> =
+    if (!prefs.animationsEnabled) snap() else spring(
+        dampingRatio = if (prefs.reducedMotion) 0.92f else 0.8f,
+        stiffness = if (prefs.reducedMotion) 420f else 320f
+    )
 
-private fun premiumNavSpringSpec(reducedMotion: Boolean) = spring<Float>(
-    dampingRatio = if (reducedMotion) 0.94f else 0.82f,
-    stiffness = if (reducedMotion) 360f else 300f
-)
+private fun premiumNavSpringSpec(prefs: PremiumMotionPrefs): FiniteAnimationSpec<Float> =
+    if (!prefs.animationsEnabled) snap() else spring(
+        dampingRatio = if (prefs.reducedMotion) 0.94f else 0.82f,
+        stiffness = if (prefs.reducedMotion) 360f else 300f
+    )
 
-private fun premiumOffsetSpringSpec(reducedMotion: Boolean) = spring<IntOffset>(
-    dampingRatio = if (reducedMotion) 0.92f else 0.84f,
-    stiffness = if (reducedMotion) 400f else 360f
-)
+private fun premiumOffsetSpringSpec(prefs: PremiumMotionPrefs): FiniteAnimationSpec<IntOffset> =
+    if (!prefs.animationsEnabled) snap() else spring(
+        dampingRatio = if (prefs.reducedMotion) 0.92f else 0.84f,
+        stiffness = if (prefs.reducedMotion) 400f else 360f
+    )
 
-private fun premiumFadeSpec(reducedMotion: Boolean) = tween<Float>(
-    durationMillis = if (reducedMotion) 80 else 120,
+private fun premiumFadeSpec(prefs: PremiumMotionPrefs) = tween<Float>(
+    durationMillis = if (prefs.animationsEnabled) {
+        if (prefs.reducedMotion) 80 else 120
+    } else 0,
     easing = FastOutSlowInEasing
 )
 
@@ -131,7 +142,7 @@ fun enterTransition(navigatingBack: Boolean): AnimatedContentTransitionScope<*>.
                 if (navigatingBack) -(fullWidth / 12) else fullWidth / 12
             }
         ) +
-            fadeIn(animationSpec = premiumFadeSpec(prefs.reducedMotion), initialAlpha = 0.02f)
+            fadeIn(animationSpec = premiumFadeSpec(prefs), initialAlpha = 0.02f)
     }
 }
 
@@ -145,7 +156,7 @@ fun exitTransition(navigatingBack: Boolean): AnimatedContentTransitionScope<*>.(
                 if (navigatingBack) fullWidth / 12 else -(fullWidth / 12)
             }
         ) +
-            fadeOut(animationSpec = premiumFadeSpec(prefs.reducedMotion), targetAlpha = 1f)
+            fadeOut(animationSpec = premiumFadeSpec(prefs), targetAlpha = 1f)
     }
 }
 
@@ -158,12 +169,12 @@ fun Modifier.pressScale(
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (enabled && isPressed) PressedScale else 1f,
-        animationSpec = premiumSpringSpec(prefs.reducedMotion),
+        animationSpec = premiumSpringSpec(prefs),
         label = "premium_press_scale"
     )
     val offset by animateFloatAsState(
         targetValue = if (enabled && isPressed) 1f else 0f,
-        animationSpec = premiumSpringSpec(prefs.reducedMotion),
+        animationSpec = premiumSpringSpec(prefs),
         label = "premium_press_offset"
     )
     val density = LocalDensity.current
@@ -184,18 +195,12 @@ fun Modifier.m3SpringPress(
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (enabled && isPressed) pressedScale else 1f,
-        animationSpec = spring(
-            dampingRatio = if (prefs.reducedMotion) 0.92f else 0.75f,
-            stiffness = if (prefs.reducedMotion) 450f else 380f
-        ),
+        animationSpec = premiumSpringSpec(prefs),
         label = "m3_spring_press_scale"
     )
     val translationYPx by animateFloatAsState(
         targetValue = if (enabled && isPressed) 1.5f else 0f,
-        animationSpec = spring(
-            dampingRatio = if (prefs.reducedMotion) 0.92f else 0.75f,
-            stiffness = if (prefs.reducedMotion) 450f else 380f
-        ),
+        animationSpec = premiumSpringSpec(prefs),
         label = "m3_spring_press_y"
     )
     return graphicsLayer {
@@ -207,9 +212,12 @@ fun Modifier.m3SpringPress(
 
 @Composable
 fun Modifier.m3PulseHighlight(active: Boolean): Modifier {
+    val prefs = rememberPremiumMotionPrefs()
     val scale by animateFloatAsState(
         targetValue = if (active) 1.04f else 1f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+        animationSpec = if (prefs.animationsEnabled) {
+            spring(dampingRatio = if (prefs.reducedMotion) 0.92f else 0.6f, stiffness = 300f)
+        } else snap(),
         label = "m3_pulse_highlight"
     )
     return graphicsLayer {
@@ -278,22 +286,22 @@ fun Modifier.clickableScale(
 fun dialogEnter(): EnterTransition {
     val prefs = rememberPremiumMotionPrefs()
     return slideInVertically(
-        animationSpec = premiumOffsetSpringSpec(prefs.reducedMotion),
+        animationSpec = premiumOffsetSpringSpec(prefs),
         initialOffsetY = { it / 6 }
     ) +
-        fadeIn(animationSpec = premiumFadeSpec(prefs.reducedMotion), initialAlpha = 0.3f) +
-        scaleIn(animationSpec = premiumSpringSpec(prefs.reducedMotion), initialScale = if (prefs.reducedMotion) 0.98f else 0.96f)
+        fadeIn(animationSpec = premiumFadeSpec(prefs), initialAlpha = 0.3f) +
+        scaleIn(animationSpec = premiumSpringSpec(prefs), initialScale = if (prefs.reducedMotion) 0.98f else 0.96f)
 }
 
 @Composable
 fun dialogExit(): ExitTransition {
     val prefs = rememberPremiumMotionPrefs()
     return slideOutVertically(
-        animationSpec = premiumOffsetSpringSpec(prefs.reducedMotion),
+        animationSpec = premiumOffsetSpringSpec(prefs),
         targetOffsetY = { it / 8 }
     ) +
-        fadeOut(animationSpec = premiumFadeSpec(prefs.reducedMotion)) +
-        scaleOut(animationSpec = premiumSpringSpec(prefs.reducedMotion), targetScale = if (prefs.reducedMotion) 0.995f else 0.985f)
+        fadeOut(animationSpec = premiumFadeSpec(prefs)) +
+        scaleOut(animationSpec = premiumSpringSpec(prefs), targetScale = if (prefs.reducedMotion) 0.995f else 0.985f)
 }
 
 @Composable
@@ -303,9 +311,12 @@ fun NavBarContent(
     label: String,
     modifier: Modifier = Modifier
 ) {
+    val prefs = rememberPremiumMotionPrefs()
     val scale by animateFloatAsState(
         targetValue = if (selected) SelectedNavScale else 1f,
-        animationSpec = tween(durationMillis = 70, easing = FastOutSlowInEasing),
+        animationSpec = if (prefs.animationsEnabled) {
+            tween(durationMillis = premiumDuration(70, prefs), easing = FastOutSlowInEasing)
+        } else snap(),
         label = "bottom_nav_scale"
     )
     val contentColor = if (selected) AppColors.primary else AppColors.textTertiary
@@ -340,17 +351,17 @@ fun Modifier.premiumFabEntrance(visible: Boolean = true): Modifier {
     val prefs = rememberPremiumMotionPrefs()
     val scale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.82f,
-        animationSpec = premiumSpringSpec(prefs.reducedMotion),
+        animationSpec = premiumSpringSpec(prefs),
         label = "fab_scale"
     )
     val rotation by animateFloatAsState(
         targetValue = if (visible) 0f else if (prefs.reducedMotion) -8f else -12f,
-        animationSpec = premiumNavSpringSpec(prefs.reducedMotion),
+        animationSpec = premiumNavSpringSpec(prefs),
         label = "fab_rotation"
     )
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
-        animationSpec = premiumFadeSpec(prefs.reducedMotion),
+        animationSpec = premiumFadeSpec(prefs),
         label = "fab_alpha"
     )
     return graphicsLayer {

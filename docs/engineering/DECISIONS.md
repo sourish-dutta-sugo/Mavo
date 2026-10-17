@@ -68,3 +68,31 @@
 **Chose:** `@Database(exportSchema = false)`.  
 **Over:** Exporting Room schemas to JSON for CI validation.  
 **Why:** Schema validation is handled by the defensive `ensure*` functions and manual migration testing. Schema export adds CI complexity that isn't needed for a solo project. May change if the project grows.
+
+## D12: Material 3 window-size adaptive navigation
+
+**Chose:** Use the installed Material 3 window-size classes to select compact
+bottom navigation and medium/expanded navigation rails.
+**Over:** Raw width checks, scaled phone frames, or a new window-management
+dependency.
+**Why:** Window classes express available app space, keep route identities
+stable, and reuse the Material 3 adaptive breakpoints already used by billing. May change if the project grows.
+
+## D13: Room-backed process-local UI read cache
+
+**Chose:** Keep typed UI snapshots in process memory, keyed by dataset and
+financial year, while Room remains source of truth.
+**Over:** TTL-based or disk cache for records already persisted in Room.
+**Why:** Screens can render saved values immediately without stale data crossing
+financial years. Room emissions replace snapshots; failures preserve cached
+content and expose retry. A disk cache adds duplicate persistence and
+invalidation work without improving the current offline-first data path.
+
+## D14: Native Compose modifiers for UI tuning
+
+**Chose:** Use native `Modifier` APIs on visual composables that expose a
+modifier parameter, with `offset`, size, and padding modifiers at call sites.
+**Over:** A custom XY helper, global layout configuration, or runtime editor.
+**Why:** Compose already provides position, size, and spacing controls.
+Composable modifier parameters let source callers tune individual surfaces
+without adding state, dependencies, or changing default layout.

@@ -4,12 +4,39 @@
 
 ## Shared components
 
+### Caller modifiers
+
+Visual composables with a `modifier: Modifier = Modifier` parameter apply it
+to their root layout. Callers can use Compose's native `offset`, `size`,
+`width`, `height`, and `padding` modifiers for source-level layout tuning.
+`offset` changes placement but not measured size, so it can overlap nearby
+content; use size or padding when neighboring layouts must reflow. Default
+modifier values preserve existing layouts.
+
+### Adaptive app shell
+
+- **File:** `ui/components/AdaptiveAppShell.kt`
+- **Purpose:** Material 3 compact bottom navigation and wider navigation rail
+- **Actions:** Home, Vouchers, Parties, More, and New Sale
+- **States:** Current route selected; compact uses bottom navigation; medium/expanded uses a rail with New Sale action
+- **Where used:** `MainActivity.kt`
+
+### UiLoadStateNotice
+
+- **File:** `ui/components/UiLoadStateNotice.kt`
+- **Purpose:** Show loading progress and retryable read errors without presenting missing data as confirmed empty
+- **States:** Loading, confirmed-empty/content handled by the screen, cached-content error with retry, uncached error with retry
+- **Where used:** Home, billing, vouchers, parties, products, reports, ledger, income/expense, and Bank & Cash
+
 ### LoadingIndicator
 
 - **File:** `ui/components/LoadingIndicator.kt`
-- **Purpose:** Skeleton/shimmer loading placeholder
-- **States:** Loading (shimmer animation), Content loaded (replaced by real content)
+- **Purpose:** Theme-aware skeleton/shimmer placeholders for pending reads
+- **States:** Loading (shimmer animation or static placeholder), content loaded (replaced by real content)
 - **Where used:** Any screen that loads data asynchronously (dashboard, vouchers, parties, etc.)
+
+Loading skeletons do not represent confirmed empty data or read failures.
+Screens render explicit read states and expose retry for failures.
 
 ### SharedComponents
 
@@ -90,8 +117,9 @@
 ### ZeroUi kit
 
 - **File:** `ui/components/ZeroUi.kt`
-- **Purpose:** Zero-language primitives — `CircleIconButton`, `StepProgress` (4dp segments, 4dp gaps), `WizardHeader`, `WizardTitle`, `ZbField` (label-above uppercase field, optional `fieldModifier` for focus/blur logic), `PrimaryButton` / `SecondaryButton`, chips, segmented tabs, `ZbCard`, `SearchField`, `SectionLabel`, `EmptyState`
-- **States:** Press feedback (scale-on-press) on all interactive controls
+- **Purpose:** Shared Material 3 controls — `CircleIconButton`, `StepProgress`, `WizardHeader`, `WizardTitle`, `ZbField`, `PrimaryButton` / `SecondaryButton`, filter chips, segmented tabs, `ZbCard`, `SearchField`, `SectionLabel`, `EmptyState`
+- **States:** Material 3 enabled, disabled, selected, and focus feedback
+- **Accessibility:** Icon actions have at least 48 dp touch targets
 - **Where used:** Voucher wizard and every Zero-restyled screen
 
 ## Theme components

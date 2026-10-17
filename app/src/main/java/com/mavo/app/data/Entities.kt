@@ -225,6 +225,18 @@ data class JournalLine(
     val credit: Double
 )
 
+@Entity(
+    tableName = "journal_draft_lines",
+    primaryKeys = ["voucherId", "position"]
+)
+data class JournalDraftLine(
+    val voucherId: String,
+    val position: Int,
+    val accountHead: String,
+    val debit: Double,
+    val credit: Double
+)
+
 @Entity(tableName = "ledger_entries")
 data class LedgerEntry(
     @PrimaryKey val id: String, // UUID

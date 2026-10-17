@@ -7,6 +7,20 @@
 Runs only when no `business_profile` row exists; existing installs skip straight
 to PIN (if enabled) → Dashboard. System Back returns one step at a time.
 
+## Flow 1a: Navigate the daily workspace
+
+| Window | Navigation | New sale |
+|--------|------------|----------|
+| Compact phone | Material 3 bottom bar: Home, Vouchers, Parties, More | Fifth bar action opens the existing voucher flow |
+| Medium / expanded tablet | Material 3 navigation rail: Home, Vouchers, Parties, More | Rail header FAB opens the existing voucher flow |
+
+The shell appears only on top-level destinations. Onboarding, PIN, and
+full-screen entry routes keep their existing focused layouts.
+
+Wider register and catalog screens cap content width instead of stretching
+financial rows across the full tablet canvas. Loading, confirmed-empty, cached
+content, and retryable read failures remain distinct states.
+
 | Step | Trigger | What shows | Data used | Result | Error state |
 |------|---------|------------|-----------|--------|-------------|
 | 1 | App opens, profile absent | SplashScreen → Initialising | `businessProfileDao.getProfile()` null → start wizard | Wizard step 1 | — |
@@ -18,11 +32,21 @@ to PIN (if enabled) → Dashboard. System Back returns one step at a time.
 | 7 | Setup 3 "Tax & bank" | GSTIN + PAN (only if GST on), Account No, IFSC, Bank, Branch | `fetchGstinDetails`, `fetchIfscDetails` | "Finish Setup" → sample-data dialog | IFSC unresolved → field left as typed |
 | 8 | Sample-data choice | Yes, Import / No, Start Clean | `businessProfileDao.insertProfile(profile)` | Profile saved → `isSetupCompleted` → Dashboard | DB error → DB error card on relaunch |
 
+## Flow 1b: Counter sale
+
+| Step | Trigger | What shows | Data used | Result | Error state |
+|------|---------|------------|-----------|--------|-------------|
+| 1 | Tap New Sale from the shell or Counter Sale from Home | BillingScreen; product search and checkout stack on compact/medium, split into product/cart panes on expanded windows | Window size class | Existing counter-sale flow opens without changing route or posting rules | — |
+| 2 | Product and customer data loads | Saved UI snapshot appears immediately when available; loading, confirmed-empty, and retryable errors remain distinct | Cached products and parties, then Room emissions for active FY | Search, unit filters, and customer selection use current cached or Room data | Read error → show retry; keep cached content visible |
+| 3 | Search/filter and tap a product | Product card updates cart and GST totals | Product rate, stock, unit, tax data | Item is added or quantity increases | No match → explicit no-results text |
+| 4 | Choose customer and payment mode | Customer chips and Cash / UPI / Bank selector | Selected party and payment mode | Checkout summary updates | Party read error → retry; walk-in sale stays available |
+| 5 | Tap Save Sale | Existing POSTED Sale voucher save flow | Cart items, party, payment mode, active FY | Save callback clears cart and confirms invoice save | Empty cart → show existing validation message |
+
 ## Flow 2: Create a sale voucher
 
 | Step | Trigger | What shows | Data used | Result | Error state |
 |------|---------|------------|-----------|--------|-------------|
-| 1 | Tap "Vouchers" tab or "+" FAB | VouchersScreen / voucher type selector | — | Shows voucher type list | — |
+| 1 | Tap "Vouchers" destination or "New Sale" shell action | VouchersScreen / voucher type selector | — | Shows voucher type list | — |
 | 2 | Select "Sale" type | NewVoucherScreen wizard step 1 (Details) | Auto-generated voucher number (`getLatestVoucherNo`) | Voucher No., Date, Party, Narration form with auto-number | — |
 | 3 | Select party | Party picker sheet (step 1) | `partyDao.getAllParties()` | Party filled, state code compared for IGST | No parties → prompt to create |
 | 4 | Tap "Continue to items" | Wizard step 2 (Line items & charges) | — | Line-items panel plus payment mode and charges shown | — |
@@ -45,19 +69,28 @@ to PIN (if enabled) → Dashboard. System Back returns one step at a time.
 | 5 | Allocate against invoices | Allocation section (step 2) | `billReceivableDao.getAllBills()` for party | Outstanding amounts reduced | Over-allocation → validation |
 | 6 | Review & save | Wizard step 3 → post | — | Ledger entries (DR Cash/Bank, CR Party), outstanding updated, bank/cash transaction created | — |
 
+## Flow 3a: Save a voucher draft
+
+| Step | Trigger | What shows | Data used | Result | Error state |
+|------|---------|------------|-----------|--------|-------------|
+| 1 | Select any voucher type and begin the phone wizard | Details → Items → Review; Journal shows ledger rows, Income/Expense show category and payment account | Voucher fields, line items or Journal rows | Partial form can be saved without posting validation | — |
+| 2 | Tap "Save Draft" from a wizard step | Draft save action | Voucher metadata and entered rows | Voucher is stored with `DRAFT` status; no ledger, bank/cash, stock, or party posting occurs | Locked FY or database failure is surfaced |
+| 3 | Open the draft from the voucher list | Voucher detail with Draft status | Saved voucher and Journal draft rows | User can review or edit the saved draft | Missing/removed draft → standard not-found state |
+| 4 | Complete required fields and choose "Save & Post" | Review confirmation | Completed voucher data | Existing posting flow runs; Journal rows move to ledger entries | Invalid or unbalanced entries → validation message |
+
 ## Flow 4: View reports
 
 | Step | Trigger | What shows | Data used | Result | Error state |
 |------|---------|------------|-----------|--------|-------------|
 | 1 | Tap "Reports" from Dashboard | ReportsScreen | — | Report type list/tabs | — |
-| 2 | Select report (e.g., P&L) | Computed report view | `ledgerEntriesForYear`, `vouchersForYear`, `expensesForYear` | Calculated totals rendered | Empty data → empty state message |
+| 2 | Select report (e.g., P&L) | Computed report view | FY-scoped cached reads, then Room emissions for ledgers, parties, products, vouchers, and bills | Calculated totals rendered from current or saved data | Loading blocks figures; cached read failure keeps saved figures visible with retry; confirmed empty data is distinct from failure |
 | 3 | Date/period filter | Filter controls | — | Report recalculated for selected range | — |
 
 ## Flow 5: Manage products
 
 | Step | Trigger | What shows | Data used | Result | Error state |
 |------|---------|------------|-----------|--------|-------------|
-| 1 | Settings → Products | ProductsScreen | `productDao.getAllProducts()` | Product list with stock info; amber low-stock banner if any item is low/out | Empty → empty state |
+| 1 | Settings → Products | Width-constrained ProductsScreen with cached list | `productDao.getAllProducts()` via FY-scoped UI cache | Product list with stock info; amber low-stock banner if any item is low/out | Loading/error → explicit notice and retry; confirmed empty → empty state |
 | 2 | Tap "+" (FAB) | Full-screen "New Product" entry: WizardHeader (back + close), title + "Master data · Inventory" subtitle, two-column fields, pinned Cancel / Save product bar | — | Fields: name, SKU/barcode + scan, unit, HSN + tax rate, sale/purchase price, opening stock, low-stock alert, batch/expiry/serial | Missing required fields → inline error |
 | 3 | Tap the HSN search icon ("Find HSN") | Search HSN/SAC dialog with live keyword results | Built-in `HsnLookup.kt` data | Tap a row to select, "Use code · description" applies the HSN | No match → manual entry |
 | 4 | Save product | `productDao.insertProduct(product)` | Form data | Product in catalog, available for vouchers | Duplicate name → replace (upsert) |

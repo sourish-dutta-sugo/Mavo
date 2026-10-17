@@ -25,6 +25,12 @@
 # Screenshot tests (Roborazzi)
 ./gradlew recordRoborazziDebug   # record baseline
 ./gradlew verifyRoborazziDebug   # compare against baseline
+
+# UI cache replay, FY isolation, and error-state tests
+./gradlew :app:testDebugUnitTest --tests "com.mavo.app.ui.UiDataCacheTest"
+
+# Adaptive navigation, pane, and dashboard width decisions
+./gradlew :app:testDebugUnitTest --tests "com.mavo.app.ui.AdaptiveLayoutTest"
 ```
 
 ## What must pass before finishing a task
@@ -60,6 +66,8 @@ app/src/androidTest/java/   # Instrumentation tests (Espresso)
 | DAO queries | Unit test (Robolectric) | Verify Room queries return expected data |
 | Migrations | Unit test | Use Room `MigrationTestHelper` |
 | ViewModels | Unit test | State flow emissions, error handling |
+| UI data cache | Unit test | Snapshot replay, Room replacement, FY isolation, cached and cold errors |
+| Adaptive shell | Unit test | Compact bottom bar; medium/expanded rail and pane decisions |
 | Compose screens | Screenshot test | Visual regression via Roborazzi |
 | Responsive billing layout | Unit test + screenshot test | Compact/medium stack; expanded split pane |
 | Full user flows | Instrumentation test | End-to-end with Espresso + Compose test APIs |
@@ -67,7 +75,10 @@ app/src/androidTest/java/   # Instrumentation tests (Espresso)
 ## Critical paths to always test
 
 1. Create voucher → verify ledger entries + stock update + bank/cash transaction
-2. FY close → verify balance carry-forward
-3. DB migration → verify no data loss
-4. App first launch → wizard (onboarding → Terms → permission → 3 setup steps) → Dashboard
-5. Returning install → PIN (if enabled) → Dashboard, no wizard replay
+2. Save a partial voucher draft → verify it appears as Draft and creates no ledger, bank/cash, or stock side effects
+3. Save a Journal draft → reopen it and verify its ordered DR/CR rows; post a balanced Journal and verify ledger entries
+4. Post Income/Expense vouchers → verify selected category, payment account, ledger entries, and existing income/expense records
+5. FY close → verify balance carry-forward
+6. DB migration → verify no data loss
+7. App first launch → wizard (onboarding → Terms → permission → 3 setup steps) → Dashboard
+8. Returning install → PIN (if enabled) → Dashboard, no wizard replay

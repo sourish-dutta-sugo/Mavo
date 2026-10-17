@@ -83,6 +83,9 @@ import com.mavo.app.data.Utils
 import com.mavo.app.data.Voucher
 import com.mavo.app.data.VoucherItem
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
 import com.mavo.app.ui.animation.m3PulseHighlight
 import com.mavo.app.ui.animation.m3SpringPress
 import com.mavo.app.ui.animation.premiumClickable
@@ -96,11 +99,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun BillingScreen(
     viewModel: AppViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val theme = LocalAppTheme.current
-    val products by viewModel.products.collectAsState()
-    val parties by viewModel.parties.collectAsState()
+    val productsReadState by viewModel.productsUiState.collectAsState()
+    val partiesReadState by viewModel.partiesUiState.collectAsState()
+    val products = productsReadState.valueOrEmpty()
+    val parties = partiesReadState.valueOrEmpty()
     val cart = remember { mutableStateListOf<VoucherItem>() }
     var selectedUnitFilter by remember { mutableStateOf("ALL") }
     var walkInCustomer by remember { mutableStateOf(true) }
@@ -119,6 +125,7 @@ fun BillingScreen(
     val total = cart.sumOf { it.totalAmount }
 
     Scaffold(
+        modifier = modifier,
         containerColor = theme.backgroundPrimary,
         topBar = {
             TopAppBar(
@@ -249,28 +256,41 @@ fun BillingScreen(
                         enter = fadeIn() + slideInVertically(),
                         exit = fadeOut() + slideOutVertically()
                     ) {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            parties.filter { it.type == "CUSTOMER" || it.type == "BOTH" }.take(8).forEach { party ->
-                                val isSelected = selectedPartyId == party.id
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick = { selectedPartyId = if (isSelected) null else party.id },
-                                    label = { Text(party.name, fontSize = 12.sp) },
-                                    leadingIcon = if (isSelected) {
-                                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp)) }
-                                    } else null,
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = theme.accentPrimary,
-                                        selectedLabelColor = Color.White,
-                                        containerColor = theme.backgroundTertiary,
-                                        labelColor = theme.textPrimary
-                                    ),
-                                    modifier = Modifier.m3SpringPress()
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
+                            if (partiesReadState.blocksContent()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            } else if (parties.isEmpty()) {
+                                Text(
+                                    "No customers available.",
+                                    color = theme.textTertiary,
+                                    style = MaterialTheme.typography.bodySmall
                                 )
+                            } else {
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    parties.filter { it.type == "CUSTOMER" || it.type == "BOTH" }.take(8).forEach { party ->
+                                        val isSelected = selectedPartyId == party.id
+                                        FilterChip(
+                                            selected = isSelected,
+                                            onClick = { selectedPartyId = if (isSelected) null else party.id },
+                                            label = { Text(party.name, fontSize = 12.sp) },
+                                            leadingIcon = if (isSelected) {
+                                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp)) }
+                                            } else null,
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = theme.accentPrimary,
+                                                selectedLabelColor = Color.White,
+                                                containerColor = theme.backgroundTertiary,
+                                                labelColor = theme.textPrimary
+                                            ),
+                                            modifier = Modifier.m3SpringPress()
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -335,6 +355,17 @@ fun BillingScreen(
                             }
                     }
 
+                    UiLoadStateNotice(productsReadState, viewModel::retryFailedReads)
+                    if (productsReadState.blocksContent()) {
+                        Spacer(modifier = Modifier.height(32.dp))
+                    } else if (filteredProducts.isEmpty()) {
+                        Text(
+                            if (products.isEmpty()) "No products available." else "No matching products.",
+                            color = theme.textTertiary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(vertical = 20.dp)
+                        )
+                    } else {
                     // Products list
                     filteredProducts.forEach { product ->
                         ElevatedCard(
@@ -402,6 +433,7 @@ fun BillingScreen(
                                                 .size(14.dp)
                                         )
                                     }
+                                }
                                 }
                             }
                         }

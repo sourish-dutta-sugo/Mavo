@@ -5,23 +5,28 @@
 
 ## Themes
 
-5 named themes, selectable at runtime. Persisted in SharedPreferences (`mavo_pref` → `selected_theme`).
+6 named themes, selectable at runtime. Persisted in SharedPreferences (`mavo_pref` → `selected_theme`).
 
 | Name | Key | Accent | Background | Dark? |
 |------|-----|--------|------------|-------|
-| Saffron | `SAFFRON` | `#1A5C4B` (teal) | `#F8F7F4` (warm off-white) | No |
-| Slate | `SLATE` | `#22755F` (deep green) | `#F8F7F4` | No |
-| Ledger | `LEDGER` | `#22A06B` (fresh green) | `#F8F7F4` | No |
-| Ink | `INK` | `#7C3AED` (purple) | `#F8F7F4` | No |
+| Zero | `ZERO` | `#006B5F` (deep teal) | `#F7F5EF` (warm off-white) | No |
+| Saffron | `SAFFRON` | `#1A5C4B` (teal) | `#F7F5EF` | No |
+| Slate | `SLATE` | `#22755F` (deep green) | `#F7F5EF` | No |
+| Ledger | `LEDGER` | `#176B4A` (deep green) | `#F7F5EF` | No |
+| Ink | `INK` | `#7C3AED` (purple) | `#F7F5EF` | No |
 | Night | `NIGHT` | `#72D2B2` (mint) | `#101615` (deep dark) | **Yes** |
 
-Each theme defines: `backgroundPrimary`, `backgroundSecondary`, `backgroundTertiary`, `accentPrimary`, `accentLight`, `textPrimary`, `textSecondary`, `textTertiary`, `statusBarColor`, `statusBarDarkIcons`.
+Each theme defines Material 3 primary, secondary, tertiary, surface, outline,
+and error roles through `MavoTheme`. Light themes share warm surfaces;
+selection still controls the user's accent and Night remains dark.
 
-Default theme: **Saffron**. Legacy names (`BEACH`, `BLUE`, `GREEN`, `TEAL`, `PURPLE`, `DARK`) map to the current five.
+Default theme: **Zero**. Legacy names (`BEACH`, `BLUE`, `GREEN`, `TEAL`,
+`PURPLE`, `DARK`) map to existing theme choices.
 
 ## Colors — Semantic
 
 Defined in `DesignTokens.kt` → `Semantic` object. Theme-independent.
+Material 3 container and foreground roles come from the active color scheme.
 
 | Token | Value | Usage |
 |-------|-------|-------|
@@ -33,6 +38,19 @@ Defined in `DesignTokens.kt` → `Semantic` object. Theme-independent.
 | `credit` | `#22A06B` | CR amounts |
 | `chartIncome` | `#22A06B` | Report charts |
 | `chartExpense` | `#E24B4A` | Report charts |
+
+## Tonal surfaces
+
+| Role | Light value | Usage |
+|---|---|---|
+| Background | `#F7F5EF` | App canvas |
+| Surface | `#FFFCF7` | Cards and menus |
+| Surface variant | `#F0ECE4` | Inputs and grouped content |
+| Primary accent | Theme-selected | Primary actions and focus |
+| Outline | `#77736B` | Control boundaries |
+
+The Night theme supplies dark equivalents. Use `MaterialTheme.colorScheme`
+for new UI instead of fixed surface colors.
 
 ## Colors — Brand
 
@@ -78,6 +96,14 @@ Responsive layout tokens:
 |---|---:|---|
 | `paneGap` | 16 | Expanded product/cart pane gap |
 | `compactPaneGap` | 12 | Compact stacked pane gap |
+
+## Adaptive windows
+
+Use Material 3 window width classes, not device labels or scaled phone frames.
+Compact windows keep a focused single-column workflow and bottom navigation.
+Medium windows use a navigation rail and width-capped content. Expanded windows
+use a rail plus list/detail or product/cart panes where supported. Keep pane
+scroll state independent and keep checkout actions reachable.
 
 ## Corner radius (dp)
 

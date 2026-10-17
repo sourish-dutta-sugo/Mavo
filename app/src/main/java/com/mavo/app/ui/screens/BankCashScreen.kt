@@ -26,10 +26,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.data.*
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.LocalAppWindowSizeClass
+import com.mavo.app.ui.dashboardMaxWidthDp
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
 import com.mavo.app.ui.animation.premiumClickable
 import com.mavo.app.ui.animation.premiumFabEntrance
 import com.mavo.app.ui.animation.pressScale
@@ -40,11 +46,16 @@ import java.util.UUID
 @Composable
 fun BankCashScreen(
     viewModel: AppViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val transactions by viewModel.transactions.collectAsState()
-    val ledgerEntries by viewModel.ledgerEntries.collectAsState()
-    val parties by viewModel.parties.collectAsState()
+    val windowSizeClass = LocalAppWindowSizeClass.current
+    val transactionsReadState by viewModel.transactionsUiState.collectAsState()
+    val ledgerEntriesReadState by viewModel.ledgerEntriesUiState.collectAsState()
+    val partiesReadState by viewModel.partiesUiState.collectAsState()
+    val transactions = transactionsReadState.valueOrEmpty()
+    val ledgerEntries = ledgerEntriesReadState.valueOrEmpty()
+    val parties = partiesReadState.valueOrEmpty()
 
     var activeTab by remember { mutableStateOf("CASH") } // "CASH", "BANK"
     var showAddForm by remember { mutableStateOf(false) }
@@ -74,11 +85,13 @@ fun BankCashScreen(
         AddTransactionForm(
             viewModel = viewModel,
             parties = parties,
-            onDismiss = { showAddForm = false }
+            partiesReadState = partiesReadState,
+            onDismiss = { showAddForm = false },
+            modifier = modifier
         )
     } else {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             containerColor = AppColors.screenBg,
             topBar = {
                 TopAppBar(
@@ -114,12 +127,20 @@ fun BankCashScreen(
             ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .widthIn(max = windowSizeClass.dashboardMaxWidthDp()?.dp ?: Dp.Unspecified)
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .align(Alignment.TopCenter)
                     .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                UiLoadStateNotice(transactionsReadState, viewModel::retryFailedReads)
+                UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
+                UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
                 // Large balance summary card
-                Card(
+                if (ledgerEntriesReadState.blocksContent()) {
+                    Spacer(modifier = Modifier.height(32.dp))
+                } else Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(0.5.dp, Color(0xFFE8E8E8), RoundedCornerShape(8.dp)),
@@ -180,7 +201,9 @@ fun BankCashScreen(
                     color = Color.Gray
                 )
 
-                if (matchedTransactions.isEmpty()) {
+                if (transactionsReadState.blocksContent()) {
+                    Spacer(modifier = Modifier.weight(1f))
+                } else if (matchedTransactions.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text("No cash or bank transactions registered in this selected view.", color = Color.Gray, fontSize = 14.sp)
                     }
@@ -248,7 +271,9 @@ fun BankCashScreen(
 fun AddTransactionForm(
     viewModel: AppViewModel,
     parties: List<Party>,
-    onDismiss: () -> Unit
+    partiesReadState: com.mavo.app.ui.UiLoadState<List<Party>>,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var type by remember { mutableStateOf("RECEIPT") } // "RECEIPT", "PAYMENT"
     var mode by remember { mutableStateOf("CASH") } // "CASH", "BANK", "CHEQUE", "UPI", "NEFT"
@@ -267,7 +292,7 @@ fun AddTransactionForm(
     val scrollState = rememberScrollState()
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         containerColor = AppColors.screenBg,
         topBar = {
             TopAppBar(
@@ -354,6 +379,7 @@ fun AddTransactionForm(
                 shape = RoundedCornerShape(8.dp)
             )
 
+            UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
             // Select Party drop down
             Box(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(

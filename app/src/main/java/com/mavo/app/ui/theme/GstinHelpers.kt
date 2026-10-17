@@ -68,11 +68,12 @@ fun GstinValidationFeedback(
     gstinValid: Boolean?,
     pan: String,
     state: String,
-    stateCode: String
+    stateCode: String,
+    modifier: Modifier = Modifier
 ) {
     when {
         gstin.length == 15 && gstinValid == true -> {
-            Column(modifier = Modifier.padding(top = 4.dp)) {
+            Column(modifier = modifier.padding(top = 4.dp)) {
                 Text(
                     "✓ Valid GSTIN",
                     color = AppColors.success,

@@ -47,6 +47,7 @@ import com.mavo.app.ui.theme.AppColors
 fun LowStockScreen(
     products: List<Product>,
     onBack: () -> Unit,
+    modifier: Modifier = Modifier,
     onReorder: () -> Unit
 ) {
     // ponytail: "Reorder" / "Create purchase order" both open an empty Purchase voucher — no line-item prefill;
@@ -58,7 +59,7 @@ fun LowStockScreen(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
     ) {

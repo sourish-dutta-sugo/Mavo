@@ -89,7 +89,8 @@ fun InvoiceScreen(
     voucherId: String,
     onNavigateBack: () -> Unit,
     onEditVoucher: (String) -> Unit,
-    onCreateSaleFromVoucher: (String) -> Unit = {}
+    onCreateSaleFromVoucher: (String) -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -188,6 +189,7 @@ fun InvoiceScreen(
     }
 
     Scaffold(
+        modifier = modifier,
         containerColor = AppColors.screenBg,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
@@ -382,11 +384,12 @@ private fun InvoiceActionButton(
     label: String,
     enabled: Boolean,
     tint: Color = Color(0xFF555555),
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .width(64.dp)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(vertical = 4.dp)

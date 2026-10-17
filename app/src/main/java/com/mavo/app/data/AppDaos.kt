@@ -189,6 +189,18 @@ interface LedgerDao {
 }
 
 @Dao
+interface JournalDraftLineDao {
+    @Query("SELECT * FROM journal_draft_lines WHERE voucherId = :voucherId ORDER BY position ASC")
+    suspend fun getLinesForVoucher(voucherId: String): List<JournalDraftLine>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLines(lines: List<JournalDraftLine>)
+
+    @Query("DELETE FROM journal_draft_lines WHERE voucherId = :voucherId")
+    suspend fun deleteLinesForVoucher(voucherId: String)
+}
+
+@Dao
 interface BankCashDao {
     @Query("SELECT * FROM bank_cash_transactions WHERE financialYearCode = :financialYearCode ORDER BY date DESC, createdAt DESC")
     fun getAllTransactionsForYear(financialYearCode: String): Flow<List<BankCashTransaction>>

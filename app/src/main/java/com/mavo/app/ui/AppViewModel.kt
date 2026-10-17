@@ -33,7 +33,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,17 +70,43 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: AppRepository
 
     val profile: StateFlow<BusinessProfile?>
+    val profileUiState: StateFlow<UiLoadState<BusinessProfile?>>
     val availableFinancialYears: StateFlow<List<String>>
+    val availableFinancialYearsUiState: StateFlow<UiLoadState<List<String>>>
     val parties: StateFlow<List<Party>>
+    val partiesUiState: StateFlow<UiLoadState<List<Party>>>
     val products: StateFlow<List<Product>>
+    val productsUiState: StateFlow<UiLoadState<List<Product>>>
     val vouchers: StateFlow<List<Voucher>>
+    val vouchersUiState: StateFlow<UiLoadState<List<Voucher>>>
     val ledgerEntries: StateFlow<List<LedgerEntry>>
+    val ledgerEntriesUiState: StateFlow<UiLoadState<List<LedgerEntry>>>
     val transactions: StateFlow<List<BankCashTransaction>>
+    val transactionsUiState: StateFlow<UiLoadState<List<BankCashTransaction>>>
     val receiptAllocations: StateFlow<List<ReceiptAllocation>>
+    val receiptAllocationsUiState: StateFlow<UiLoadState<List<ReceiptAllocation>>>
     val ledgerAccounts: StateFlow<List<LedgerAccount>>
+    val ledgerAccountsUiState: StateFlow<UiLoadState<List<LedgerAccount>>>
     val billsReceivable: StateFlow<List<BillReceivable>>
+    val billsReceivableUiState: StateFlow<UiLoadState<List<BillReceivable>>>
     val expenses: StateFlow<List<Expense>>
+    val expensesUiState: StateFlow<UiLoadState<List<Expense>>>
     val incomes: StateFlow<List<Income>>
+    val incomesUiState: StateFlow<UiLoadState<List<Income>>>
+
+    private val retryGeneration = MutableStateFlow(0)
+    private val profileCache = UiDataCache<BusinessProfile?>()
+    private val financialYearsCache = UiDataCache<List<String>>()
+    private val partiesCache = UiDataCache<List<Party>>()
+    private val productsCache = UiDataCache<List<Product>>()
+    private val vouchersCache = UiDataCache<List<Voucher>>()
+    private val ledgerEntriesCache = UiDataCache<List<LedgerEntry>>()
+    private val transactionsCache = UiDataCache<List<BankCashTransaction>>()
+    private val receiptAllocationsCache = UiDataCache<List<ReceiptAllocation>>()
+    private val ledgerAccountsCache = UiDataCache<List<LedgerAccount>>()
+    private val billsReceivableCache = UiDataCache<List<BillReceivable>>()
+    private val expensesCache = UiDataCache<List<Expense>>()
+    private val incomesCache = UiDataCache<List<Income>>()
 
     val isSetupCompleted = MutableStateFlow(false)
     val setupStatusResolved = MutableStateFlow(false)
@@ -93,77 +126,76 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
         repository = tempRepo
 
-        profile = repository.profile.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = null
+        profileUiState = cachedReadState(
+            dataset = "profile",
+            keyFlow = flowOf<String?>(null),
+            source = { repository.profile },
+            cache = profileCache,
+            isEmpty = { it == null }
+        )
+        profile = profileUiState.asCompatibilityState(null)
+
+        availableFinancialYearsUiState = cachedReadState(
+            dataset = "financial-years",
+            keyFlow = flowOf<String?>(null),
+            source = { repository.observeAvailableFinancialYearCodes() },
+            cache = financialYearsCache,
+            isEmpty = { it.isEmpty() }
+        )
+        availableFinancialYears = availableFinancialYearsUiState.asCompatibilityState(
+            FinancialYearUtils.buildGeneratedYears()
         )
 
-        availableFinancialYears = repository.observeAvailableFinancialYearCodes().stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = FinancialYearUtils.buildGeneratedYears()
-        )
-
-        parties = financialYear.flatMapLatest(repository::observeParties).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-        products = financialYear.flatMapLatest(repository::observeProducts).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-        vouchers = financialYear.flatMapLatest(repository::observeVouchers).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-        ledgerEntries = financialYear.flatMapLatest(repository::observeLedgerEntries).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-        transactions = financialYear.flatMapLatest(repository::observeTransactions).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-        receiptAllocations = financialYear.flatMapLatest(repository::observeReceiptAllocations).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-        ledgerAccounts = financialYear.flatMapLatest(repository::observeLedgerAccounts).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-        billsReceivable = financialYear.flatMapLatest(repository::observeBillsReceivable).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-        expenses = financialYear.flatMapLatest(repository::observeExpenses).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
-
-        incomes = financialYear.flatMapLatest(repository::observeIncomes).stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+        partiesUiState = cachedReadState(
+            "parties", financialYear.asCacheKeyFlow(),
+            { repository.observeParties(checkNotNull(it)) }, partiesCache
+        ) { it.isEmpty() }
+        parties = partiesUiState.asCompatibilityState(emptyList())
+        productsUiState = cachedReadState(
+            "products", financialYear.asCacheKeyFlow(),
+            { repository.observeProducts(checkNotNull(it)) }, productsCache
+        ) { it.isEmpty() }
+        products = productsUiState.asCompatibilityState(emptyList())
+        vouchersUiState = cachedReadState(
+            "vouchers", financialYear.asCacheKeyFlow(),
+            { repository.observeVouchers(checkNotNull(it)) }, vouchersCache
+        ) { it.isEmpty() }
+        vouchers = vouchersUiState.asCompatibilityState(emptyList())
+        ledgerEntriesUiState = cachedReadState(
+            "ledger-entries", financialYear.asCacheKeyFlow(),
+            { repository.observeLedgerEntries(checkNotNull(it)) }, ledgerEntriesCache
+        ) { it.isEmpty() }
+        ledgerEntries = ledgerEntriesUiState.asCompatibilityState(emptyList())
+        transactionsUiState = cachedReadState(
+            "transactions", financialYear.asCacheKeyFlow(),
+            { repository.observeTransactions(checkNotNull(it)) }, transactionsCache
+        ) { it.isEmpty() }
+        transactions = transactionsUiState.asCompatibilityState(emptyList())
+        receiptAllocationsUiState = cachedReadState(
+            "receipt-allocations", financialYear.asCacheKeyFlow(),
+            { repository.observeReceiptAllocations(checkNotNull(it)) }, receiptAllocationsCache
+        ) { it.isEmpty() }
+        receiptAllocations = receiptAllocationsUiState.asCompatibilityState(emptyList())
+        ledgerAccountsUiState = cachedReadState(
+            "ledger-accounts", financialYear.asCacheKeyFlow(),
+            { repository.observeLedgerAccounts(checkNotNull(it)) }, ledgerAccountsCache
+        ) { it.isEmpty() }
+        ledgerAccounts = ledgerAccountsUiState.asCompatibilityState(emptyList())
+        billsReceivableUiState = cachedReadState(
+            "bills-receivable", financialYear.asCacheKeyFlow(),
+            { repository.observeBillsReceivable(checkNotNull(it)) }, billsReceivableCache
+        ) { it.isEmpty() }
+        billsReceivable = billsReceivableUiState.asCompatibilityState(emptyList())
+        expensesUiState = cachedReadState(
+            "expenses", financialYear.asCacheKeyFlow(),
+            { repository.observeExpenses(checkNotNull(it)) }, expensesCache
+        ) { it.isEmpty() }
+        expenses = expensesUiState.asCompatibilityState(emptyList())
+        incomesUiState = cachedReadState(
+            "incomes", financialYear.asCacheKeyFlow(),
+            { repository.observeIncomes(checkNotNull(it)) }, incomesCache
+        ) { it.isEmpty() }
+        incomes = incomesUiState.asCompatibilityState(emptyList())
 
         if (dbInitState.value is DbInitState.Success) {
             viewModelScope.launch {
@@ -173,15 +205,69 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             viewModelScope.launch {
-                repository.profile.collect { prof ->
+                profileUiState.collect { state ->
+                    if (state == UiLoadState.Loading ||
+                        state is UiLoadState.Error && !state.hasCachedValue
+                    ) {
+                        return@collect
+                    }
+                    val prof = when (state) {
+                        is UiLoadState.Content -> state.value
+                        is UiLoadState.Empty -> state.value
+                        is UiLoadState.Error -> state.cachedValue
+                        UiLoadState.Loading -> null
+                    }
                     setupStatusResolved.value = true
                     isSetupCompleted.value = prof != null
-                    val resolvedFy = prof?.fyLabel?.takeIf { it.isNotBlank() } ?: FinancialYearUtils.currentFinancialYearCode()
+                    val resolvedFy = prof?.fyLabel?.takeIf { it.isNotBlank() }
+                        ?: FinancialYearUtils.currentFinancialYearCode()
                     financialYear.value = resolvedFy
                     repository.ensureFinancialYearExists(resolvedFy)
                 }
             }
         }
+    }
+
+    private fun <T> cachedReadState(
+        dataset: String,
+        keyFlow: Flow<String?>,
+        source: (String?) -> Flow<T>,
+        cache: UiDataCache<T>,
+        isEmpty: (T) -> Boolean
+    ): StateFlow<UiLoadState<T>> =
+        combine(keyFlow, retryGeneration) { financialYearCode, _ -> financialYearCode }
+            .flatMapLatest { financialYearCode ->
+                val key = UiDataKey(dataset, financialYearCode)
+                flow { emitAll(source(financialYearCode)) }
+                    .map { value -> cache.update(key, value, isEmpty) }
+                    .onStart { emit(cache.currentState(key, isEmpty)) }
+                    .catch { cause -> emit(cache.error(key, cause)) }
+            }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = UiLoadState.Loading
+            )
+
+    private fun <T> StateFlow<UiLoadState<T>>.asCompatibilityState(
+        initialValue: T
+    ): StateFlow<T> =
+        map { state ->
+            when (state) {
+                is UiLoadState.Content -> state.value
+                is UiLoadState.Empty -> state.value
+                is UiLoadState.Error ->
+                    if (state.hasCachedValue) state.cachedValue ?: initialValue else initialValue
+                UiLoadState.Loading -> initialValue
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = initialValue
+        )
+
+    fun retryFailedReads() {
+        retryGeneration.value += 1
     }
 
     fun insertAllocation(allocation: ReceiptAllocation) {
@@ -305,6 +391,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     suspend fun getVoucherSaveExtras(voucherId: String): VoucherSaveExtras =
         repository.getVoucherSaveExtras(voucherId)
+
+    suspend fun getJournalLinesForVoucher(voucherId: String) =
+        repository.getJournalLinesForVoucher(voucherId)
 
     fun saveVoucher(
         voucher: Voucher,
@@ -600,3 +689,5 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         return updatedLabel
     }
 }
+
+private fun MutableStateFlow<String>.asCacheKeyFlow(): Flow<String?> = map { it }

@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -67,12 +69,19 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.data.Product
 import com.mavo.app.data.Utils
 import com.mavo.app.data.filterDecimalInput
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.LocalAppWindowSizeClass
+import com.mavo.app.ui.UiLoadState
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
+import com.mavo.app.ui.dashboardMaxWidthDp
 import com.mavo.app.ui.animation.premiumCombinedClickable
 import com.mavo.app.ui.animation.premiumFabEntrance
 import com.mavo.app.ui.animation.pressScale
@@ -145,9 +154,12 @@ fun Product.isLowStockAlertTriggered(): Boolean =
 fun ProductsScreen(
     viewModel: AppViewModel,
     onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
     onNavigateToLowStock: () -> Unit
 ) {
-    val products by viewModel.products.collectAsState()
+    val windowSizeClass = LocalAppWindowSizeClass.current
+    val productsReadState by viewModel.productsUiState.collectAsState()
+    val products = productsReadState.valueOrEmpty()
     var searchQuery by remember { mutableStateOf("") }
     var sheetMode by remember { mutableStateOf<ProductSheetMode?>(null) }
     var editingProductId by remember { mutableStateOf<String?>(null) }
@@ -184,7 +196,7 @@ fun ProductsScreen(
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         containerColor = AppColors.screenBg,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
@@ -227,15 +239,18 @@ fun ProductsScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(AppColors.screenBg)
-                .padding(innerPadding)
-                .imePadding()
-                .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = windowSizeClass.dashboardMaxWidthDp()?.dp ?: Dp.Unspecified)
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .align(Alignment.TopCenter)
+                    .background(AppColors.screenBg)
+                    .imePadding()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -247,6 +262,10 @@ fun ProductsScreen(
                     focusedContainerColor = AppColors.inputBg,
                     unfocusedContainerColor = AppColors.inputBg
                 )
+            )
+            UiLoadStateNotice(
+                state = productsReadState,
+                onRetry = viewModel::retryFailedReads
             )
 
             if (lowStockCount > 0) {
@@ -260,10 +279,11 @@ fun ProductsScreen(
                         color = Color(0xFFB45309),
                         fontWeight = FontWeight.SemiBold
                     )
+                    }
                 }
-            }
-
-            if (filteredProducts.isEmpty()) {
+            if (productsReadState.blocksContent()) {
+                Spacer(modifier = Modifier.weight(1f))
+            } else if (filteredProducts.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No products configured yet.", color = AppColors.textSecondary, fontSize = 14.sp)
                 }
@@ -401,6 +421,7 @@ fun ProductsScreen(
         )
     }
 }
+}
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -408,6 +429,7 @@ private fun ProductRow(
     product: Product,
     isSelected: Boolean,
     selectionActive: Boolean,
+    modifier: Modifier = Modifier,
     onOpenDetail: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -426,7 +448,7 @@ private fun ProductRow(
     }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .border(
                 1.dp,
@@ -493,6 +515,7 @@ fun ProductEditorScreen(
     viewModel: AppViewModel,
     mode: ProductSheetMode,
     existingProduct: Product?,
+    modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
     var editorState by remember(existingProduct, mode) {
@@ -570,7 +593,7 @@ fun ProductEditorScreen(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
     ) {

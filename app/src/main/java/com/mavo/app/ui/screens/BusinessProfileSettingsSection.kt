@@ -94,7 +94,8 @@ fun BusinessProfileSettingsSection(
     viewModel: AppViewModel,
     profile: BusinessProfile?,
     isDesktop: Boolean,
-    onBackToMenu: () -> Unit
+    onBackToMenu: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -261,7 +262,7 @@ fun BusinessProfileSettingsSection(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
     ) {
