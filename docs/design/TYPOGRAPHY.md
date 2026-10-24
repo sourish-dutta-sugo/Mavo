@@ -1,11 +1,15 @@
 # TYPOGRAPHY.md — Mavo
 
-> Last updated: 2026-10-03  
+> Last updated: 2026-10-24  
 > Source of truth: `app/src/main/java/com/mavo/app/ui/theme/Type.kt`
 
 ## Typography System
 
-Mavo uses Jetpack Compose Material 3 typography with system default font family (`FontFamily.Default`), optimized for legibility on diverse Android retail screens.
+Mavo enforces a dedicated, self-contained typography hierarchy independent of device settings:
+- **Headers & Headlines (`display*`, `headline*`):** `Playwrite Polska` (`PlaywritePolskaFontFamily`, bundled in `res/font/playwrite_polska.ttf`).
+- **Body, Titles, and Labels (`title*`, `body*`, `label*`):** `DynaPuff` (`DynaPuffFontFamily`, bundled in `res/font/dynapuff.ttf`).
+- **Numerics & Financial Figures:** `FontFamily.Default` / `FontFamily.Monospace` via `NumericFontFamily` to ensure clean tabular alignment and decimal legibility.
+- **Device Override Protection:** `MavoTheme` enforces `LocalDensity` with fixed `fontScale = 1.0f`, guaranteeing external OS display size or font settings do not distort the visual hierarchy or break retail layouts.
 
 ---
 

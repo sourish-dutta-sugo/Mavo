@@ -62,7 +62,7 @@ Mavo has **no backend server**. All data is local (Room/SQLite). This doc covers
 ## Location
 
 - **Library:** `play-services-location`
-- **Usage:** Auto-detect GST state code from device GPS during setup
+- **Usage:** Auto-detect pin code, city, and GST state code from device GPS during setup (`detectGstStateInfoFromLocation` → `DetectedLocation`); reverse geocode via `Geocoder` (`en_IN`)
 - **Optional:** Falls back to manual entry
 
 ## DataStore preferences

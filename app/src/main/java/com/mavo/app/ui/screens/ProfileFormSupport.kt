@@ -105,6 +105,7 @@ private fun hasLocationPermission(context: Context): Boolean {
     return fine || coarse
 }
 
+@android.annotation.SuppressLint("MissingPermission")
 private suspend fun getLastKnownLocation(context: Context): Location? {
     if (!hasLocationPermission(context)) return null
     return suspendCancellableCoroutine { continuation ->
@@ -119,11 +120,18 @@ private suspend fun getLastKnownLocation(context: Context): Location? {
     }
 }
 
+data class DetectedLocation(
+    val state: String,
+    val stateCode: String,
+    val pin: String,
+    val city: String
+)
+
 private suspend fun reverseGeocodeStateInfo(
     context: Context,
     latitude: Double,
     longitude: Double
-): Pair<String, String>? = withContext(Dispatchers.IO) {
+): DetectedLocation? = withContext(Dispatchers.IO) {
     if (!Geocoder.isPresent()) return@withContext null
     runCatching {
         @Suppress("DEPRECATION")
@@ -131,22 +139,29 @@ private suspend fun reverseGeocodeStateInfo(
             .getFromLocation(latitude, longitude, 5)
             .orEmpty()
 
-        addresses.asSequence()
-            .flatMap { address ->
-                sequenceOf(
-                    address.adminArea,
-                    address.subAdminArea,
-                    address.locality,
-                    address.subLocality
-                )
-            }
-            .mapNotNull { candidate -> candidate?.takeIf { it.isNotBlank() } }
-            .mapNotNull(::resolveIndianStateInfo)
-            .firstOrNull()
+        // ponytail: geocoder postalCode is town-level approximate (may be a neighbouring town's pin);
+        // upgrade path = cross-check via fetchPinLookup, which already runs on the prefilled pin in SetupLocationScreen
+        addresses.firstNotNullOfOrNull { address ->
+            val stateInfo = sequenceOf(
+                address.adminArea,
+                address.subAdminArea,
+                address.locality,
+                address.subLocality
+            )
+                .mapNotNull { candidate -> candidate?.takeIf { it.isNotBlank() } }
+                .mapNotNull(::resolveIndianStateInfo)
+                .firstOrNull() ?: return@firstNotNullOfOrNull null
+            DetectedLocation(
+                state = stateInfo.first,
+                stateCode = stateInfo.second,
+                pin = address.postalCode?.trim().orEmpty().takeIf { it.length == 6 && it.all { c -> c.isDigit() } } ?: "",
+                city = address.locality?.trim().orEmpty()
+            )
+        }
     }.getOrNull()
 }
 
-suspend fun detectGstStateInfoFromLocation(context: Context): Pair<String, String>? {
+suspend fun detectGstStateInfoFromLocation(context: Context): DetectedLocation? {
     val location = getLastKnownLocation(context) ?: return null
     return reverseGeocodeStateInfo(context, location.latitude, location.longitude)
 }

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.data.LedgerAccount
+import com.mavo.app.data.Utils
 import com.mavo.app.ui.AppViewModel
 import com.mavo.app.ui.LocalAppWindowSizeClass
 import com.mavo.app.ui.components.UiLoadStateNotice
@@ -228,7 +229,7 @@ private fun LedgerAccountRow(
     ) {
         Text(account.name, fontWeight = FontWeight.Normal, fontSize = 13.sp, color = AppColors.textPrimary, modifier = Modifier.weight(1f))
         Text(
-            text = if (absBal < 0.01) "Settled" else "₹ ${"%,.2f".format(absBal)} ${if (isDr) "DR" else "CR"}",
+            text = if (absBal < 0.01) "Settled" else "${Utils.formatIndianCurrency(absBal)} ${if (isDr) "DR" else "CR"}",
             fontWeight = FontWeight.SemiBold,
             fontSize = 12.sp,
             color = when {
@@ -271,7 +272,7 @@ private fun EditableLedgerAccountRow(
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = if (absBal < 0.01) "Settled" else "Rs ${"%,.2f".format(absBal)} ${if (isDr) "DR" else "CR"}",
+                text = if (absBal < 0.01) "Settled" else "${Utils.formatIndianCurrency(absBal)} ${if (isDr) "DR" else "CR"}",
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 12.sp,
                 color = when {

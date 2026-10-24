@@ -129,7 +129,7 @@ Defined in `DesignTokens.kt` → `CornerRadius`.
 
 ## Typography
 
-Defined in `Type.kt`. All use `FontFamily.Default` (system sans-serif).
+Defined in `Type.kt`. Headers (`display*`, `headline*`) use `Playwrite Polska` (`res/font/playwrite_polska.ttf`). All titles, body, and labels use `DynaPuff` (`res/font/dynapuff.ttf`). Numerics and financial figures preserve clean alignment via `NumericFontFamily`. Device font scaling overrides are locked (`fontScale = 1.0f`) in `MavoTheme`.
 
 | Style | Size | Weight | Line height | Letter spacing |
 |-------|------|--------|-------------|----------------|

@@ -199,7 +199,7 @@ fun BusinessProfileSettingsSection(
         isLocationDetecting = true
         val detectedState = detectGstStateInfoFromLocation(context)
         if (detectedState != null) {
-            selectedStateInfo = detectedState
+            selectedStateInfo = detectedState.state to detectedState.stateCode
             locationDetectionMessage = "GST state code auto-detected via location."
         } else {
             locationDetectionMessage = ""

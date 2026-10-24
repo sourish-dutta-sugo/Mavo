@@ -18,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
@@ -76,8 +78,10 @@ fun SplashScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(R.drawable.logo_transparent),
+                    painter = painterResource(R.drawable.logo_icon),
                     contentDescription = null,
+                    // dark mark asset, tinted for the primary-colored box (works in light+dark themes)
+                    colorFilter = ColorFilter.tint(AppColors.textOnPrimary, BlendMode.SrcIn),
                     modifier = Modifier.size(54.dp)
                 )
             }

@@ -63,7 +63,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -407,11 +409,12 @@ fun DashboardScreen(
                             .background(AppColors.textPrimary),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.MenuBook,
+                        Image(
+                            painter = painterResource(R.drawable.logo_icon),
                             contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
+                            // dark mark asset, tinted to match the box's established white icon convention
+                            colorFilter = ColorFilter.tint(Color.White, BlendMode.SrcIn),
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
@@ -1587,104 +1590,3 @@ fun AnalyticsStat(
     }
 }
 
-@Composable
-fun TransactionSummaryPill(modifier: Modifier = Modifier, label: String, value: String) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(AppColors.screenBg, RoundedCornerShape(10.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp)
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(label, fontSize = 10.sp, color = AppColors.textTertiary)
-            Text(value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
-        }
-    }
-}
-
-fun deriveTransactionStatus(voucher: Voucher): String {
-    return when {
-        voucher.status == "DRAFT" -> "Cancelled"
-        voucher.outstandingAmount <= 0.0 -> "Paid"
-        voucher.outstandingAmount < voucher.netAmount -> "Partially Paid"
-        else -> "Due"
-    }
-}
-
-@Composable
-fun QuickActionItem(
-    label: String,
-    icon: ImageVector,
-    backgroundColor: Color,
-    iconColor: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = modifier
-            .premiumClickable(onClick = onClick)
-            .padding(4.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(backgroundColor, RoundedCornerShape(14.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = iconColor,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = AppColors.textPrimary
-        )
-    }
-}
-
-@Composable
-fun KpiCard(
-    details: KpiDetails,
-    isSelected: Boolean = false,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(16.dp))
-            .border(
-                1.dp,
-                if (isSelected) AppColors.primary else AppColors.border,
-                RoundedCornerShape(16.dp)
-            )
-            .premiumClickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = details.title.uppercase(),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.textTertiary,
-                letterSpacing = 0.5.sp
-            )
-            Text(
-                text = details.amount,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.textPrimary
-            )
-        }
-    }
-}

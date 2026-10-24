@@ -26,7 +26,7 @@ content, and retryable read failures remain distinct states.
 | 1 | App opens, profile absent | SplashScreen → Initialising | `businessProfileDao.getProfile()` null → start wizard | Wizard step 1 | — |
 | 2 | Onboarding 1 / 2 | Static explainers in a card shell with pager dots and a pill Next (›) button | — | Next → Terms page | — |
 | 3 | Terms & Privacy page | Check card, terms/privacy copy, two expandable document rows, agree checkbox, Get Started pill | Local text | Get Started enabled only when ticked | Unticked → button dimmed, tap ignored |
-| 4 | Location permission | Rationale card, "Allow location" / "Enter manually" pills | `play-services-location` (optional) | Grant → state code auto-detected into draft; Enter manually → skip detection | Denied → manual state entry |
+| 4 | Location permission | Rationale card, "Allow location" / "Enter manually" pills | `play-services-location` (optional) | Grant → pin, city, and state code auto-detected into draft; Enter manually → skip detection | Denied → manual entry |
 | 5 | Setup 1 "Basic details" | Business Name*, Owner, Phone, Alt phone, Email, Address*, business type, what you sell | Empty `SetupDraft` | Continue enabled when Business Name + Address filled | Hint lists missing fields |
 | 6 | Setup 2 "Where you are" | PIN*, City, GST toggle, State, (GST State Code if toggle on) | `fetchPinLookup` after 6 digits, `StateDropdownMenu` | PIN auto-fills city/state; GST toggle reveals state code | Lookup fails → "Unable to fetch location" |
 | 7 | Setup 3 "Tax & bank" | GSTIN + PAN (only if GST on), Account No, IFSC, Bank, Branch | `fetchGstinDetails`, `fetchIfscDetails` | "Finish Setup" → sample-data dialog | IFSC unresolved → field left as typed |

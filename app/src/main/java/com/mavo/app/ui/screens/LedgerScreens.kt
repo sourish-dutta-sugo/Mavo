@@ -1,4 +1,4 @@
-package com.mavo.app.ui.screens
+﻿package com.mavo.app.ui.screens
 
 import android.app.DatePickerDialog
 import android.widget.Toast
@@ -189,19 +189,7 @@ private val ExpenseKind = LedgerKind(
     }
 )
 
-private fun Income.toLedgerRow() = LedgerRow(id, date, category, description, amount, paymentMode, referenceNo)
 private fun Expense.toLedgerRow() = LedgerRow(id, date, category, description, amount, paymentMode, referenceNo)
-
-@Composable
-fun IncomeScreen(
-    viewModel: AppViewModel,
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val incomeReadState by viewModel.incomesUiState.collectAsState()
-    val incomes = incomeReadState.valueOrEmpty()
-    LedgerListScreen(IncomeKind, incomes.map { it.toLedgerRow() }, incomeReadState, viewModel, onNavigateBack, modifier)
-}
 
 @Composable
 fun ExpensesScreen(

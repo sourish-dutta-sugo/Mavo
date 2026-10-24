@@ -9,6 +9,7 @@
 
 | Document | Description |
 |---|---|
+| [AI slop.md](AI%20slop.md) | Standard engineering and design rules for preventing low-quality AI slop |
 | [agent-rules/CHANGE_REPORT_GUIDE.md](agent-rules/CHANGE_REPORT_GUIDE.md) | Standard operating procedure and template for post-task change reports in `docs/changes/` |
 | [agent-rules/DOC_SYNC_MAP.md](agent-rules/DOC_SYNC_MAP.md) | Lookup table: "if you changed X, also update these docs" |
 

@@ -52,6 +52,9 @@ object Utils {
     fun formatIndianCurrency(amount: Double): String =
         (if (amount < 0) "-" else "") + "₹" + DecimalFormat("#,##,##0.00").format(Math.abs(amount))
 
+    fun formatIndianNumber(amount: Double): String =
+        DecimalFormat("#,##,##0.00").format(amount)
+
     fun formatDate(timestamp: Long): String {
         return SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).format(Date(timestamp))
     }

@@ -1,4 +1,4 @@
-package com.mavo.app.services
+﻿package com.mavo.app.services
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -392,40 +392,6 @@ object InvoiceGenerator {
         )
     }
 
-    suspend fun printBundle(
-        context: Context,
-        bundle: InvoiceRenderBundle
-    ) {
-        withContext(Dispatchers.Main) {
-            val webView = createConfiguredWebView(context)
-            suspendCancellableCoroutine<Unit> { continuation ->
-                webView.webViewClient = object : WebViewClient() {
-                    override fun onPageFinished(view: WebView?, url: String?) {
-                        val target = view ?: return
-                        target.postDelayed({
-                            runCatching {
-                                val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
-                                val printAdapter = target.createPrintDocumentAdapter(bundle.document.invoiceNumber)
-                                val printAttributes = PrintAttributes.Builder()
-                                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                                    .setResolution(PrintAttributes.Resolution("pdf", "pdf", 600, 600))
-                                    .setMinMargins(PrintAttributes.Margins(0, 0, 0, 0))
-                                    .build()
-                                printManager.print("Invoice_${bundle.document.invoiceNumber}", printAdapter, printAttributes)
-                            }.onSuccess {
-                                if (continuation.isActive) continuation.resume(Unit)
-                            }.onFailure {
-                                if (continuation.isActive) continuation.resumeWithException(it)
-                            }
-                        }, 500L)
-                    }
-                }
-                webView.loadDataWithBaseURL("file:///", bundle.html, "text/html", "UTF-8", null)
-                continuation.invokeOnCancellation { webView.destroy() }
-            }
-            webView.destroy()
-        }
-    }
 
     fun generateUpiLink(
         upiId: String,
@@ -1168,18 +1134,6 @@ object InvoiceGenerator {
         }
     }
 
-    fun exportInvoicePdf(
-        context: Context,
-        pdfFile: File
-    ): ExportStorageManager.ExportResult =
-        ExportStorageManager.exportFile(
-            context = context,
-            sourceFile = pdfFile,
-            displayName = pdfFile.name,
-            mimeType = "application/pdf",
-            target = ExportTarget.Invoices
-        )
-
     fun emailInvoicePdf(
         context: Context,
         pdfFile: File,
@@ -1276,13 +1230,6 @@ fun configureInvoiceWebView(webView: WebView) {
     }
 }
 
-suspend fun printInvoice(
-    context: Context,
-    bundle: InvoiceGenerator.InvoiceRenderBundle
-) {
-    InvoiceGenerator.printBundle(context, bundle)
-}
-
 fun printInvoice(
     context: Context,
     htmlContent: String,
@@ -1327,19 +1274,6 @@ fun shareInvoicePdfToWhatsApp(
     pdfFile: File
 ) = InvoiceGenerator.shareInvoicePdfToWhatsApp(context, pdfFile)
 
-fun exportInvoicePdf(
-    context: Context,
-    pdfFile: File
-): ExportStorageManager.ExportResult = InvoiceGenerator.exportInvoicePdf(context, pdfFile)
-
-fun emailInvoicePdf(
-    context: Context,
-    pdfFile: File,
-    recipient: String?,
-    subject: String,
-    body: String
-) = InvoiceGenerator.emailInvoicePdf(context, pdfFile, recipient, subject, body)
-
 private fun escapeHtml(value: String): String =
     value.replace("&", "&amp;")
         .replace("<", "&lt;")
@@ -1349,9 +1283,6 @@ private fun toFileUrl(path: String): String =
     if (path.startsWith("/")) "file://$path" else "file:///$path"
 
 private fun formatMoney(value: Double): String = DecimalFormat("#,##0.00").format(value)
-
-private fun formatSignedMoney(value: Double): String =
-    if (value < 0) "-${formatMoney(abs(value))}" else formatMoney(value)
 
 private fun formatQty(value: Double): String =
     String.format(Locale.ENGLISH, "%.3f", value)

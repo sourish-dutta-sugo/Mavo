@@ -70,6 +70,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -362,8 +364,10 @@ private fun AppContent(
                             contentAlignment = Alignment.Center
                         ) {
                             Image(
-                                painter = painterResource(R.drawable.logo_transparent),
+                                painter = painterResource(R.drawable.logo_icon),
                                 contentDescription = null,
+                                // dark mark asset, tinted for the primary-colored box (works in light+dark themes)
+                                colorFilter = ColorFilter.tint(AppColors.textOnPrimary, BlendMode.SrcIn),
                                 modifier = Modifier.size(48.dp)
                             )
                         }

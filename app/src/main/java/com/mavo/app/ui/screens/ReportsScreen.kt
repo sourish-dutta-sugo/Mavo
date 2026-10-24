@@ -939,7 +939,7 @@ fun TrialBalanceView(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = if (dr > 0) String.format("%,.2f", dr) else "-",
+                    text = if (dr > 0) Utils.formatIndianNumber(dr) else "-",
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp,
@@ -948,7 +948,7 @@ fun TrialBalanceView(
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = if (cr > 0) String.format("%,.2f", cr) else "-",
+                    text = if (cr > 0) Utils.formatIndianNumber(cr) else "-",
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp,
@@ -985,7 +985,7 @@ fun TrialBalanceView(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = if (isDr) String.format("%,.2f", balance) else "-",
+                    text = if (isDr) Utils.formatIndianNumber(balance) else "-",
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -994,7 +994,7 @@ fun TrialBalanceView(
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = if (!isDr) String.format("%,.2f", balance) else "-",
+                    text = if (!isDr) Utils.formatIndianNumber(balance) else "-",
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -1122,7 +1122,7 @@ fun TrialBalanceView(
                     maxLines = 2
                 )
                 Text(
-                    text = if (reconcileWithCapital < 0) String.format("DR: %,.2f", -reconcileWithCapital) else "-",
+                    text = if (reconcileWithCapital < 0) "DR: " + Utils.formatIndianNumber(-reconcileWithCapital) else "-",
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -1131,7 +1131,7 @@ fun TrialBalanceView(
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = if (reconcileWithCapital > 0) String.format("CR: %,.2f", reconcileWithCapital) else "-",
+                    text = if (reconcileWithCapital > 0) "CR: " + Utils.formatIndianNumber(reconcileWithCapital) else "-",
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -1163,8 +1163,8 @@ fun TrialBalanceView(
                 color = AppColors.textOnPrimary,
                 modifier = Modifier.weight(1.5f)
             )
-            Text(String.format("₹ %,.2f", finalDrSum), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
-            Text(String.format("₹ %,.2f", finalCrSum), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+            Text(Utils.formatIndianCurrency(finalDrSum), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+            Text(Utils.formatIndianCurrency(finalCrSum), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
         }
     }
 }
@@ -1424,7 +1424,7 @@ fun PLTotalItem(total: Double, modifier: Modifier = Modifier) {
     ) {
         Text("Total", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.primary)
         Text(
-            text = String.format("₹%,.2f", total),
+            text = Utils.formatIndianCurrency(total),
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp,
@@ -1551,7 +1551,7 @@ fun BalanceSheetView(
                     maxLines = 2
                 )
                 Text(
-                    text = String.format("₹ %,.2f", bsDifference),
+                    text = Utils.formatIndianCurrency(bsDifference),
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -1601,7 +1601,7 @@ fun GSTSummaryView(
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Total Outward Tax Liability:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
-                    Text(String.format("₹ %,.2f", outputTotal), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
+                    Text(Utils.formatIndianCurrency(outputTotal), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
                 }
             }
         }
@@ -1621,7 +1621,7 @@ fun GSTSummaryView(
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Total Input Tax credits (ITC):", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
-                    Text(String.format("₹ %,.2f", inputTotal), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
+                    Text(Utils.formatIndianCurrency(inputTotal), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
                 }
             }
         }
@@ -1645,7 +1645,7 @@ fun GSTSummaryView(
                 ) {
                     Text(label, fontWeight = FontWeight.Black, fontSize = 13.sp, color = AppColors.textPrimary, modifier = Modifier.weight(1f))
                     Text(
-                        text = String.format("₹ %,.2f", Math.abs(netPayable)),
+                        text = Utils.formatIndianCurrency(Math.abs(netPayable)),
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Black,
                         fontSize = 16.sp,
@@ -1710,7 +1710,7 @@ fun DebtorsRemindersView(
 
                         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = String.format("₹ %,.2f", balance),
+                                text = Utils.formatIndianCurrency(balance),
                                 fontWeight = FontWeight.Bold,
                                 color = AppColors.error,
                                 fontSize = 14.sp,
@@ -1754,7 +1754,7 @@ fun sendDebtorReminderEmail(context: Context, party: Party, balance: Double, pro
 
 This is a professional notification from $bName. 
 
-Your ledger account shows an active outstanding due amount of ₹ ${String.format("%,.2f", balance)}.
+Your ledger account shows an active outstanding due amount of ₹ ${Utils.formatIndianNumber(balance)}.
 
 Please clear your pending bills at your earliest convenience.$bankDesc
 If you have already processed the transfer, please share the transaction reference.
@@ -1773,49 +1773,6 @@ Phone: ${profile?.phone ?: ""}
         ),
         chooserTitle = "Send Reminder Email"
     )
-}
-
-// ═══════════════════════════════════════════════════════
-// OUTSTANDING CREDITORS LIST VIEW
-// ═══════════════════════════════════════════════════════
-@Composable
-fun CreditorsListView(creditors: List<Pair<Party, Double>>, modifier: Modifier = Modifier) {
-    if (creditors.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No active outstanding supplier liabilities.", fontSize = 13.sp, color = AppColors.textSecondary)
-        }
-    } else {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier.fillMaxSize()) {
-            items(creditors) { (party, balance) ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    border = BorderStroke(1.dp, AppColors.border)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(party.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppColors.textPrimary)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Email: ${party.email.ifBlank { "N/A" }}", fontSize = 11.sp, color = AppColors.textSecondary)
-                            Text("Phone: ${party.phone}", fontSize = 11.sp, color = AppColors.textSecondary)
-                        }
-
-                        Text(
-                            text = String.format("₹ %,.2f", balance),
-                            fontWeight = FontWeight.Bold,
-                            color = AppColors.success,
-                            fontSize = 14.sp,
-                            fontFamily = FontFamily.Monospace
-                        )
-                    }
-                }
-            }
-        }
-    }
 }
 
 // System Constant for simple retail accounts structure balancing
@@ -1973,9 +1930,9 @@ fun AgedBillsListView(
                             }
                             
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("Net bill: ₹${String.format("%,.2f", bill.originalAmount)}", fontSize = 11.sp, color = AppColors.textSecondary)
+                                Text("Net bill: ₹${Utils.formatIndianNumber(bill.originalAmount)}", fontSize = 11.sp, color = AppColors.textSecondary)
                                 Text(
-                                    "Pending: ₹${String.format("%,.2f", bill.outstandingAmount)}",
+                                    "Pending: ₹${Utils.formatIndianNumber(bill.outstandingAmount)}",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = AppColors.error
@@ -2044,7 +2001,7 @@ fun AgedBillsListView(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        "Outstanding: ₹${String.format("%,.2f", bill.outstandingAmount)}",
+                        "Outstanding: ₹${Utils.formatIndianNumber(bill.outstandingAmount)}",
                         fontWeight = FontWeight.Bold,
                         color = AppColors.error,
                         fontSize = 14.sp
@@ -2188,7 +2145,7 @@ fun AgedBillsListView(
                                         createdAt = System.currentTimeMillis()
                                     )
                                     viewModel.insertAllocation(allocation)
-                                    Toast.makeText(context, "Payment of ₹${String.format("%,.2f", amtVal)} captured!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Payment of ₹${Utils.formatIndianNumber(amtVal)} captured!", Toast.LENGTH_SHORT).show()
                                     showDialog = false
                                 }
                             }

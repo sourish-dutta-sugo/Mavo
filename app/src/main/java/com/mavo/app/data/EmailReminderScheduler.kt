@@ -739,6 +739,7 @@ class DueReminderWorker(
     context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
+    @android.annotation.SuppressLint("MissingPermission")
     override suspend fun doWork(): Result {
         val voucherId = inputData.getString("voucher_id").orEmpty()
         val fallbackEmail = inputData.getString("party_email").orEmpty()

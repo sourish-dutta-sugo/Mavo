@@ -11,6 +11,7 @@ Mavo is a native Android retail accounting & GST invoicing app for small Indian 
 
 | Doc | What it covers |
 |-----|----------------|
+| [docs/AI slop.md](docs/AI%20slop.md) | **Read before any AI edit** — anti-slop rules for text, code, UI, refactors |
 | [docs/agent-rules/DOC_SYNC_MAP.md](docs/agent-rules/DOC_SYNC_MAP.md) | Lookup table: "if you changed X, also update these docs" |
 | [docs/agent-rules/CHANGE_REPORT_GUIDE.md](docs/agent-rules/CHANGE_REPORT_GUIDE.md) | Standard report format & template for every task |
 | [docs/product/PRODUCT.md](docs/product/PRODUCT.md) | What the app is, who uses it, goals, non-goals |

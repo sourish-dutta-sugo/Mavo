@@ -164,41 +164,6 @@ fun WizardHeader(
 }
 
 @Composable
-fun ScreenHeader(
-    title: String,
-    onBack: (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
-    trailing: @Composable () -> Unit = {}
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (onBack != null) {
-            CircleIconButton(
-                icon = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                onClick = onBack
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-        }
-        Text(
-            text = title,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = AppColors.textPrimary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        trailing()
-    }
-}
-
-@Composable
 fun WizardTitle(
     text: String,
     modifier: Modifier = Modifier,
@@ -465,40 +430,6 @@ fun SegmentedTabs(
             ) {
                 Text(option, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-        }
-    }
-}
-
-@Composable
-fun BottomActionBar(
-    primaryLabel: String,
-    onPrimary: () -> Unit,
-    modifier: Modifier = Modifier,
-    primaryEnabled: Boolean = true,
-    secondaryLabel: String? = null,
-    onSecondary: (() -> Unit)? = null
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(AppColors.cardBg)
-    ) {
-        HorizontalDivider(color = ScreenBorder)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            if (secondaryLabel != null && onSecondary != null) {
-                SecondaryButton(label = secondaryLabel, onClick = onSecondary)
-            }
-            PrimaryButton(
-                label = primaryLabel,
-                onClick = onPrimary,
-                enabled = primaryEnabled
-            )
         }
     }
 }

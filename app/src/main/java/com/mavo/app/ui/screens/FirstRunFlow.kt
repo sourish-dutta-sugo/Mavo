@@ -99,7 +99,12 @@ fun FirstRunFlow(
 
         SetupStep.Permission -> PermissionStep(
             onDetected = { detected ->
-                draft = draft.copy(state = detected.first, stateCode = detected.second)
+                draft = draft.copy(
+                    state = detected.state,
+                    stateCode = detected.stateCode,
+                    pin = detected.pin,
+                    city = detected.city
+                )
             },
             onNext = { goTo(stepIndex + 1) },
             modifier = modifier
@@ -412,7 +417,7 @@ private fun TermsBody(modifier: Modifier = Modifier) {
     Text(text = "Privacy Policy", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = AppColors.primary)
     Text(
         text = "1. Your business data is stored on this device. Mavo keeps no copy on a server.\n" +
-            "2. Location is requested only to pre-fill your GST state code. It is optional and can be denied.\n" +
+            "2. Location is requested only to pre-fill your pin code, city and GST state code. It is optional and can be denied.\n" +
             "3. PIN code, GSTIN and IFSC lookups send only the value you typed, over HTTPS.\n" +
             "4. Mavo contains no advertising or tracking SDKs.",
         fontSize = 13.sp,
@@ -424,7 +429,7 @@ private fun TermsBody(modifier: Modifier = Modifier) {
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun PermissionStep(
-    onDetected: (Pair<String, String>) -> Unit,
+    onDetected: (DetectedLocation) -> Unit,
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {

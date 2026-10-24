@@ -6,6 +6,25 @@
 
 ---
 
+## [Unreleased]
+
+### Changed
+- New app logo: MAVO mark cropped, background-transparent, recolored to brand ink, and compressed (~227 KB of duplicate logo PNGs → ~26 KB of correctly-sized assets); used on the launcher icon, splash/init screens (tinted theme-aware), Dashboard header lockup, and Settings → About
+- First-run location permission now auto-fills PIN code and city into the setup draft (previously state code only); PIN field remains editable
+- Dead code purge: ~1,350 lines of unreachable composables, wrappers, and commented-out UI removed (Settings, Dashboard, Reports, Ledger, InvoiceGenerator, FilePicker, ZeroUi, ThemeHelpers)
+- Money in Reports and Ledger lists now uses Indian digit grouping via `Utils.formatIndianCurrency` / `formatIndianNumber` (was western `1,234,567.00`)
+- Custom typography system: headers and headlines now use bundled `Playwrite Polska`, while all titles, body text, and labels use bundled `DynaPuff`. Numerics and currency figures remain cleanly formatted on `FontFamily.Default` / `FontFamily.Monospace`.
+- Device override protection: `MavoTheme` now locks `LocalDensity` `fontScale = 1.0f` to prevent system/device display and font scaling from overriding app typography hierarchy or breaking retail layouts.
+- New standing anti-slop guide `docs/AI slop.md` (wired into `AGENTS.md`); crash logs and regenerable tool output gitignored
+
+### Removed
+- Duplicate logo assets: `logo_transparent.png`, orphaned `ic_launcher_background.xml` vector, all `ic_launcher_round.png` mipmaps and the round adaptive icon (`android:roundIcon` dropped from the manifest)
+- JVM crash dumps (`hs_err_pid*.log`, `replay_pid*.log`), empty `feature/` + `core/` package scaffolds, root scratch files (`analyse.md`, `ft-anotate.md`)
+
+DB migration: no
+
+---
+
 ## [2.2.1] — 2026-10-05
 
 ### Added
