@@ -19,6 +19,8 @@ import com.mavo.app.data.Party
 import com.mavo.app.data.Voucher
 import com.mavo.app.data.VoucherItem
 import com.mavo.app.services.documents.DocumentGeneratorRegistry
+import com.mavo.app.services.documents.DocumentHtmlComponents
+import com.mavo.app.services.documents.DocumentHtmlComponents.escapeHtml
 import com.mavo.app.services.documents.DocumentType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -176,9 +178,6 @@ object InvoiceGenerator {
         return array.toString()
     }
 
-    fun primeVoucherRenderExtras(context: Context, voucherId: String) {
-        // Intentionally retained as a no-op compatibility method.
-    }
 
     suspend fun loadInvoiceDocumentData(
         context: Context,
@@ -198,24 +197,6 @@ object InvoiceGenerator {
             profile = profile,
             party = party,
             extras = extras
-        )
-    }
-
-    suspend fun buildRenderBundle(
-        context: Context,
-        voucherId: String
-    ): InvoiceRenderBundle? {
-        val documentData = loadInvoiceDocumentData(context, voucherId) ?: return null
-        val document = buildInvoiceDocument(documentData)
-        validateInvoiceDocument(document)
-        val html = buildInvoiceHtml(document)
-        val fileName = "${buildInvoiceFileStem(document)}.pdf"
-        val cacheKey = sha256("${document.voucherId}|${document.invoiceNumber}|$html")
-        return InvoiceRenderBundle(
-            document = document,
-            html = html,
-            exportFileName = fileName,
-            cacheKey = cacheKey
         )
     }
 
@@ -343,26 +324,6 @@ object InvoiceGenerator {
         return buildInvoiceHtml(document)
     }
 
-    fun generatePdfFromVoucherId(
-        context: Context,
-        voucherId: String,
-        onComplete: (File?, Voucher?) -> Unit
-    ) {
-        invoiceScope.launch {
-            val bundle = buildRenderBundleWithTypeAware(context, voucherId)
-            if (bundle == null) {
-                withContext(Dispatchers.Main) { onComplete(null, null) }
-                return@launch
-            }
-            val pdfFile = runCatching {
-                renderBundleToPdf(context, bundle)
-            }.getOrNull()
-            withContext(Dispatchers.Main) {
-                onComplete(pdfFile, bundle.document.voucher)
-            }
-        }
-    }
-
     suspend fun renderBundleToPdf(
         context: Context,
         bundle: InvoiceRenderBundle
@@ -376,32 +337,6 @@ object InvoiceGenerator {
         renderHtmlToPdf(context, bundle.html, bundle.document.invoiceNumber, pdfFile)
         validatePdfFile(pdfFile, bundle)
         return pdfFile
-    }
-
-    suspend fun exportLatestPdf(
-        context: Context,
-        bundle: InvoiceRenderBundle
-    ): ExportStorageManager.ExportResult {
-        val pdfFile = renderBundleToPdf(context, bundle)
-        return ExportStorageManager.exportFile(
-            context = context,
-            sourceFile = pdfFile,
-            displayName = bundle.exportFileName,
-            mimeType = "application/pdf",
-            target = ExportTarget.Invoices
-        )
-    }
-
-
-    fun generateUpiLink(
-        upiId: String,
-        businessName: String,
-        amount: Double,
-        invoiceNo: String
-    ): String {
-        val encodedName = java.net.URLEncoder.encode(businessName, "UTF-8")
-        val encodedNote = java.net.URLEncoder.encode("Invoice $invoiceNo", "UTF-8")
-        return "upi://pay?pa=$upiId&pn=$encodedName&am=${"%.2f".format(Locale.ENGLISH, amount)}&cu=INR&tn=$encodedNote"
     }
 
     private fun buildInvoiceDocument(source: InvoiceDocumentData): InvoiceDocument {
@@ -577,7 +512,7 @@ object InvoiceGenerator {
             }
         }
         val gstRows = if (isDraftDocument) "" else buildItemGstRows(document, isIntrastate)
-        val declarationHtml = buildDeclarationHtml(business.termsAndConditions.ifBlank { DEFAULT_TERMS_AND_CONDITIONS })
+        val declarationHtml = DocumentHtmlComponents.buildTermsLines(business.termsAndConditions.ifBlank { DEFAULT_TERMS_AND_CONDITIONS })
         val itemHeaderHtml = if (isChallan) {
             """
               <tr class='items-header'>
@@ -634,31 +569,15 @@ object InvoiceGenerator {
           <meta charset='UTF-8'/>
           <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
           <style>
-            * { margin:0; padding:0; box-sizing:border-box; }
-            body { font-family:Arial,Helvetica,sans-serif; font-size:11px; color:#111111; background:#ffffff; }
-            @page { 
-              size: A4 portrait; 
-              margin: 10mm 12mm;
-            }
+            ${DocumentHtmlComponents.buildBaseStyles()}
             .page { width:100%; max-width:794px; margin:0 auto; padding:14px 18px 18px 18px; background:#ffffff; }
             table { width:100%; border-collapse:collapse; table-layout:fixed; }
             td, th { border:1px solid #000000; padding:5px 6px; vertical-align:top; overflow-wrap:anywhere; word-break:break-word; }
             .title { text-align:center; font-size:15px; font-weight:700; letter-spacing:0.5px; padding:4px 0 12px 0; }
-            .center { text-align:center; }
-            .right { text-align:right; }
-            .bold { font-weight:700; }
             .num { white-space:nowrap; overflow-wrap:normal; word-break:normal; font-size:9.4px; }
-            .small-label { font-size:9px; color:#666666; margin-bottom:4px; }
-            .meta-value { font-size:11px; font-weight:700; margin-top:2px; }
             .meta-subtext { font-size:9px; color:#444444; margin-top:3px; line-height:1.35; }
             .company-name { font-size:15px; font-weight:700; color:#000000; display:block; margin-bottom:4px; }
             .buyer-name { font-size:12px; font-weight:700; margin-bottom:3px; }
-            .section-body { line-height:1.45; font-size:11px; }
-            .seller-head { font-size:9px; color:#666666; margin-bottom:6px; }
-            .seller-grid { width:100%; border-collapse:collapse; table-layout:fixed; }
-            .seller-grid td { border:none; padding:0; vertical-align:top; }
-            .seller-logo { width:86px; padding-right:8px; }
-            .seller-logo img { max-width:80px; max-height:80px; object-fit:contain; display:block; }
             .items-header th { background:#eef2fa; font-size:9.5px; font-weight:700; text-align:center; }
             .amount-words .value { display:block; font-size:11px; font-weight:700; margin-top:4px; line-height:1.45; }
             .snapshot-table td, .gst-table td, .gst-table th, .meta-table td, .meta-table th { font-size:10px; line-height:1.25; }
@@ -673,15 +592,6 @@ object InvoiceGenerator {
             .signatory .for-line { font-size:11px; font-weight:700; margin-bottom:22px; }
             .summary-wrap { padding:0; }
             .summary-wrap > table { width:100%; border-collapse:collapse; table-layout:fixed; }
-            .page-break { page-break-before:always; }
-            .no-break-inside { page-break-inside:avoid; }
-            .continuation-header { border-bottom:1px solid #000000; padding:4px 0; margin-bottom:8px; font-size:10px; }
-            .page-number { text-align:center; font-size:9px; color:#666666; margin-top:8px; }
-            @media print { 
-              body { -webkit-print-color-adjust:exact; }
-              .page-break { page-break-before:always; }
-              .no-break-inside { page-break-inside:avoid; }
-            }
           </style>
         </head>
         <body>
@@ -891,16 +801,6 @@ object InvoiceGenerator {
             else -> "<div style='height:100%;min-height:40px;'></div>"
         }
     }
-
-    private fun buildDeclarationHtml(rawTerms: String): String =
-        rawTerms.lines()
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .mapIndexed { index, line ->
-                val prefix = if (line.first().isDigit()) "" else "${index + 1}. "
-                "<span class='terms-line'>$prefix${escapeHtml(line)}</span>"
-            }
-            .joinToString("")
 
     private fun buildGstBreakupHtml(
         document: InvoiceDocument,
@@ -1273,11 +1173,6 @@ fun shareInvoicePdfToWhatsApp(
     context: Context,
     pdfFile: File
 ) = InvoiceGenerator.shareInvoicePdfToWhatsApp(context, pdfFile)
-
-private fun escapeHtml(value: String): String =
-    value.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
 
 private fun toFileUrl(path: String): String =
     if (path.startsWith("/")) "file://$path" else "file:///$path"

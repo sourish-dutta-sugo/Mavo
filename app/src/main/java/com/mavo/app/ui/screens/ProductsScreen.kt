@@ -258,9 +258,12 @@ fun ProductsScreen(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = AppColors.inputBg,
-                    unfocusedContainerColor = AppColors.inputBg
+                    unfocusedContainerColor = AppColors.inputBg,
+                    focusedBorderColor = AppColors.primary,
+                    unfocusedBorderColor = AppColors.border
                 )
             )
             UiLoadStateNotice(
@@ -270,17 +273,21 @@ fun ProductsScreen(
 
             if (lowStockCount > 0) {
                 Card(
-                    modifier = Modifier.clickable { onNavigateToLowStock() },
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0))
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, AppColors.warning.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+                        .clickable { onNavigateToLowStock() },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.warningBg)
                 ) {
                     Text(
                         text = "$lowStockCount product(s) need stock attention. Tap to review.",
-                        modifier = Modifier.padding(14.dp),
-                        color = Color(0xFFB45309),
+                        modifier = Modifier.padding(16.dp),
+                        color = AppColors.warning,
                         fontWeight = FontWeight.SemiBold
                     )
-                    }
                 }
+            }
             if (productsReadState.blocksContent()) {
                 Spacer(modifier = Modifier.weight(1f))
             } else if (filteredProducts.isEmpty()) {
@@ -318,7 +325,7 @@ fun ProductsScreen(
             onDismissRequest = { selectedProduct = null },
             title = { Text(product.name, fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("HSN: ${product.hsnCode.ifBlank { "N/A" }}")
                     Text("Unit: ${product.unit}")
                     Text("Sale Rate: ${Utils.formatIndianCurrency(product.saleRate)}")
@@ -437,9 +444,9 @@ private fun ProductRow(
     onLongPress: () -> Unit
 ) {
     val statusColor = when {
-        product.currentStock <= 0.0 -> Color(0xFFC62828)
-        product.isLowStockAlertTriggered() -> Color(0xFFEF6C00)
-        else -> Color(0xFF2E7D32)
+        product.currentStock <= 0.0 -> AppColors.error
+        product.isLowStockAlertTriggered() -> AppColors.warning
+        else -> AppColors.success
     }
     val statusLabel = when {
         product.currentStock <= 0.0 -> "Out of Stock"
@@ -452,22 +459,23 @@ private fun ProductRow(
             .fillMaxWidth()
             .border(
                 1.dp,
-                if (isSelected) AppColors.primary.copy(alpha = 0.35f) else Color(0xFFE8E8E8),
-                RoundedCornerShape(8.dp)
+                if (isSelected) AppColors.primary.copy(alpha = 0.45f) else AppColors.border,
+                RoundedCornerShape(16.dp)
             )
             .premiumCombinedClickable(
                 onClick = onOpenDetail,
                 onLongClick = onLongPress
             ),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = if (isSelected) AppColors.primary.copy(alpha = 0.06f) else AppColors.cardBg)
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(product.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF1A1A1A))
+                Text(product.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppColors.textPrimary)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text("HSN: ${product.hsnCode.ifBlank { "N/A" }}", fontSize = 11.sp, color = AppColors.textSecondary)
                 Text(
@@ -483,7 +491,7 @@ private fun ProductRow(
                 }
             }
 
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Outlined.Edit, contentDescription = "Edit Product", tint = AppColors.primary)
@@ -851,13 +859,13 @@ private fun DecimalField(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = label.uppercase(),
+            text = label,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.8.sp,
+            letterSpacing = 0.sp,
             color = AppColors.textSecondary
         )
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = value,
             onValueChange = { onValueChange(filterDecimalInput(it)) },
@@ -870,7 +878,7 @@ private fun DecimalField(
             },
             singleLine = true,
             textStyle = TextStyle(color = AppColors.inputText, fontSize = 15.sp),
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(16.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             colors = mavoInputColors()
         )

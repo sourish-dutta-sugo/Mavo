@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +32,7 @@ import com.mavo.app.R
 import com.mavo.app.ui.animation.PremiumFadeSpec
 import com.mavo.app.ui.animation.PremiumSpringSpec
 import com.mavo.app.ui.theme.AppColors
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun SplashScreen(
@@ -52,14 +53,15 @@ fun SplashScreen(
 
     LaunchedEffect(Unit) {
         visible = true
-        delay(900)
+        snapshotFlow { alpha }.first { it >= 0.999f }
         onTimeout()
     }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(AppColors.screenBg),
+            .background(AppColors.screenBg)
+            .graphPaperCanvas(),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -73,7 +75,7 @@ fun SplashScreen(
             Box(
                 modifier = Modifier
                     .size(96.dp)
-                    .clip(RoundedCornerShape(26.dp))
+                    .clip(RoundedCornerShape(24.dp))
                     .background(AppColors.primary),
                 contentAlignment = Alignment.Center
             ) {
@@ -82,14 +84,14 @@ fun SplashScreen(
                     contentDescription = null,
                     // dark mark asset, tinted for the primary-colored box (works in light+dark themes)
                     colorFilter = ColorFilter.tint(AppColors.textOnPrimary, BlendMode.SrcIn),
-                    modifier = Modifier.size(54.dp)
+                    modifier = Modifier.size(56.dp)
                 )
             }
             Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = "Mavo",
-                fontSize = 30.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
                 color = AppColors.textPrimary,
                 letterSpacing = (-0.5).sp
             )

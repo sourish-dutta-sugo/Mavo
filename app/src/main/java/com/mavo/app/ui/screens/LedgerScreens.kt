@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +22,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -137,7 +140,7 @@ private val IncomeKind = LedgerKind(
     title = "Income",
     entryTitle = "Add Income",
     noLabel = "Income No",
-    missingNoMessage = "Cannot save: Income No is missing!",
+    missingNoMessage = "Cannot save: Income No is missing",
     saveButtonLabel = "Save Income",
     fabDescription = "Add income",
     csvFileName = "Mavo_Income.csv",
@@ -165,7 +168,7 @@ private val ExpenseKind = LedgerKind(
     title = "Expenses",
     entryTitle = "Add Expense",
     noLabel = "Expense No",
-    missingNoMessage = "Cannot save: Expense No is missing!",
+    missingNoMessage = "Cannot save: Expense No is missing",
     saveButtonLabel = "Save Expense",
     fabDescription = "Add expense",
     csvFileName = "Mavo_Expenses.csv",
@@ -266,35 +269,66 @@ private fun LedgerListScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                FilterChip(selected = activeFilter == "ALL", onClick = { activeFilter = "ALL" }, label = { Text("All") })
-                kind.categories.take(4).forEach { category ->
-                    FilterChip(selected = activeFilter == category, onClick = { activeFilter = category }, label = { Text(category) })
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = activeFilter == "ALL",
+                            onClick = { activeFilter = "ALL" },
+                            label = { Text("All") },
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        kind.categories.take(4).forEach { category ->
+                            FilterChip(
+                                selected = activeFilter == category,
+                                onClick = { activeFilter = category },
+                                label = { Text(category) },
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                    }
+                    Button(
+                        enabled = !readState.blocksContent(),
+                        onClick = {
+                            val csv = buildString {
+                                append("date,category,description,amount,payment_mode,reference\n")
+                                filteredRows.forEach { row ->
+                                    append("${Utils.formatDate(row.date)},${row.category},${row.description},${row.amount},${row.paymentMode},${row.referenceNo}\n")
+                                }
+                            }
+                            val result = ExportStorageManager.exportBytes(
+                                context = viewModel.getApplication(),
+                                bytes = csv.toByteArray(),
+                                displayName = kind.csvFileName,
+                                mimeType = "text/csv",
+                                target = ExportTarget.Reports
+                            )
+                            Toast.makeText(viewModel.getApplication(), "Saved to ${result.locationLabel}", Toast.LENGTH_LONG).show()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .pressScale(),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Export to CSV")
+                    }
                 }
             }
             UiLoadStateNotice(readState, viewModel::retryFailedReads)
-            Button(
-                enabled = !readState.blocksContent(),
-                onClick = {
-                    val csv = buildString {
-                        append("date,category,description,amount,payment_mode,reference\n")
-                        filteredRows.forEach { row ->
-                            append("${Utils.formatDate(row.date)},${row.category},${row.description},${row.amount},${row.paymentMode},${row.referenceNo}\n")
-                        }
-                    }
-                    val result = ExportStorageManager.exportBytes(
-                        context = viewModel.getApplication(),
-                        bytes = csv.toByteArray(),
-                        displayName = kind.csvFileName,
-                        mimeType = "text/csv",
-                        target = ExportTarget.Reports
-                    )
-                    Toast.makeText(viewModel.getApplication(), "Saved to ${result.locationLabel}", Toast.LENGTH_LONG).show()
-                },
-                modifier = Modifier.pressScale()
-            ) {
-                Text("Export to CSV")
-            }
             if (readState.blocksContent()) {
                 Spacer(modifier = Modifier.weight(1f))
             } else if (filteredRows.isEmpty()) {
@@ -310,11 +344,18 @@ private fun LedgerListScreen(
                     contentPadding = PaddingValues(bottom = 120.dp)
                 ) {
                     items(filteredRows, key = { it.id }) { row ->
-                        Card(colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(14.dp),
+                                    .padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -322,7 +363,12 @@ private fun LedgerListScreen(
                                     Text(row.description.ifBlank { "No description" }, color = AppColors.textSecondary)
                                     Text("${Utils.formatDate(row.date)} | ${row.paymentMode}", color = AppColors.textSecondary)
                                 }
-                                Column(horizontalAlignment = Alignment.End) {
+                                Column(
+                                    modifier = Modifier
+                                        .background(AppColors.primaryLight, RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    horizontalAlignment = Alignment.End
+                                ) {
                                     Text(Utils.formatIndianCurrency(row.amount), fontWeight = FontWeight.Bold, color = AppColors.primary)
                                     if (row.referenceNo.isNotBlank()) Text(row.referenceNo, color = AppColors.textSecondary)
                                     }

@@ -44,10 +44,10 @@ object LoadingDefaults {
 
     val shape: Shape = RoundedCornerShape(12.dp)
     val avatarShape: Shape = CircleShape
-    val lineHeight: Dp = 14.dp
-    val textSpacing: Dp = 10.dp
+    val lineHeight: Dp = 16.dp
+    val textSpacing: Dp = 12.dp
     val tileSpacing: Dp = 12.dp
-    val tileCornerRadius: Dp = 14.dp
+    val tileCornerRadius: Dp = 16.dp
     val cardCornerRadius: Dp = 16.dp
 }
 
@@ -203,7 +203,7 @@ fun LoadingTile(
     LoadingCard(modifier = modifier) {
         LoadingText(height = 16.dp, animate = animate)
         Spacer(modifier = Modifier.height(12.dp))
-        LoadingText(width = 120.dp, height = 14.dp, animate = animate)
+        LoadingText(width = 120.dp, height = 16.dp, animate = animate)
     }
 }
 
@@ -212,7 +212,7 @@ fun LoadingTile(
 private fun LoadingPreview() {
     MavoTheme {
         Column(modifier = Modifier.padding(16.dp)) {
-            LoadingText(height = 22.dp, animate = false)
+            LoadingText(height = 24.dp, animate = false)
             Spacer(modifier = Modifier.height(16.dp))
             LoadingListItem(animate = false)
             Spacer(modifier = Modifier.height(16.dp))

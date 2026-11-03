@@ -4,15 +4,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -43,6 +48,7 @@ import com.mavo.app.data.BusinessProfile
 import com.mavo.app.data.Utils
 import com.mavo.app.ui.AppViewModel
 import com.mavo.app.ui.theme.AppColors
+import com.mavo.app.ui.theme.parseGstinInput
 import java.io.Serializable
 
 /**
@@ -137,7 +143,7 @@ private fun ChoiceRow(
     selected: String,
     onSelect: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = label,
             fontSize = 12.sp,
@@ -154,6 +160,23 @@ private fun ChoiceRow(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SetupCard(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            content = content
+        )
     }
 }
 
@@ -175,11 +198,13 @@ title = "Basic details",
 subtitle = "Business Profile Setup",
 stepLabel = "Step 1 of 3",
 stepProgress = 1,
+        modifier = Modifier.graphPaperCanvas(),
         onBack = onBack,
         onNext = onNext,
         nextEnabled = missing.isEmpty(),
         hint = stepHint(missing)
     ) {
+        SetupCard {
         RetailTextField(
             value = draft.businessName,
             onValueChange = { updateDraft { d -> d.copy(businessName = it) } },
@@ -239,6 +264,7 @@ stepProgress = 1,
             selected = draft.sellingType,
             onSelect = { updateDraft { d -> d.copy(sellingType = it) } }
         )
+        }
     }
 }
 
@@ -255,34 +281,33 @@ fun SetupLocationScreen(
     var pinLookupError by remember { mutableStateOf("") }
     val missing = missingFieldsFor(SetupStep.Location, draft.businessName, draft.address, draft.pin)
 
-    LaunchedEffect(draft.pin) {
-        if (draft.pin.length == 6 && draft.pin.all { it.isDigit() }) {
-            kotlinx.coroutines.delay(1000)
-            isPinLoading = true
-            val result = fetchPinLookup(draft.pin)
-            isPinLoading = false
-            if (result != null) {
-                updateDraft { d -> d.copy(city = result.city, state = result.state, stateCode = result.stateCode) }
-                pinLookupError = ""
-            } else {
-                pinLookupError = "Unable to fetch location"
-            }
-        } else {
+    PinAutoFillEffect(
+        pin = draft.pin,
+        debounceMs = 1000L,
+        onInvalid = {
             isPinLoading = false
             pinLookupError = ""
-        }
-    }
+        },
+        onStart = { isPinLoading = true },
+        onResolved = { result ->
+            updateDraft { d -> d.copy(city = result.city, state = result.state, stateCode = result.stateCode) }
+            pinLookupError = ""
+        },
+        onFailed = { pinLookupError = "Unable to fetch location" }
+    )
 
 WizardScaffold(
 title = "Where you are",
 subtitle = "Business Profile Setup",
 stepLabel = "Step 2 of 3",
 stepProgress = 2,
+        modifier = Modifier.graphPaperCanvas(),
         onBack = onBack,
         onNext = onNext,
         nextEnabled = missing.isEmpty(),
         hint = stepHint(missing)
     ) {
+        SetupCard {
         AdaptivePair(
             isTablet = isTablet,
             first = {
@@ -373,6 +398,7 @@ stepProgress = 2,
                 readOnly = true
             )
         }
+        }
     }
 }
 
@@ -386,6 +412,7 @@ fun SetupTaxBankScreen(
 ) {
     val isTablet = LocalConfiguration.current.screenWidthDp >= 600
     var isGstinLoading by remember { mutableStateOf(false) }
+    var gstinValid by remember { mutableStateOf<Boolean?>(null) }
     var isIfscLoading by remember { mutableStateOf(false) }
     var ifscMessage by remember { mutableStateOf("") }
     var askForSampleData by remember { mutableStateOf(false) }
@@ -395,12 +422,14 @@ title = "Tax & bank",
 subtitle = "Business Profile Setup",
 stepLabel = "Step 3 of 3",
 stepProgress = 3,
+        modifier = Modifier.graphPaperCanvas(),
         onBack = onBack,
         onNext = { askForSampleData = true },
         nextLabel = "Finish Setup",
         nextEnabled = true
     ) {
         if (draft.gstEnabled) {
+            SetupCard {
             Text(
                 text = "GST Details",
                 fontSize = 16.sp,
@@ -413,23 +442,21 @@ stepProgress = 3,
                     RetailTextField(
                         value = draft.gstin,
                         onValueChange = { input ->
-                            val gstin = input.uppercase().trim().take(15)
+                            val result = parseGstinInput(input, draft.pan, draft.state, draft.stateCode)
                             updateDraft { d ->
-                                var next = d.copy(gstin = gstin)
-                                if (gstin.length >= 12) {
-                                    val extractedPan = gstin.substring(2, 12)
-                                    if (extractedPan.all { it.isLetterOrDigit() }) next = next.copy(pan = extractedPan)
-                                }
-                                if (gstin.length >= 2) {
-                                    Utils.INDIAN_STATES.find { it.second == gstin.substring(0, 2) }?.let {
-                                        next = next.copy(state = it.first, stateCode = it.second)
+                                var next = d.copy(gstin = result.gstin)
+                                if (result.valid == true) {
+                                    next = next.copy(pan = result.pan)
+                                    result.stateName?.let {
+                                        next = next.copy(state = it, stateCode = result.stateCode)
                                     }
                                 }
                                 next
                             }
-                            if (gstin.length == 15) {
+                            gstinValid = result.valid
+                            if (result.gstin.length == 15) {
                                 isGstinLoading = true
-                                viewModel.fetchGstinDetails(gstin) { trade, legal ->
+                                viewModel.fetchGstinDetails(result.gstin) { trade, legal ->
                                     isGstinLoading = false
                                     val detectedName = trade ?: legal
                                     if (!detectedName.isNullOrBlank()) {
@@ -461,8 +488,10 @@ stepProgress = 3,
                 }
             )
             HorizontalDivider(color = AppColors.divider)
+            }
         }
 
+        SetupCard {
         Text(
             text = "Bank Details for Invoice Payments",
             fontSize = 16.sp,
@@ -480,27 +509,10 @@ stepProgress = 3,
         RetailTextField(
             value = draft.ifsc,
             onValueChange = { input ->
-                val ifsc = input.uppercase().replace("\\s".toRegex(), "")
+                val ifsc = normalizeIfsc(input)
                 if (ifsc.length <= 11) {
                     updateDraft { d -> d.copy(ifsc = ifsc) }
                     ifscMessage = ""
-                    if (ifsc.length == 11) {
-                        isIfscLoading = true
-                        viewModel.fetchIfscDetails(ifsc) { resolvedBank, resolvedBranch ->
-                            isIfscLoading = false
-                            if (!resolvedBank.isNullOrBlank()) {
-                                updateDraft { d -> d.copy(bankName = resolvedBank, bankBranch = resolvedBranch.orEmpty()) }
-                                ifscMessage = buildString {
-                                    append("Bank verified: ")
-                                    append(resolvedBank)
-                                    if (!resolvedBranch.isNullOrBlank()) {
-                                        append(", ")
-                                        append(resolvedBranch)
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             },
             label = "IFSC Code",
@@ -512,6 +524,17 @@ stepProgress = 3,
                         strokeWidth = 2.dp
                     )
                 }
+            }
+        )
+
+        IfscVerifyEffect(
+            viewModel = viewModel,
+            ifsc = draft.ifsc,
+            onStart = { isIfscLoading = true },
+            onFinish = { isIfscLoading = false },
+            onResolved = { bank, branch, message ->
+                updateDraft { d -> d.copy(bankName = bank, bankBranch = branch) }
+                ifscMessage = message
             }
         )
 
@@ -536,6 +559,7 @@ stepProgress = 3,
                 )
             }
         )
+        }
     }
 
     if (askForSampleData) {

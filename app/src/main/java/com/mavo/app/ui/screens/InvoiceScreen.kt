@@ -150,23 +150,6 @@ fun InvoiceScreen(
         }
     }
 
-    fun openPdfUri(uri: Uri) {
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/pdf")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        runCatching {
-            context.startActivity(intent)
-        }.onFailure {
-            Toast.makeText(context, "No PDF viewer found", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    fun openPdf(file: java.io.File) {
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
-        openPdfUri(uri)
-    }
-
     fun runPdfAction(action: suspend (InvoiceGenerator.InvoiceRenderBundle, java.io.File) -> Unit) {
         scope.launch {
             isWorking = true
@@ -189,8 +172,8 @@ fun InvoiceScreen(
     }
 
     Scaffold(
-        modifier = modifier,
-        containerColor = AppColors.screenBg,
+        modifier = modifier.graphPaperCanvas(),
+        containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -199,35 +182,37 @@ fun InvoiceScreen(
                         Text(
                             renderBundle?.document?.displayTitle ?: "Document Viewer",
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0D0D0D)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             renderBundle?.document?.invoiceNumber ?: "",
                             fontSize = 11.sp,
-                            color = Color(0xFF6B7280)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF444444))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 actions = {
                     IconButton(onClick = { webViewRef?.zoomOut() }) {
-                        Icon(Icons.Outlined.Remove, contentDescription = "Zoom Out", tint = Color(0xFF444444))
+                        Icon(Icons.Outlined.Remove, contentDescription = "Zoom Out", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     IconButton(onClick = { webViewRef?.zoomIn() }) {
-                        Icon(Icons.Outlined.Add, contentDescription = "Zoom In", tint = Color(0xFF444444))
+                        Icon(Icons.Outlined.Add, contentDescription = "Zoom In", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     IconButton(onClick = { refreshBundle() }) {
-                        Icon(Icons.Outlined.Refresh, contentDescription = "Regenerate", tint = Color(0xFF444444))
+                        Icon(Icons.Outlined.Refresh, contentDescription = "Regenerate", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     IconButton(onClick = { onEditVoucher(voucherId) }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color(0xFF444444))
+                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { innerPadding ->
@@ -245,16 +230,15 @@ fun InvoiceScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(AppColors.screenBg)
                     .padding(innerPadding)
             ) {
                 Card(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(10.dp)
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     AndroidView(
                         modifier = Modifier.fillMaxSize(),
@@ -279,14 +263,13 @@ fun InvoiceScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 8.dp,
                     tonalElevation = 2.dp
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                            .padding(horizontal = 12.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -301,7 +284,7 @@ fun InvoiceScreen(
                         InvoiceActionButton(
                             icon = Icons.Outlined.Download,
                             label = "Save As",
-                            tint = Color(0xFF1A73E8),
+                            tint = AppColors.primary,
                             enabled = !isWorking,
                             onClick = {
                                 runPdfAction { _, pdfFile ->
@@ -368,7 +351,7 @@ fun InvoiceScreen(
                         }
                         Text(
                             convertLabel,
-                            color = Color.White,
+                            color = AppColors.textOnPrimary,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -383,7 +366,7 @@ private fun InvoiceActionButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     enabled: Boolean,
-    tint: Color = Color(0xFF555555),
+    tint: Color = AppColors.textSecondary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -397,14 +380,14 @@ private fun InvoiceActionButton(
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = if (enabled) tint else Color(0xFFAAAAAA),
+            tint = if (enabled) tint else AppColors.textTertiary,
             modifier = Modifier.size(24.dp)
         )
-        Spacer(Modifier.height(3.dp))
+        Spacer(Modifier.height(4.dp))
         Text(
             text = label,
             fontSize = 10.sp,
-            color = if (enabled) tint else Color(0xFFAAAAAA),
+            color = if (enabled) tint else AppColors.textTertiary,
             textAlign = TextAlign.Center,
             maxLines = 1
         )

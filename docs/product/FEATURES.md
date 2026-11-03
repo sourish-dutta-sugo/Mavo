@@ -132,7 +132,7 @@ Status key: ✅ Done · 🟡 Partial · 📋 Planned
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| 5 color themes (Saffron, Slate, Ledger, Ink, Night) | ✅ | Material 3 |
+| 4 light themes (Zero, Saffron, Slate, Ledger) | ✅ | Material 3 |
 | Dark mode (Night theme) | ✅ | |
 | Skeleton loading states | ✅ | |
 | Premium motion system (transitions, press feedback) | ✅ | |

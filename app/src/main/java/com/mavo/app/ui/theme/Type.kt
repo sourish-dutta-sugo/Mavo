@@ -22,7 +22,15 @@ val DynaPuffFontFamily = FontFamily(
     Font(R.font.dynapuff, FontWeight.Bold)
 )
 
-val NumericFontFamily = FontFamily.Default
+// Numerics: Tomorrow. ponytail: proportional figures — columns rely on textAlign.End;
+// if strict decimal alignment is ever needed, switch to a tabular-figures font (e.g. Roboto Mono).
+val NumericFontFamily = FontFamily(
+    Font(R.font.tomorrow_regular, FontWeight.Normal),
+    Font(R.font.tomorrow_medium, FontWeight.Medium),
+    Font(R.font.tomorrow_semibold, FontWeight.SemiBold),
+    Font(R.font.tomorrow_bold, FontWeight.Bold),
+    Font(R.font.tomorrow_black, FontWeight.Black)
+)
 
 val Typography = Typography(
     displayLarge = TextStyle(

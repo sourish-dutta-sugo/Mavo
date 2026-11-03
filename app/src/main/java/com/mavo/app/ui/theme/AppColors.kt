@@ -72,6 +72,6 @@ object AppColors {
     val errorBg get() = if (theme.isDark) Color(0xFF452522) else Color(0xFFFEF0F0)
     val warning = Color(0xFFD97706)
     val warningBg get() = if (theme.isDark) Color(0xFF49371D) else Color(0xFFFFF7E6)
-    val info = Color(0xFF8B95FF)
-    val infoBg get() = if (theme.isDark) Color(0xFF29305A) else Color(0xFFEEF2FF)
+    val info = Color(0xFF0F766E)
+    val infoBg get() = if (theme.isDark) Color(0xFF15423C) else Color(0xFFDCEFEA)
 }

@@ -1,27 +1,31 @@
 # DESIGN_SYSTEM.md — Mavo
 
-> Last updated: 2026-10-03  
+> Last updated: 2026-11-02  
 > Source of truth: `ui/theme/` package — `DesignTokens.kt`, `AppTheme.kt`, `AppColors.kt`, `Type.kt`
 
 ## Themes
 
-6 named themes, selectable at runtime. Persisted in SharedPreferences (`mavo_pref` → `selected_theme`).
+4 named light themes, selectable at runtime. Persisted in SharedPreferences
+(`mavo_pref` → `selected_theme`).
 
-| Name | Key | Accent | Background | Dark? |
-|------|-----|--------|------------|-------|
-| Zero | `ZERO` | `#006B5F` (deep teal) | `#F7F5EF` (warm off-white) | No |
-| Saffron | `SAFFRON` | `#1A5C4B` (teal) | `#F7F5EF` | No |
-| Slate | `SLATE` | `#22755F` (deep green) | `#F7F5EF` | No |
-| Ledger | `LEDGER` | `#176B4A` (deep green) | `#F7F5EF` | No |
-| Ink | `INK` | `#7C3AED` (purple) | `#F7F5EF` | No |
-| Night | `NIGHT` | `#72D2B2` (mint) | `#101615` (deep dark) | **Yes** |
+| Name | Key | Accent | Accent light | Background | Dark? |
+|------|-----|--------|--------------|------------|-------|
+| Zero | `ZERO` | `#006B5F` (deep teal) | `#DCEFEA` | `#F7F5EF` (warm off-white) | No |
+| Saffron | `SAFFRON` | `#A85F00` (burnt saffron) | `#FFF0DA` | `#F7F5EF` | No |
+| Slate | `SLATE` | `#4D4A43` (warm graphite) | `#EDEAE2` | `#F7F5EF` | No |
+| Ledger | `LEDGER` | `#176B4A` (deep green) | `#DCEFEA` | `#F7F5EF` | No |
 
-Each theme defines Material 3 primary, secondary, tertiary, surface, outline,
-and error roles through `MavoTheme`. Light themes share warm surfaces;
-selection still controls the user's accent and Night remains dark.
+The **Ink** theme (purple, `#7C3AED`) is retired — every accent now sits on the
+paper palette. Each theme defines Material 3 primary, secondary, tertiary,
+surface, outline, and error roles through `MavoTheme`. Themes change accent
+colors only.
 
 Default theme: **Zero**. Legacy names (`BEACH`, `BLUE`, `GREEN`, `TEAL`,
-`PURPLE`, `DARK`) map to existing theme choices.
+`PURPLE`, `DARK`, `INK`) resolve through `AppTheme.fromName` and fall back to
+Zero. A saved `NIGHT` selection falls back to Zero.
+
+All screens use the graph-paper canvas. Material 3 surfaces remain opaque
+behind text, fields, and financial data.
 
 ## Colors — Semantic
 
@@ -33,7 +37,7 @@ Material 3 container and foreground roles come from the active color scheme.
 | `success` | `#22A06B` | Positive actions, credit |
 | `error` | `#E24B4A` | Errors, debit |
 | `warning` | `#D97706` | Warnings, pending |
-| `info` | `#6366F1` | Informational |
+| `info` | `#0F766E` | Informational (bg `#DCEFEA`) |
 | `debit` | `#E24B4A` | DR amounts |
 | `credit` | `#22A06B` | CR amounts |
 | `chartIncome` | `#22A06B` | Report charts |
@@ -43,14 +47,15 @@ Material 3 container and foreground roles come from the active color scheme.
 
 | Role | Light value | Usage |
 |---|---|---|
-| Background | `#F7F5EF` | App canvas |
+| Canvas | `#F4F0E5` | Graph-paper background |
+| Grid lines | `#CEC8BC` | Canvas grid, 16 dp |
+| Theme background | Transparent | Reveals shared canvas |
 | Surface | `#FFFCF7` | Cards and menus |
 | Surface variant | `#F0ECE4` | Inputs and grouped content |
 | Primary accent | Theme-selected | Primary actions and focus |
 | Outline | `#77736B` | Control boundaries |
 
-The Night theme supplies dark equivalents. Use `MaterialTheme.colorScheme`
-for new UI instead of fixed surface colors.
+Use `MaterialTheme.colorScheme` for new UI instead of fixed surface colors.
 
 ## Colors — Brand
 
@@ -71,13 +76,22 @@ for new UI instead of fixed surface colors.
 | Sale | `#E8F8F0` | `#22A06B` |
 | Purchase | `#FEF0F0` | `#E24B4A` |
 | Receipt | `#FFF7E6` | `#D97706` |
-| Payment | `#EEF2FF` | `#6366F1` |
+| Payment | `#F0ECE4` | `#4D4A43` |
 | Return | `#FEF0F0` | `#E24B4A` |
 | Overdue | `#FEF0F0` | `#E24B4A` |
 | Partial | `#FFF7E6` | `#D97706` |
 | Paid | `#E8F8F0` | `#22A06B` |
+| Unpaid | `#F0ECE4` | `#4D4A43` |
+
+Badge colors are read through `AppColors.badge*` so every screen reports the
+same value for the same status. Voucher type chips use
+`voucherBadgeColor(type)` in `VouchersScreen.kt` as their single source.
 
 ## Spacing (dp)
+
+All padding, margin, gap and fixed-height values sit on a **4 dp grid**
+(4 / 8 / 12 / 16 / 20 / 24 / 32 …). Exceptions: 1 dp hairline borders, 2 dp
+icon nudges, and `999` for pills.
 
 Responsive geometry is defined in `DesignTokens.kt` → `LayoutTokens`.
 
@@ -107,18 +121,21 @@ scroll state independent and keep checkout actions reachable.
 
 ## Corner radius (dp)
 
-Defined in `DesignTokens.kt` → `CornerRadius`.
+Applied as literal `RoundedCornerShape(...)` values across screens. Keep to
+this scale; nested radii add up (inner = outer − padding, never below 4).
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `xs` | 4 | Small chips |
-| `sm` | 8 | Input fields |
-| `md` | 12 | Cards |
-| `lg` | 14 | Dialogs |
-| `xl` | 20 | Bottom sheets |
-| `full` | 999 | Circular (FAB, avatar) |
+| Value | Usage |
+|-------|-------|
+| 4 | Small chips, tiny tags |
+| 8 | Inputs, badges, compact controls |
+| 12 | Rows, inner cards, list items |
+| 16 | Cards, sheets, grouped panels |
+| 24 / 28 / 32 | Hero blocks, wizard headers, M3 dialogs |
+| 999 | Pills (segmented controls, progress tracker, avatars) |
 
 ## Elevation (dp)
+
+Shadows stay neutral and soft — no colored shadows, glows, or ambient tints.
 
 | Token | Value |
 |-------|-------|
@@ -153,9 +170,59 @@ Defined in `Type.kt`. Headers (`display*`, `headline*`) use `Playwrite Polska` (
 
 Material Icons (core + extended). No custom icon library. Access via `Icons.Default.*`, `Icons.Outlined.*`, `Icons.AutoMirrored.Filled.*`.
 
-## Dark mode handling
+## Light theme handling
 
-- Night theme uses `isDark = true` flag
-- `AppColors` object switches colors dynamically via `get()` delegates that read `ThemeRuntime.currentTheme`
-- Semantic colors (debit/credit bg, success/error bg) have dark-mode variants with alpha-adjusted deep tones
-- `MavoTheme` composable builds either `darkColorScheme()` or `lightColorScheme()` based on `appTheme.isDark`
+- Theme selection exposes Zero, Saffron, Slate, and Ledger.
+- Saved Night / Ink / legacy Purple selections load as Zero.
+- Semantic credit/debit colors remain distinct from the graph-paper canvas.
+
+## Mavo · Redesign (Penpot design artifacts)
+
+The redesign is specified in Penpot only (pages **Mavo · Redesign** and **Mavo · System**); no Android code or Kotlin theme files were changed.
+
+### Palette
+
+| Role | Value | Usage |
+|------|-------|-------|
+| ink | `#171A16` | Body text, headers |
+| ink2 | `#3D423A` | Secondary text |
+| muted | `#767B70` | Captions, hints |
+| paper | `#F4EFE3` | Board background |
+| paper2 | `#EAE1CE` | Inactive segments |
+| card | `#FFFDF8` | Cards, sheets |
+| field | `#FBF7EC` | Input fields |
+| forest | `#0B5D4B` | Primary brand |
+| forest2 | `#06382E` | Dark sheets |
+| mint | `#C8F2E3` | Primary brand light |
+| mint2 | `#E9F9F3` | Chip fills |
+| amber | `#E7A63A` | Warning accent |
+| amber2 | `#FBEBCB` | Warning chip fill |
+| coral | `#D95C4A` | Error / danger accent |
+| coral2 | `#F8DCD6` | Error chip fill |
+| blue | `#4E7BE8` | Info accent |
+| blue2 | `#DDE6FB` | Info chip fill |
+| line | `#E1D8C4` | Strokes, dividers |
+| white | `#FFFFFF` | Inverse text on brand |
+
+### Type roles
+
+| Role | Font | Usage |
+|------|------|-------|
+| Display / body | DynaPuff | Titles, headlines, section labels |
+| Numerals / labels | Tomorrow | Currency, dates, field labels, captions |
+| Editorial accents | Playwrite PL | Short decorative lines |
+| Icons | Custom 77 SVG set | Dock, header actions, list row avatars (replaces Material Symbols glyphs, which rendered poorly in Penpot export) |
+
+### Motion rules
+
+- Press scale `0.97` at `120 ms` ease-out
+- Page / sheet transitions `220–280 ms`
+- Animate `transform` / `opacity` only
+- Respect reduced motion
+
+### Layout rules
+
+- Boards `390 × 844`, 6 per row, `40 px` gaps; rows y = `0, 900, 1800, 2700, 3600, 4500`
+- `20 px` page padding, `26 px` dock radius
+- All screens share status bar, header, content area, floating dock, home indicator
+

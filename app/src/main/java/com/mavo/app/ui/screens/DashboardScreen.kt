@@ -137,17 +137,13 @@ data class DashboardBalanceSnapshot(
 data class KpiDetails(
     val title: String,
     val amount: String,
-    val subt: String,
-    val highlight: Color,
-    val icon: ImageVector? = null,
-    val trendValue: Double = 0.0
+    val highlight: Color
 )
 
 enum class ChartType { LINE, BAR, PIE }
 enum class AnalyticsFilter(val label: String) {
     TODAY("Today"), THIS_WEEK("This Week"), THIS_MONTH("This Month"),
     THIS_QUARTER("This Quarter"), THIS_YEAR("This Year"),
-    CUSTOM_DATE("Custom Date"), CUSTOM_DATE_RANGE("Custom Date Range")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -394,6 +390,7 @@ fun DashboardScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
                     .background(AppColors.cardBg)
                     .padding(horizontal = if (isTablet) 24.dp else 16.dp)
                     .padding(top = 4.dp, bottom = 16.dp)
@@ -404,8 +401,8 @@ fun DashboardScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(46.dp)
-                            .clip(RoundedCornerShape(15.dp))
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(16.dp))
                             .background(AppColors.textPrimary),
                         contentAlignment = Alignment.Center
                     ) {
@@ -414,20 +411,20 @@ fun DashboardScreen(
                             contentDescription = null,
                             // dark mark asset, tinted to match the box's established white icon convention
                             colorFilter = ColorFilter.tint(Color.White, BlendMode.SrcIn),
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Mavo",
-                        fontSize = 21.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = AppColors.textPrimary
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
                             .background(AppColors.sectionHeaderBg),
                         contentAlignment = Alignment.Center
@@ -445,7 +442,7 @@ fun DashboardScreen(
 
                 Text(
                     text = headerState.businessName.ifBlank { "Mavo" },
-                    fontSize = 31.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = AppColors.textPrimary
                 )
@@ -464,7 +461,7 @@ fun DashboardScreen(
                     color = AppColors.textSecondary
                 )
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 val pendingDues = vouchers.count { it.outstandingAmount > 0 }
                 val alertText = when {
@@ -476,34 +473,39 @@ fun DashboardScreen(
                         "$pendingDues voucher(s) with payment pending. Tap to review."
                     else -> "Books up to date for FY ${headerState.fyLabel}."
                 }
-                Row(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(AppColors.screenBg)
-                        .border(1.dp, ScreenBorder, RoundedCornerShape(14.dp))
                         .then(
                             when {
                                 lowStockProducts.isNotEmpty() -> Modifier.clickable { onQuickAction("LOW_STOCK") }
                                 pendingDues > 0 -> Modifier.clickable { onQuickAction("VOUCHERS") }
                                 else -> Modifier
                             }
-                        )
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        ),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, AppColors.border),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                 ) {
-                    Box(
+                    Row(
                         modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(AppColors.textPrimary)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = alertText,
-                        fontSize = 15.sp,
-                        color = AppColors.textPrimary
-                    )
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(AppColors.primary)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = alertText,
+                            fontSize = 15.sp,
+                            color = AppColors.textPrimary
+                        )
+                    }
                 }
             }
 
@@ -513,7 +515,7 @@ fun DashboardScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(AppColors.screenBg)
+                    .background(Color.Transparent)
                     .padding(horizontal = if (isTablet) 24.dp else 16.dp)
                     .padding(top = 16.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -533,17 +535,17 @@ fun DashboardScreen(
 
             // ========== KPI CARDS SECTION ==========
             val cardList = buildList {
-                add(KpiDetails("Today's Sales", Utils.formatIndianCurrency(voucherSummary.todaySales), "vs yesterday", Color(0xFF22A06B), null, voucherSummary.todaySales))
-                add(KpiDetails("Today's Purchases", Utils.formatIndianCurrency(voucherSummary.todayPurchases), "vs yesterday", Color(0xFFE24B4A), null, voucherSummary.todayPurchases))
-                add(KpiDetails("This Month's Sales", Utils.formatIndianCurrency(voucherSummary.thisMonthSales), "running total", Color(0xFF22A06B), null, voucherSummary.thisMonthSales))
-                add(KpiDetails("Net Profit (Est.)", Utils.formatIndianCurrency(voucherSummary.netProfit), if (voucherSummary.netProfit >= 0) "positive" else "negative", if (voucherSummary.netProfit >= 0) Color(0xFF22A06B) else Color(0xFFE24B4A), null, voucherSummary.netProfit))
-                add(KpiDetails("Receivables", Utils.formatIndianCurrency(balanceSnapshot.outstandingReceivable), "amount due in", Color(0xFFD97706), null, balanceSnapshot.outstandingReceivable))
-                add(KpiDetails("Payables", Utils.formatIndianCurrency(balanceSnapshot.outstandingPayable), "amount due out", Color(0xFF6366F1), null, balanceSnapshot.outstandingPayable))
-                add(KpiDetails("Cash Account", Utils.formatIndianCurrency(balanceSnapshot.cashBalance), "current balance", Color(0xFF1A5C4B), null, balanceSnapshot.cashBalance))
-                add(KpiDetails("Bank & UPI", Utils.formatIndianCurrency(balanceSnapshot.bankBalance), "current balance", Color(0xFF22755F), null, balanceSnapshot.bankBalance))
-                add(KpiDetails("Inventory", Utils.formatIndianCurrency(inventoryValue), "stock value", Color(0xFFC8943A), null, inventoryValue))
+                add(KpiDetails("Today's Sales", Utils.formatIndianCurrency(voucherSummary.todaySales), AppColors.success))
+                add(KpiDetails("Today's Purchases", Utils.formatIndianCurrency(voucherSummary.todayPurchases), AppColors.error))
+                add(KpiDetails("This Month's Sales", Utils.formatIndianCurrency(voucherSummary.thisMonthSales), AppColors.success))
+                add(KpiDetails("Net Profit (Est.)", Utils.formatIndianCurrency(voucherSummary.netProfit), if (voucherSummary.netProfit >= 0) AppColors.success else AppColors.error))
+                add(KpiDetails("Receivables", Utils.formatIndianCurrency(balanceSnapshot.outstandingReceivable), AppColors.warning))
+                add(KpiDetails("Payables", Utils.formatIndianCurrency(balanceSnapshot.outstandingPayable), AppColors.error))
+                add(KpiDetails("Cash Account", Utils.formatIndianCurrency(balanceSnapshot.cashBalance), Color(0xFF1A5C4B)))
+                add(KpiDetails("Bank & UPI", Utils.formatIndianCurrency(balanceSnapshot.bankBalance), Color(0xFF22755F)))
+                add(KpiDetails("Inventory", Utils.formatIndianCurrency(inventoryValue), AppColors.gold))
                 if (showGstCard) {
-                    add(KpiDetails("GST", Utils.formatIndianCurrency(voucherSummary.gstValue), "total tax", Color(0xFF059669), null, voucherSummary.gstValue))
+                    add(KpiDetails("GST", Utils.formatIndianCurrency(voucherSummary.gstValue), AppColors.success))
                 }
             }
 
@@ -593,9 +595,9 @@ fun DashboardScreen(
                 } else {
                     Card(
                         modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = BorderStroke(0.5.dp, AppColors.border),
-                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                        border = BorderStroke(1.dp, AppColors.border),
+                        shape = RoundedCornerShape(16.dp),
                         elevation = CardDefaults.cardElevation(4.dp)
                     ) {
                         Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -609,12 +611,12 @@ fun DashboardScreen(
                                         }
                                         Text(Utils.formatIndianCurrency(v.netAmount), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
                                     }
-                                    HorizontalDivider(color = AppColors.divider, thickness = 0.5.dp)
+                                    HorizontalDivider(color = AppColors.divider)
                                 }
                             }
                             if (foundLedger.isNotEmpty()) {
                                 if (foundVouchers.isNotEmpty()) Spacer(modifier = Modifier.height(4.dp))
-                                Text("Ledger Entries", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF7C3AED))
+                                Text("Ledger Entries", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AppColors.primary)
                                 foundLedger.forEach { l ->
                                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Column(modifier = Modifier.weight(1f)) {
@@ -624,12 +626,12 @@ fun DashboardScreen(
                                         val amt = if (l.debit > 0) "Dr. ${Utils.formatIndianCurrency(l.debit)}" else "Cr. ${Utils.formatIndianCurrency(l.credit)}"
                                         Text(amt, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (l.debit > 0) AppColors.debit else AppColors.credit)
                                     }
-                                    HorizontalDivider(color = AppColors.divider, thickness = 0.5.dp)
+                                    HorizontalDivider(color = AppColors.divider)
                                 }
                             }
                             if (foundProducts.isNotEmpty()) {
                                 if (foundVouchers.isNotEmpty() || foundLedger.isNotEmpty()) Spacer(modifier = Modifier.height(4.dp))
-                                Text("Stock Items", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AppColors.success)
+                                Text("Stock Items", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AppColors.primary)
                                 foundProducts.forEach { p ->
                                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Column(modifier = Modifier.weight(1f)) {
@@ -638,7 +640,7 @@ fun DashboardScreen(
                                         }
                                         Text(Utils.formatIndianCurrency(p.saleRate), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
                                     }
-                                    HorizontalDivider(color = AppColors.divider, thickness = 0.5.dp)
+                                    HorizontalDivider(color = AppColors.divider)
                                 }
                             }
                         }
@@ -658,10 +660,10 @@ fun DashboardScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .premiumClickable { showProgressDetails = true },
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(50.dp),
+                        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                        shape = RoundedCornerShape(999.dp),
                         elevation = CardDefaults.cardElevation(2.dp),
-                        border = BorderStroke(0.5.dp, AppColors.border)
+                        border = BorderStroke(1.dp, AppColors.border)
                     ) {
                         Row(
                             modifier = Modifier
@@ -670,7 +672,7 @@ fun DashboardScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -693,7 +695,7 @@ fun DashboardScreen(
                                     progress = (progressPercent / 100f).toFloat(),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(6.dp)
+                                        .height(8.dp)
                                         .clip(RoundedCornerShape(999.dp)),
                                     color = AppColors.primary,
                                     trackColor = AppColors.primary.copy(alpha = 0.12f)
@@ -709,22 +711,34 @@ fun DashboardScreen(
                 }
 
                 // ========== QUICK ACTIONS ==========
-                Row(
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                    shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(1.dp, AppColors.border)
                 ) {
-                    HomeQuickAction("Sale", Icons.AutoMirrored.Outlined.ReceiptLong) { onQuickAction("SALE") }
-                    HomeQuickAction("Purchase", Icons.Outlined.ShoppingCart) { onQuickAction("PURCHASE") }
-                    HomeQuickAction("Receipt", Icons.Outlined.SouthWest) { onQuickAction("RECEIPT") }
-                    HomeQuickAction("Expense", Icons.AutoMirrored.Filled.TrendingUp) { onQuickAction("EXPENSES") }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    HomeQuickAction("Quick Sale", Icons.Default.Bolt) { onQuickAction("QUICK_SALE") }
-                    HomeQuickAction("Payment", Icons.Outlined.NorthEast) { onQuickAction("PAYMENT") }
-                    HomeQuickAction("Reports", Icons.AutoMirrored.Filled.Assignment) { onQuickAction("REPORTS") }
+                    Column(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            HomeQuickAction("Sale", Icons.AutoMirrored.Outlined.ReceiptLong) { onQuickAction("SALE") }
+                            HomeQuickAction("Purchase", Icons.Outlined.ShoppingCart) { onQuickAction("PURCHASE") }
+                            HomeQuickAction("Receipt", Icons.Outlined.SouthWest) { onQuickAction("RECEIPT") }
+                            HomeQuickAction("Expense", Icons.AutoMirrored.Filled.TrendingUp) { onQuickAction("EXPENSES") }
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            HomeQuickAction("Quick Sale", Icons.Default.Bolt) { onQuickAction("QUICK_SALE") }
+                            HomeQuickAction("Payment", Icons.Outlined.NorthEast) { onQuickAction("PAYMENT") }
+                            HomeQuickAction("Reports", Icons.AutoMirrored.Filled.Assignment) { onQuickAction("REPORTS") }
+                        }
+                    }
                 }
 
                 // ========== RECENT TRANSACTIONS ==========
@@ -734,7 +748,7 @@ fun DashboardScreen(
                 ) {
                     Text(
                         text = "Recent Transactions",
-                        fontSize = 19.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = AppColors.textPrimary
                     )
@@ -775,7 +789,7 @@ fun DashboardScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                    .padding(horizontal = 16.dp, vertical = 16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -786,7 +800,7 @@ fun DashboardScreen(
                                         fontWeight = FontWeight.SemiBold,
                                         color = AppColors.textPrimary
                                     )
-                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         text = "${dashboardTypeLabel(voucher.type)} · " +
                                             "${voucher.voucherNo.ifBlank { "\u2014" }} · " +
@@ -873,12 +887,12 @@ private fun DashboardReadStateCard(
                 else -> MaterialTheme.colorScheme.errorContainer
             }
         ),
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -946,7 +960,7 @@ private fun RowScope.HomeQuickAction(
             imageVector = icon,
             contentDescription = label,
             tint = AppColors.textPrimary,
-            modifier = Modifier.size(26.dp)
+            modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -968,13 +982,13 @@ private fun KpiStandardHorizontal(
     onCardClick: (KpiDetails) -> Unit
 ) {
     val listState = rememberLazyListState()
-    val cardWidthDp = if (isTablet) 300.dp else 170.dp
+    val cardWidthDp = if (isTablet) 300.dp else 168.dp
 
     LazyRow(
         state = listState,
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 0.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         itemsIndexed(cards) { _, card ->
             KpiPremiumCard(
@@ -1065,9 +1079,9 @@ private fun KpiWalletStack(
                 val isActive = index == currentIndex
                 Box(
                     modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .height(if (isActive) 6.dp else 4.dp)
-                        .width(if (isActive) 18.dp else 4.dp)
+                        .padding(horizontal = 4.dp)
+                        .height(if (isActive) 8.dp else 4.dp)
+                        .width(if (isActive) 20.dp else 4.dp)
                         .background(
                             if (isActive) AppColors.primary else AppColors.border,
                             RoundedCornerShape(999.dp)
@@ -1130,7 +1144,6 @@ private fun KpiSpotlightCarousel(
                 val normalizedOffset = (absOffset / (cardWidthDp.value * density)).coerceIn(0f, 2f)
                 val scale = 1f - (normalizedOffset * 0.15f).coerceAtMost(0.2f)
                 val alphaVal = 1f - (normalizedOffset * 0.5f).coerceAtMost(0.6f)
-                val rotationY = normalizedOffset * -8f
 
                 KpiPremiumCard(
                     details = card,
@@ -1140,8 +1153,6 @@ private fun KpiSpotlightCarousel(
                             this.scaleX = scale
                             this.scaleY = scale
                             this.alpha = alphaVal
-                            this.rotationY = rotationY
-                            this.cameraDistance = 12f * density
                         },
                     isTablet = isTablet,
                     onClick = { onCardClick(card) }
@@ -1158,8 +1169,8 @@ private fun KpiSpotlightCarousel(
                 val isActive = index == currentIndex
                 Box(
                     modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(if (isActive) 8.dp else 5.dp)
+                        .padding(horizontal = 4.dp)
+                        .size(if (isActive) 8.dp else 4.dp)
                         .background(
                             if (isActive) AppColors.primary else AppColors.border,
                             CircleShape
@@ -1190,7 +1201,7 @@ private fun KpiPremiumCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (isTablet) 18.dp else 16.dp),
+                .padding(if (isTablet) 20.dp else 16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
@@ -1280,7 +1291,7 @@ private fun KpiAnalyticsPopup(
                         Text("Metric", fontSize = 13.sp, color = AppColors.textTertiary)
                         Text(
                             card.title,
-                            fontSize = 26.sp,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = AppColors.textPrimary
                         )
@@ -1292,11 +1303,11 @@ private fun KpiAnalyticsPopup(
                     )
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         Utils.formatIndianCurrency(currentValue),
-                        fontSize = 34.sp,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
                         color = AppColors.textPrimary
                     )
                     Text(
@@ -1328,7 +1339,7 @@ private fun KpiAnalyticsPopup(
 
                                     for (i in 0..4) {
                                         val y = padding + i * (chartHeight / 4f)
-                                        drawLine(Color(0xFFE5E7EB), Offset(padding, y), Offset(size.width - padding, y), 1f)
+                                        drawLine(AppColors.divider, Offset(padding, y), Offset(size.width - padding, y), 1f)
                                     }
 
                                     when (chartType) {
@@ -1357,7 +1368,7 @@ private fun KpiAnalyticsPopup(
                                             }
                                             points.forEach { point ->
                                                 drawCircle(card.highlight, 5f, point)
-                                                drawCircle(Color.White, 3f, point)
+                                                drawCircle(AppColors.cardBg, 3f, point)
                                             }
                                         }
                                         ChartType.BAR -> {
@@ -1383,11 +1394,11 @@ private fun KpiAnalyticsPopup(
                                             var startAngle = -90f
                                             val colors = listOf(
                                                 card.highlight,
-                                                card.highlight.copy(alpha = 0.7f),
-                                                card.highlight.copy(alpha = 0.5f),
-                                                card.highlight.copy(alpha = 0.3f),
-                                                Color(0xFFEA580C),
-                                                Color(0xFF7C3AED)
+                                                AppColors.success,
+                                                AppColors.warning,
+                                                AppColors.error,
+                                                AppColors.gold,
+                                                Color(0xFF1A5C4B)
                                             )
                                             analyticsSeries.forEachIndexed { index, value ->
                                                 val sweep = (value / total * 360f).toFloat()
@@ -1409,7 +1420,7 @@ private fun KpiAnalyticsPopup(
                     }
                 }
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     ZbCard(modifier = Modifier.weight(1f), contentPadding = 12) {
                         AnalyticsStat("Highest", Utils.formatIndianCurrency(highestValue))
                     }
@@ -1436,7 +1447,7 @@ private fun KpiAnalyticsPopup(
                                             ChartType.PIE -> Icons.Default.PieChart
                                         },
                                         contentDescription = type.name,
-                                        modifier = Modifier.size(14.dp)
+                                        modifier = Modifier.size(16.dp)
                                     )
                                     Text(type.name.lowercase().replaceFirstChar { it.uppercase() }, fontSize = 11.sp)
                                 }
@@ -1533,23 +1544,6 @@ private fun computeAnalyticsSeries(
                 }.timeInMillis
             }
         )
-        AnalyticsFilter.CUSTOM_DATE, AnalyticsFilter.CUSTOM_DATE_RANGE -> Triple(6,
-            { i: Int ->
-                Calendar.getInstance().apply {
-                    add(Calendar.MONTH, -i)
-                    set(Calendar.DAY_OF_MONTH, 1)
-                    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-                }.timeInMillis
-            },
-            { i: Int ->
-                Calendar.getInstance().apply {
-                    add(Calendar.MONTH, -i)
-                    set(Calendar.DAY_OF_MONTH, 1)
-                    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-                    add(Calendar.MONTH, 1)
-                }.timeInMillis
-            }
-        )
     }
 
     val buckets = mutableListOf<Double>()
@@ -1589,4 +1583,3 @@ fun AnalyticsStat(
         Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
     }
 }
-

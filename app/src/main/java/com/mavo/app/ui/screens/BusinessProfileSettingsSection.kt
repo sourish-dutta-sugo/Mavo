@@ -215,27 +215,25 @@ fun BusinessProfileSettingsSection(
         }
     }
 
-    LaunchedEffect(pinCode) {
-        if (pinCode.length == 6 && pinCode.all { it.isDigit() }) {
-            delay(300)
-            isPinLoading = true
-            val result = fetchPinLookup(pinCode)
-            isPinLoading = false
-            if (result != null) {
-                city = result.city
-                pinLookupMessage = "City: ${result.city}, ${result.state}"
-                pinLookupSuccess = true
-                resolveIndianStateInfo(result.state)?.let { selectedStateInfo = it }
-            } else {
-                pinLookupMessage = "City not found, enter manually"
-                pinLookupSuccess = false
-            }
-        } else {
+    PinAutoFillEffect(
+        pin = pinCode,
+        onInvalid = {
             isPinLoading = false
             pinLookupMessage = ""
             pinLookupSuccess = false
+        },
+        onStart = { isPinLoading = true },
+        onResolved = { result ->
+            city = result.city
+            pinLookupMessage = "City: ${result.city}, ${result.state}"
+            pinLookupSuccess = true
+            resolveIndianStateInfo(result.state)?.let { selectedStateInfo = it }
+        },
+        onFailed = {
+            pinLookupMessage = "City not found, enter manually"
+            pinLookupSuccess = false
         }
-    }
+    )
 
     val signatureUploadLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -255,7 +253,7 @@ fun BusinessProfileSettingsSection(
                 }
                 path?.let {
                     uploadedSignaturePath = it
-                    Toast.makeText(context, "Signature uploaded!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Signature uploaded", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -271,7 +269,7 @@ fun BusinessProfileSettingsSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (!isDesktop) {
@@ -306,62 +304,69 @@ fun BusinessProfileSettingsSection(
                 .verticalScroll(formScroll)
                 .imePadding()
         ) {
-            // Business identity block (mockup 16)
-            Row(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Box(
+                Row(
                     modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(AppColors.primary),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Business,
-                        contentDescription = null,
-                        tint = AppColors.textOnPrimary,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Text(
-                        text = profile?.businessName?.ifBlank { "Business profile" } ?: "Business profile",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AppColors.textPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = listOfNotNull(
-                            profile?.city?.ifBlank { null },
-                            profile?.state?.ifBlank { null }
-                        ).joinToString(", ").ifBlank {
-                            profile?.address?.ifBlank { null } ?: "Address not set"
-                        },
-                        fontSize = 15.sp,
-                        color = AppColors.textSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = if (profile?.gstin.isNullOrBlank()) "Non-GST" else "GSTIN ${profile?.gstin}",
-                        fontSize = 15.sp,
-                        color = AppColors.textSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(AppColors.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Business,
+                            contentDescription = null,
+                            tint = AppColors.textOnPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = profile?.businessName?.ifBlank { "Business profile" } ?: "Business profile",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.textPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = listOfNotNull(
+                                profile?.city?.ifBlank { null },
+                                profile?.state?.ifBlank { null }
+                            ).joinToString(", ").ifBlank {
+                                profile?.address?.ifBlank { null } ?: "Address not set"
+                            },
+                            fontSize = 15.sp,
+                            color = AppColors.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = if (profile?.gstin.isNullOrBlank()) "Non-GST" else "GSTIN ${profile?.gstin}",
+                            fontSize = 15.sp,
+                            color = AppColors.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
-            HorizontalDivider(color = ScreenBorder)
 
             Column(
                 modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
@@ -589,8 +594,15 @@ fun BusinessProfileSettingsSection(
                 label = "PAN Card Number"
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            Text("BANK DETAILS SETUP", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text("BANK DETAILS SETUP", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
+            }
 
             ZbField(
                 value = accountNo,
@@ -602,35 +614,29 @@ fun BusinessProfileSettingsSection(
             ZbField(
                 value = ifsc,
                 onValueChange = { input ->
-                    val uppercaseInput = input.uppercase().replace("\\s".toRegex(), "")
-                    if (uppercaseInput.length <= 11) {
-                        ifsc = uppercaseInput
+                    val normalized = normalizeIfsc(input)
+                    if (normalized.length <= 11) {
+                        ifsc = normalized
                         ifscVerifiedMessage = ""
-                        if (uppercaseInput.length == 11) {
-                            isIfscLoading = true
-                            viewModel.fetchIfscDetails(uppercaseInput) { resolvedBank, resolvedBranch ->
-                                isIfscLoading = false
-                                if (!resolvedBank.isNullOrBlank()) {
-                                    bankName = resolvedBank
-                                    bankBranch = resolvedBranch.orEmpty()
-                                    ifscVerifiedMessage = buildString {
-                                        append("Bank verified: ")
-                                        append(resolvedBank)
-                                        if (!resolvedBranch.isNullOrBlank()) {
-                                            append(", ")
-                                            append(resolvedBranch)
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
                 },
                 label = "IFSC Code",
                 trailingIcon = {
                     if (isIfscLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                     }
+                }
+            )
+
+            IfscVerifyEffect(
+                viewModel = viewModel,
+                ifsc = ifsc,
+                onStart = { isIfscLoading = true },
+                onFinish = { isIfscLoading = false },
+                onResolved = { bank, branch, message ->
+                    bankName = bank
+                    bankBranch = branch
+                    ifscVerifiedMessage = message
                 }
             )
 
@@ -650,8 +656,15 @@ fun BusinessProfileSettingsSection(
                 label = "Bank Branch"
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            Text("BRANDING & INVOICE IMAGES", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text("BRANDING & INVOICE IMAGES", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
+            }
 
             BusinessImageUploadSection(
                 title = "Business Logo",
@@ -673,9 +686,9 @@ fun BusinessProfileSettingsSection(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                border = BorderStroke(1.dp, AppColors.border),
-                shape = RoundedCornerShape(12.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Column(Modifier.padding(16.dp)) {
                     Text(
@@ -702,7 +715,7 @@ fun BusinessProfileSettingsSection(
                                 .background(AppColors.screenBg),
                             contentScale = ContentScale.Fit
                         )
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(
                                 onClick = {
@@ -752,13 +765,20 @@ fun BusinessProfileSettingsSection(
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            Text("INVOICE SETTINGS", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text("INVOICE SETTINGS", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
+            }
             ZbField(
                 value = termsAndConditions,
                 onValueChange = { termsAndConditions = it },
                 label = "Terms & Conditions / Declaration",
-                placeholder = "Enter your default terms and conditions that will appear on every invoice",
+                placeholder = "Default terms printed on every invoice",
                 singleLine = false,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -830,14 +850,16 @@ fun BusinessProfileSettingsSection(
                                     termsAndConditions = termsAndConditions.ifBlank { DEFAULT_TERMS_AND_CONDITIONS }
                                 )
                                 viewModel.updateProfile(nextProfile) {
-                                    Toast.makeText(context, "Business Profile successfully updated!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Business Profile successfully updated", Toast.LENGTH_SHORT).show()
                                     onBackToMenu()
                                 }
                             }
+
                         }
                     )
                 }
             }
         }
+
     }
 }

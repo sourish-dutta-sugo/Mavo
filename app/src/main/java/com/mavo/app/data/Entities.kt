@@ -47,7 +47,7 @@ data class BusinessProfile(
     val logoPath: String? = null,
     val signaturePath: String? = null,
     val invoiceTitleDefault: String = "TAX INVOICE",
-    val invoiceFooterText: String = "Thank you for your business!",
+    val invoiceFooterText: String = "Thank you for your business",
     val showLogo: Boolean = true,
     val showSignature: Boolean = true,
     val showBankDetails: Boolean = true,

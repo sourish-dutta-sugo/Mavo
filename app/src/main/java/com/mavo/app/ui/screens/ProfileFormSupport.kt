@@ -69,7 +69,7 @@ fun resolveIndianStateInfo(rawValue: String): Pair<String, String>? {
         "dadra and nagar haveli" to ("Dadra & Nagar Haveli" to "26"),
         "daman and diu" to ("Daman & Diu" to "25"),
         "dadra and nagar haveli and daman and diu" to ("Dadra & Nagar Haveli" to "26"),
-        "andhra pradesh new" to ("Andhra Pradesh (New)" to "37"),
+        "andhra pradesh new" to ("Andhra Pradesh" to "37"),
         "uttaranchal" to ("Uttarakhand" to "05"),
         "lucknow" to ("Uttar Pradesh" to "09"),
         "kolkata" to ("West Bengal" to "19"),

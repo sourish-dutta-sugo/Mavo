@@ -218,7 +218,11 @@ fun ReportsScreen(
                             text = "Reports Menu ($financialYear)",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = AppColors.textSecondary
+                            color = AppColors.textSecondary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppColors.sectionHeaderBg, RoundedCornerShape(16.dp))
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
                         )
 
                         val reportsList = listOf(
@@ -377,7 +381,7 @@ fun ReportsScreen(
                                 val billsReceivable = billsReceivableReadState.valueOrEmpty()
                                 val billsReceivableError = billsReceivableReadState as? UiLoadState.Error<*>
 
-                                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                     TabRow(
                                         selectedTabIndex = if (mSelectedTab == "PARTIES") 0 else 1,
                                         containerColor = AppColors.cardBg,
@@ -440,7 +444,7 @@ fun ReportsScreen(
                 containerColor = AppColors.screenBg,
                 topBar = {
                     TopAppBar(
-                        title = { Text("Regulatory Financial Books & GST Reports", fontWeight = FontWeight.Black, color = AppColors.textPrimary) },
+                        title = { Text("Regulatory Financial Books & GST Reports", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
                         navigationIcon = {
                             IconButton(onClick = onNavigateBack) {
                                 Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AppColors.textPrimary)
@@ -463,7 +467,11 @@ fun ReportsScreen(
                         text = "Double Entry Ledger Reports Summary ($financialYear)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = AppColors.textSecondary
+                        color = AppColors.textSecondary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(AppColors.sectionHeaderBg, RoundedCornerShape(16.dp))
+                            .padding(horizontal = 16.dp, vertical = 16.dp)
                     )
 
                     ReportMenuCard(
@@ -640,7 +648,7 @@ fun ReportsScreen(
                             val billsReceivable = billsReceivableReadState.valueOrEmpty()
                             val billsReceivableError = billsReceivableReadState as? UiLoadState.Error<*>
 
-                            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 TabRow(
                                     selectedTabIndex = if (mSelectedTab == "PARTIES") 0 else 1,
                                     containerColor = AppColors.cardBg,
@@ -726,7 +734,7 @@ fun PayablesBillsListView(
         }
     } else {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)
         ) {
             items(purchaseBills) { bill ->
@@ -737,7 +745,7 @@ fun PayablesBillsListView(
                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
                     border = BorderStroke(1.dp, AppColors.border)
                 ) {
-                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -749,16 +757,19 @@ fun PayablesBillsListView(
                                 fontSize = 14.sp,
                                 color = AppColors.textPrimary
                             )
+                            val isPartial = outstanding < bill.netAmount
                             Card(
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFCE8E6)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isPartial) AppColors.badgePartialBg else AppColors.badgePaymentBg
+                                ),
                                 shape = RoundedCornerShape(4.dp)
                             ) {
                                 Text(
-                                    text = if (outstanding < bill.netAmount) "PARTIAL" else "UNPAID",
+                                    text = if (isPartial) "PARTIAL" else "UNPAID",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFC5221F),
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    color = if (isPartial) AppColors.badgePartialText else AppColors.badgePaymentText,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                 )
                             }
                         }
@@ -815,15 +826,15 @@ fun PayablesBillsListView(
                                     )
                                     navigateToNewVoucher(null)
                                 },
-                                shape = RoundedCornerShape(6.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                modifier = Modifier.height(34.dp)
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                                modifier = Modifier.height(32.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Pay", fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -868,7 +879,6 @@ fun TrialBalanceView(
     }
 
     // Prepare groups:
-    val capBalance = 0.0 // Custom manual capital additions if any
     val gstPayBalance = cgstPayable + sgstPayable + igstPayable
     val gstRecBalance = cgstRec + sgstRec + igstRec
 
@@ -896,7 +906,7 @@ fun TrialBalanceView(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(AppColors.primary)
-                .padding(vertical = 10.dp, horizontal = 12.dp),
+                .padding(vertical = 12.dp, horizontal = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("PARTICULARS", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1.5f))
@@ -928,7 +938,7 @@ fun TrialBalanceView(
                     tint = AppColors.primaryText,
                     modifier = Modifier.size(16.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = name,
                     fontWeight = FontWeight.Bold,
@@ -940,7 +950,7 @@ fun TrialBalanceView(
                 )
                 Text(
                     text = if (dr > 0) Utils.formatIndianNumber(dr) else "-",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = NumericFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp,
                     color = if (dr > 0) AppColors.debit else AppColors.textPrimary,
@@ -949,7 +959,7 @@ fun TrialBalanceView(
                 )
                 Text(
                     text = if (cr > 0) Utils.formatIndianNumber(cr) else "-",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = NumericFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp,
                     color = if (cr > 0) AppColors.credit else AppColors.textPrimary,
@@ -986,7 +996,7 @@ fun TrialBalanceView(
                 )
                 Text(
                     text = if (isDr) Utils.formatIndianNumber(balance) else "-",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = NumericFontFamily,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = AppColors.debit,
@@ -995,7 +1005,7 @@ fun TrialBalanceView(
                 )
                 Text(
                     text = if (!isDr) Utils.formatIndianNumber(balance) else "-",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = NumericFontFamily,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = AppColors.credit,
@@ -1111,7 +1121,7 @@ fun TrialBalanceView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(AppColors.warning.copy(alpha = 0.12f))
-                    .padding(10.dp)
+                    .padding(12.dp)
             ) {
                 Text(
                     text = "Unreconciled Difference (review required):",
@@ -1123,7 +1133,7 @@ fun TrialBalanceView(
                 )
                 Text(
                     text = if (reconcileWithCapital < 0) "DR: " + Utils.formatIndianNumber(-reconcileWithCapital) else "-",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = NumericFontFamily,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = AppColors.error,
@@ -1132,7 +1142,7 @@ fun TrialBalanceView(
                 )
                 Text(
                     text = if (reconcileWithCapital > 0) "CR: " + Utils.formatIndianNumber(reconcileWithCapital) else "-",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = NumericFontFamily,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = AppColors.success,
@@ -1158,13 +1168,13 @@ fun TrialBalanceView(
         ) {
             Text(
                 if (isBalanced) "GRAND TOTALS (BALANCED)" else "GRAND TOTALS (NOT BALANCED — REVIEW)",
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Bold,
                 fontSize = 11.sp,
                 color = AppColors.textOnPrimary,
                 modifier = Modifier.weight(1.5f)
             )
-            Text(Utils.formatIndianCurrency(finalDrSum), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
-            Text(Utils.formatIndianCurrency(finalCrSum), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+            Text(Utils.formatIndianCurrency(finalDrSum), fontFamily = NumericFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+            Text(Utils.formatIndianCurrency(finalCrSum), fontFamily = NumericFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
         }
     }
 }
@@ -1202,7 +1212,7 @@ fun TradingAndPLView(
                     fontSize = 11.sp,
                     color = AppColors.primary
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Dual column split representation
                 Row(
@@ -1214,13 +1224,13 @@ fun TradingAndPLView(
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .border(BorderStroke(0.5.dp, AppColors.border))
+                            .border(BorderStroke(1.dp, AppColors.border))
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(AppColors.screenBg)
-                                .padding(6.dp)
+                                .padding(8.dp)
                         ) {
                             Text("DEBIT (DR) / COST", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.textPrimary)
                         }
@@ -1245,13 +1255,13 @@ fun TradingAndPLView(
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .border(BorderStroke(0.5.dp, AppColors.border))
+                            .border(BorderStroke(1.dp, AppColors.border))
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(AppColors.screenBg)
-                                .padding(6.dp)
+                                .padding(8.dp)
                         ) {
                             Text("CREDIT (CR) / REVENUE", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.textPrimary)
                         }
@@ -1287,7 +1297,7 @@ fun TradingAndPLView(
                     fontSize = 11.sp,
                     color = AppColors.primary
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
                     modifier = Modifier
@@ -1298,13 +1308,13 @@ fun TradingAndPLView(
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .border(BorderStroke(0.5.dp, AppColors.border))
+                            .border(BorderStroke(1.dp, AppColors.border))
                     ) {
                          Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(AppColors.screenBg)
-                                .padding(6.dp)
+                                .padding(8.dp)
                         ) {
                             Text("DEBIT (DR) / CHARGES", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.textPrimary)
                         }
@@ -1334,13 +1344,13 @@ fun TradingAndPLView(
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .border(BorderStroke(0.5.dp, AppColors.border))
+                            .border(BorderStroke(1.dp, AppColors.border))
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(AppColors.screenBg)
-                                .padding(6.dp)
+                                .padding(8.dp)
                         ) {
                             Text("CREDIT (CR) / GAINS", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.textPrimary)
                         }
@@ -1382,8 +1392,8 @@ fun PLColumnItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(34.dp)
-            .padding(horizontal = 6.dp),
+            .height(32.dp)
+            .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1399,8 +1409,8 @@ fun PLColumnItem(
             )
             Text(
                 text = String.format("%.2f", amount),
-                fontSize = 9.sp,
-                fontFamily = FontFamily.Monospace,
+                fontSize = 10.sp,
+                fontFamily = NumericFontFamily,
                 fontWeight = FontWeight.Bold,
                 color = if (highlight) (if (isProfit) AppColors.credit else AppColors.debit) else AppColors.textSecondary,
                 textAlign = TextAlign.End
@@ -1418,14 +1428,14 @@ fun PLTotalItem(total: Double, modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .background(AppColors.primary.copy(alpha = 0.08f))
-            .padding(6.dp),
+            .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text("Total", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.primary)
         Text(
             text = Utils.formatIndianCurrency(total),
-            fontFamily = FontFamily.Monospace,
+            fontFamily = NumericFontFamily,
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp,
             color = AppColors.primary,
@@ -1475,7 +1485,7 @@ fun BalanceSheetView(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .border(BorderStroke(0.5.dp, AppColors.border))
+                    .border(BorderStroke(1.dp, AppColors.border))
             ) {
                 Box(
                     modifier = Modifier
@@ -1505,7 +1515,7 @@ fun BalanceSheetView(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .border(BorderStroke(0.5.dp, AppColors.border))
+                    .border(BorderStroke(1.dp, AppColors.border))
             ) {
                 Box(
                     modifier = Modifier
@@ -1539,7 +1549,7 @@ fun BalanceSheetView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(AppColors.warning.copy(alpha = 0.12f))
-                    .padding(10.dp),
+                    .padding(12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
@@ -1552,7 +1562,7 @@ fun BalanceSheetView(
                 )
                 Text(
                     text = Utils.formatIndianCurrency(bsDifference),
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = NumericFontFamily,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = AppColors.error,
@@ -1601,7 +1611,7 @@ fun GSTSummaryView(
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Total Outward Tax Liability:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
-                    Text(Utils.formatIndianCurrency(outputTotal), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
+                    Text(Utils.formatIndianCurrency(outputTotal), fontFamily = NumericFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
                 }
             }
         }
@@ -1621,7 +1631,7 @@ fun GSTSummaryView(
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Total Input Tax credits (ITC):", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
-                    Text(Utils.formatIndianCurrency(inputTotal), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
+                    Text(Utils.formatIndianCurrency(inputTotal), fontFamily = NumericFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
                 }
             }
         }
@@ -1631,7 +1641,7 @@ fun GSTSummaryView(
             colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("GST PAYABLE POSITION (NET TO FILE)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.primary)
                 HorizontalDivider()
 
@@ -1643,11 +1653,11 @@ fun GSTSummaryView(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(label, fontWeight = FontWeight.Black, fontSize = 13.sp, color = AppColors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(label, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = AppColors.textPrimary, modifier = Modifier.weight(1f))
                     Text(
                         text = Utils.formatIndianCurrency(Math.abs(netPayable)),
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Black,
+                        fontFamily = NumericFontFamily,
+                        fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = color
                     )
@@ -1669,7 +1679,7 @@ fun ReportRow(label: String, amount: Double, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label, fontSize = 11.sp, color = AppColors.textTertiary)
-        Text(String.format("%.2f", amount), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = AppColors.textSecondary)
+        Text(String.format("%.2f", amount), fontFamily = NumericFontFamily, fontSize = 11.sp, color = AppColors.textSecondary)
     }
     HorizontalDivider(color = AppColors.divider)
 }
@@ -1697,24 +1707,24 @@ fun DebtorsRemindersView(
                     border = BorderStroke(1.dp, AppColors.border)
                 ) {
                     Row(
-                        modifier = Modifier.padding(14.dp).fillMaxWidth(),
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(party.name, fontWeight = FontWeight.Black, fontSize = 14.sp, color = AppColors.textPrimary)
+                            Text(party.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppColors.textPrimary)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text("Email: ${party.email.ifBlank { "N/A" }}", fontSize = 11.sp, color = AppColors.textSecondary)
                             Text("Phone: ${party.phone}", fontSize = 11.sp, color = AppColors.textSecondary)
                         }
 
-                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
                                 text = Utils.formatIndianCurrency(balance),
                                 fontWeight = FontWeight.Bold,
                                 color = AppColors.error,
                                 fontSize = 14.sp,
-                                fontFamily = FontFamily.Monospace
+                                fontFamily = NumericFontFamily
                             )
 
                             if (party.email.isNotBlank()) {
@@ -1725,14 +1735,14 @@ fun DebtorsRemindersView(
                                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary),
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                                     shape = RoundedCornerShape(4.dp),
-                                    modifier = Modifier.height(30.dp)
+                                    modifier = Modifier.height(32.dp)
                                 ) {
-                                    Icon(imageVector = Icons.Default.Email, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Icon(imageVector = Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text("Send Email", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                             } else {
-                                Text("[No Email Configured]", fontSize = 10.sp, color = Color.Gray)
+                                Text("[No Email Configured]", fontSize = 10.sp, color = AppColors.textHint)
                             }
                         }
                     }
@@ -1849,11 +1859,11 @@ fun AgedBillsListView(
 
     if (activeBills.isEmpty()) {
         Box(modifier = modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-            Text("All credit invoices have been fully paid off!", fontSize = 13.sp, color = AppColors.textSecondary)
+            Text("All credit invoices have been fully paid off", fontSize = 13.sp, color = AppColors.textSecondary)
         }
     } else {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)
         ) {
             items(activeBills) { bill ->
@@ -1862,7 +1872,7 @@ fun AgedBillsListView(
                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
                     border = BorderStroke(1.dp, AppColors.border)
                 ) {
-                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1879,20 +1889,20 @@ fun AgedBillsListView(
                             val badgeTxtColor: Color
                             when (bill.status) {
                                 "PAID" -> {
-                                    badgeBgColor = Color(0xFFE6F4EA)
-                                    badgeTxtColor = Color(0xFF137333)
+                                    badgeBgColor = AppColors.badgePaidBg
+                                    badgeTxtColor = AppColors.badgePaidText
                                 }
                                 "OVERDUE" -> {
-                                    badgeBgColor = Color(0xFFFCE8E6)
-                                    badgeTxtColor = Color(0xFFC5221F)
+                                    badgeBgColor = AppColors.badgeOverdueBg
+                                    badgeTxtColor = AppColors.badgeOverdueText
                                 }
                                 "PARTIAL" -> {
-                                    badgeBgColor = Color(0xFFE8F0FE)
-                                    badgeTxtColor = Color(0xFF1A73E8)
+                                    badgeBgColor = AppColors.badgePartialBg
+                                    badgeTxtColor = AppColors.badgePartialText
                                 }
                                 else -> { // UNPAID
-                                    badgeBgColor = Color(0xFFFEF7E0)
-                                    badgeTxtColor = Color(0xFFB06000)
+                                    badgeBgColor = AppColors.badgePaymentBg
+                                    badgeTxtColor = AppColors.badgePaymentText
                                 }
                             }
                             
@@ -1905,7 +1915,7 @@ fun AgedBillsListView(
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = badgeTxtColor,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                 )
                             }
                         }
@@ -1958,17 +1968,17 @@ fun AgedBillsListView(
                                     )
                                     navigateToNewVoucher(null)
                                 },
-                                shape = RoundedCornerShape(6.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                                 modifier = Modifier
-                                    .height(34.dp)
+                                    .height(32.dp)
                                     .pressScale()
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Receive Payment", fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -1985,14 +1995,14 @@ fun AgedBillsListView(
         AlertDialog(
             onDismissRequest = { showDialog = false },
             containerColor = Color(0xFFFFFFFF),
-            titleContentColor = Color(0xFF0D0D0D),
-            textContentColor = Color(0xFF0D0D0D),
+            titleContentColor = AppColors.textPrimary,
+            textContentColor = AppColors.textPrimary,
             title = {
                 Text(
                     "Receive Payment - Invoice #${bill.voucherNo}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = Color(0xFF0D0D0D)
+                    color = AppColors.textPrimary
                 )
             },
             text = {
@@ -2029,13 +2039,13 @@ fun AgedBillsListView(
                                     containerColor = if (isSel) AppColors.primary else AppColors.screenBg,
                                     contentColor = if (isSel) Color.White else AppColors.textSecondary
                                 ),
-                                shape = RoundedCornerShape(6.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier
                                     .weight(1f)
                                     .border(
                                         1.dp,
                                         if (isSel) AppColors.primary else AppColors.border,
-                                        RoundedCornerShape(6.dp)
+                                        RoundedCornerShape(8.dp)
                                     )
                                     .pressScale()
                             ) {
@@ -2145,7 +2155,7 @@ fun AgedBillsListView(
                                         createdAt = System.currentTimeMillis()
                                     )
                                     viewModel.insertAllocation(allocation)
-                                    Toast.makeText(context, "Payment of ₹${Utils.formatIndianNumber(amtVal)} captured!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Payment of ₹${Utils.formatIndianNumber(amtVal)} captured", Toast.LENGTH_SHORT).show()
                                     showDialog = false
                                 }
                             }

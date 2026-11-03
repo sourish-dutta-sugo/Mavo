@@ -75,21 +75,29 @@ fun LowStockScreen(
                 .padding(horizontal = 16.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(AppColors.warningBg)
+                    .border(1.dp, AppColors.warning.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
                     imageVector = Icons.Outlined.Warning,
                     contentDescription = null,
-                    tint = AppColors.textSecondary,
-                    modifier = Modifier.size(18.dp)
+                    tint = AppColors.warning,
+                    modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "${items.size} items need attention",
                     fontSize = 15.sp,
-                    color = AppColors.textSecondary
+                    color = AppColors.textPrimary
                 )
             }
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             WizardTitle(
                 text = "Low & Out of Stock",
                 subtitle = "Reorder before your next dispatch cycle."
@@ -112,14 +120,16 @@ fun LowStockScreen(
                         Box(
                             modifier = Modifier
                                 .size(44.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(AppColors.sectionHeaderBg),
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    if (product.currentStock <= 0.0) AppColors.errorBg else AppColors.warningBg
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Inventory2,
                                 contentDescription = null,
-                                tint = AppColors.textSecondary
+                                tint = if (product.currentStock <= 0.0) AppColors.error else AppColors.warning
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
@@ -130,7 +140,7 @@ fun LowStockScreen(
                                 fontWeight = FontWeight.SemiBold,
                                 color = AppColors.textPrimary
                             )
-                            Spacer(modifier = Modifier.height(3.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Stock ${qtyLabel(product.currentStock)} · Reorder at ${qtyLabel(product.lowStockThreshold)}",
                                 fontSize = 13.sp,
@@ -140,9 +150,9 @@ fun LowStockScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(AppColors.cardBg)
-                                .border(1.dp, ScreenBorder, RoundedCornerShape(18.dp))
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(AppColors.primaryLight)
+                                .border(1.dp, AppColors.border, RoundedCornerShape(16.dp))
                                 .clickable(onClick = onReorder)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
@@ -150,12 +160,12 @@ fun LowStockScreen(
                                 text = "Reorder",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = AppColors.textPrimary
+                                color = AppColors.primary
                             )
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
             Spacer(modifier = Modifier.height(16.dp))
         }

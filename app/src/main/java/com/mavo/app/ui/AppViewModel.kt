@@ -565,38 +565,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun auditLogsForYear(financialYearCode: String): Flow<List<FinancialYearAuditLog>> =
         AppDatabase.getDatabase(getApplication()).financialYearAuditLogDao().getLogsForYear(financialYearCode)
 
-    fun fetchPinCodeDetails(pincode: String, onResult: (city: String?, state: String?) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val url = java.net.URL("https://api.postalpincode.in/pincode/$pincode")
-                val connection = (url.openConnection() as java.net.HttpURLConnection).apply {
-                    requestMethod = "GET"
-                    connectTimeout = 5000
-                    readTimeout = 5000
-                }
-                val responseText = try {
-                    connection.inputStream.bufferedReader().use { it.readText() }
-                } finally {
-                    connection.disconnect()
-                }
-                val districtRegex = """"District"\s*:\s*"([^"]+)"""".toRegex()
-                val stateRegex = """"State"\s*:\s*"([^"]+)"""".toRegex()
-
-                val district = districtRegex.find(responseText)?.groupValues?.get(1)
-                val state = stateRegex.find(responseText)?.groupValues?.get(1)
-
-                withContext(Dispatchers.Main) {
-                    onResult(district, state)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    onResult(null, null)
-                }
-            }
-        }
-    }
-
     fun fetchIfscDetails(ifsc: String, onResult: (bankName: String?, branchName: String?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             try {

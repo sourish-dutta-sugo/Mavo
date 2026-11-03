@@ -161,7 +161,7 @@ object HsnLookup {
     }
 
     /**
-     * Bolt Optimization ⚡: Optimized suggest lookup to use a single-pass O(N) loop.
+     * Single-pass O(N) lookup.
      * - Avoids Sequence/Map/Filter/Sorting allocations (e.g., intermediate Pair objects, Sequence wrappers,
      *   iterator instances, and sorted copy arrays/lists), resulting in zero extra garbage per keystroke lookup.
      * - Implements an O(1) early exit if an exact match (score 0) is found during iteration.
@@ -190,7 +190,7 @@ object HsnLookup {
                 bestScore = score
                 bestProduct = product
                 if (bestScore == 0) {
-                    break // Bolt Early-Exit ⚡: Found exact match, no need to iterate further
+                    break // exact match found
                 }
             }
         }

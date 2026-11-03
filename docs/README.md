@@ -1,6 +1,6 @@
 # Mavo Documentation Index
 
-> Last updated: 2026-10-03  
+> Last updated: 2026-10-24  
 > Single source of truth index for all documentation across the Mavo project.
 
 ---
@@ -48,7 +48,9 @@
 | [engineering/API.md](engineering/API.md) | Internal services: PDF generation, JavaMail, CSV transfer, CameraX/MLKit |
 | [engineering/TESTING.md](engineering/TESTING.md) | Testing strategy, Robolectric, Roborazzi screenshot tests, and verification commands |
 | [engineering/DECISIONS.md](engineering/DECISIONS.md) | Architecture Decision Records (ADRs) explaining technical trade-offs |
+| [superpowers/specs/2026-10-24_complete-ui-redesign-design.md](superpowers/specs/2026-10-24_complete-ui-redesign-design.md) | Approved Material 3 UI rebuild design |
 | [superpowers/specs/2026-10-01-responsive-counter-layout-design.md](superpowers/specs/2026-10-01-responsive-counter-layout-design.md) | Approved responsive counter layout specification |
+| [superpowers/specs/2026-10-25_kmp-ready-source-organization-design.md](superpowers/specs/2026-10-25_kmp-ready-source-organization-design.md) | Proposed KMP-ready source boundaries and repository organization |
 
 ---
 

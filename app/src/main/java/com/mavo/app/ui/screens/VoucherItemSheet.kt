@@ -167,16 +167,17 @@ fun VoucherItemEntrySheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = AppColors.cardBg
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .graphPaperCanvas()
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .imePadding()
                 .padding(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 if (isEditing) "Edit Item" else "Add Item",
@@ -243,7 +244,7 @@ fun VoucherItemEntrySheet(
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Add, null, tint = AppColors.primary, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
+                                Spacer(Modifier.width(8.dp))
                                 Text("Create new product", color = AppColors.primary, fontWeight = FontWeight.Bold)
                             }
                         },
@@ -263,8 +264,8 @@ fun VoucherItemEntrySheet(
                         border = BorderStroke(1.dp, AppColors.border)
                     ) {
                         Column(
-                            modifier = Modifier.padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text("No products added yet", color = TextDark, fontWeight = FontWeight.Bold)
                             OutlinedButton(
@@ -280,7 +281,7 @@ fun VoucherItemEntrySheet(
                     }
                 }
             }
-            if (nameError) Text("Product name is required", color = Color(0xFFC62828), fontSize = 11.sp)
+            if (nameError) Text("Product name is required", color = AppColors.error, fontSize = 11.sp)
 
             // FIELD 2 — HSN
             Text("HSN/SAC Code", color = TextGray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
@@ -311,7 +312,7 @@ fun VoucherItemEntrySheet(
             if (hsnSuggestions.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     hsnSuggestions.forEach { result ->
                         SuggestionChip(
@@ -323,6 +324,8 @@ fun VoucherItemEntrySheet(
                 }
             }
 
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
             // FIELD 3 — Quantity
             DecimalInputField(
                 value = qtyText,
@@ -331,7 +334,7 @@ fun VoucherItemEntrySheet(
                 isError = qtyError,
                 modifier = Modifier.fillMaxWidth()
             )
-            if (qtyError) Text("Quantity must be greater than zero", color = Color(0xFFC62828), fontSize = 11.sp)
+            if (qtyError) Text("Quantity must be greater than zero", color = AppColors.error, fontSize = 11.sp)
 
             // FIELD 4 — Unit
             var unitExpanded by remember { mutableStateOf(false) }
@@ -373,7 +376,7 @@ fun VoucherItemEntrySheet(
                 prefix = { Text("₹", color = TextDark) },
                 modifier = Modifier.fillMaxWidth()
             )
-            if (rateError) Text("Rate must be greater than zero", color = Color(0xFFC62828), fontSize = 11.sp)
+            if (rateError) Text("Rate must be greater than zero", color = AppColors.error, fontSize = 11.sp)
 
             // FIELD 6 — Discount
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

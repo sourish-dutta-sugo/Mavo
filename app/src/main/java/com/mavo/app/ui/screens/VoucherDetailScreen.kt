@@ -34,6 +34,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -44,6 +46,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -82,7 +86,7 @@ fun VoucherDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppColors.screenBg)
+                .graphPaperCanvas()
         ) {
             DetailHeader(title = "", onBack = onBack, showMenu = false, onDelete = {})
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -99,7 +103,8 @@ fun VoucherDetailScreen(
     val party = voucher.partyId?.let { pid -> parties.firstOrNull { it.id == pid } }
 
     Scaffold(
-        containerColor = AppColors.screenBg,
+        modifier = Modifier.graphPaperCanvas(),
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             DetailHeader(
                 title = voucherTypeLabel(voucher.type),
@@ -116,7 +121,7 @@ fun VoucherDetailScreen(
                         .fillMaxWidth()
                         .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     DetailAction(icon = Icons.Outlined.Edit, label = "Edit", onClick = onEdit, modifier = Modifier.weight(1f))
                     DetailAction(icon = Icons.Default.Share, label = "Share", onClick = onOpenInvoice, modifier = Modifier.weight(1f))
@@ -133,51 +138,61 @@ fun VoucherDetailScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "${voucher.voucherNo} \u00B7 ${fullDate(voucher.date)}",
-                fontSize = 14.sp,
-                color = AppColors.textSecondary
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = party?.name ?: "Cash / Bank Account",
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.textPrimary,
-                lineHeight = 36.sp
-            )
-            if (!party?.gstin.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "GSTIN ${party?.gstin} \u00B7 ${party?.state.orEmpty().ifBlank { party?.city.orEmpty() }}",
-                    fontSize = 14.sp,
-                    color = AppColors.textSecondary
-                )
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(16.dp),
+                tonalElevation = 1.dp
             ) {
-                Column {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "TOTAL",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 1.2.sp,
+                        text = "${voucher.voucherNo} \u00B7 ${fullDate(voucher.date)}",
+                        fontSize = 14.sp,
                         color = AppColors.textSecondary
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = Utils.formatIndianCurrency(voucher.netAmount),
-                        fontSize = 30.sp,
+                        text = party?.name ?: "Cash / Bank Account",
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = AppColors.textPrimary
+                        color = AppColors.textPrimary,
+                        lineHeight = 36.sp
                     )
+                    if (!party?.gstin.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "GSTIN ${party?.gstin} \u00B7 ${party?.state.orEmpty().ifBlank { party?.city.orEmpty() }}",
+                            fontSize = 14.sp,
+                            color = AppColors.textSecondary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Column {
+                            Text(
+                                text = "Total",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.sp,
+                                color = AppColors.textSecondary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = Utils.formatIndianCurrency(voucher.netAmount),
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.textPrimary
+                            )
+                        }
+                        StatusPill(status = voucher.status)
+                    }
                 }
-                StatusPill(status = voucher.status)
             }
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider(color = ScreenBorder)
@@ -189,7 +204,7 @@ fun VoucherDetailScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -269,7 +284,7 @@ private fun DetailHeader(
             .fillMaxWidth()
             .background(AppColors.cardBg)
             .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         CircleIconButton(
@@ -282,7 +297,7 @@ private fun DetailHeader(
             text = title,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 1.2.sp,
+            letterSpacing = 0.sp,
             color = AppColors.textSecondary,
             textAlign = TextAlign.Center
         )
@@ -315,7 +330,7 @@ private fun StatusPill(status: String) {
     Box(
         modifier = Modifier
             .border(1.dp, ScreenBorder, RoundedCornerShape(999.dp))
-            .padding(horizontal = 12.dp, vertical = 5.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
     ) {
         Text(
             text = if (status == "DRAFT") "Draft" else "Posted",
@@ -341,8 +356,8 @@ private fun DetailAction(
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .border(1.dp, ScreenBorder, RoundedCornerShape(14.dp)),
+                .clip(RoundedCornerShape(16.dp))
+                .border(1.dp, ScreenBorder, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -352,7 +367,7 @@ private fun DetailAction(
                 modifier = Modifier.size(20.dp)
             )
         }
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(text = label, fontSize = 12.sp, color = AppColors.textSecondary)
     }
 }
@@ -362,7 +377,7 @@ private fun DetailTotalRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp),
+            .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(text = label, fontSize = 14.sp, color = AppColors.textSecondary)

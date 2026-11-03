@@ -6,6 +6,7 @@ import com.mavo.app.data.Voucher
 import com.mavo.app.data.VoucherItem
 import com.mavo.app.services.InvoiceGenerator
 import com.mavo.app.services.documents.DocumentGenerator
+import com.mavo.app.services.documents.DocumentHtmlComponents
 import com.mavo.app.services.documents.DocumentHtmlComponents.escapeHtml
 import com.mavo.app.services.documents.DocumentHtmlComponents.formatMoney
 import com.mavo.app.services.documents.DocumentHtmlComponents.formatQty
@@ -105,7 +106,7 @@ class TaxInvoiceGenerator : DocumentGenerator {
         val transportHtml = buildTransportDetails(voucher, business)
         
         // Build declaration/terms
-        val declarationHtml = buildDeclaration(business.termsAndConditions)
+        val declarationHtml = DocumentHtmlComponents.buildTermsLines(business.termsAndConditions)
         
         // Signature html
         val signatureHtml = if (showSignature) {
@@ -115,8 +116,8 @@ class TaxInvoiceGenerator : DocumentGenerator {
         }
         
         // Amount in words
-        val amountInWords = amountInWords(voucher.netAmount)
-        val taxAmountInWords = amountInWords(totalTaxAmount)
+        val amountInWords = InvoiceGenerator.amountInWords(voucher.netAmount)
+        val taxAmountInWords = InvoiceGenerator.amountInWords(totalTaxAmount)
         
         return """
         <!DOCTYPE html>
@@ -125,31 +126,12 @@ class TaxInvoiceGenerator : DocumentGenerator {
           <meta charset='UTF-8'/>
           <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
           <style>
-            * { margin:0; padding:0; box-sizing:border-box; }
-            body { font-family:Arial,Helvetica,sans-serif; font-size:11px; color:#111; background:#fff; }
-            @page { 
-              size: A4 portrait; 
-              margin: 10mm 12mm;
-            }
-            .page { width:100%; max-width:794px; margin:0 auto; padding:14px 18px; background:#fff; }
+            ${DocumentHtmlComponents.buildBaseStyles()}
             table { width:100%; border-collapse:collapse; table-layout:fixed; }
             td, th { border:1px solid #000; padding:5px 6px; vertical-align:top; word-wrap:break-word; overflow-wrap:break-word; }
             .title { text-align:center; font-size:16px; font-weight:700; letter-spacing:0.5px; padding:4px 0 12px 0; }
-            .center { text-align:center; }
-            .right { text-align:right; }
-            .bold { font-weight:700; }
             .num { white-space:nowrap; font-size:10px; }
-            .small-label { font-size:9px; color:#666; margin-bottom:4px; }
-            .meta-value { font-size:11px; font-weight:700; margin-top:2px; }
             .meta-subtext { font-size:9px; color:#444; margin-top:3px; line-height:1.35; }
-            .company-name { font-size:14px; font-weight:700; color:#000; display:block; margin-bottom:4px; }
-            .buyer-name { font-size:12px; font-weight:700; margin-bottom:3px; }
-            .section-body { line-height:1.45; font-size:11px; }
-            .seller-head { font-size:9px; color:#666; margin-bottom:6px; }
-            .seller-grid { width:100%; border-collapse:collapse; table-layout:fixed; }
-            .seller-grid td { border:none; padding:0; vertical-align:top; }
-            .seller-logo { width:86px; padding-right:8px; }
-            .seller-logo img { max-width:80px; max-height:80px; object-fit:contain; display:block; }
             .items-header th { background:#eef2fa; font-size:10px; font-weight:700; text-align:center; }
             .amount-words .value { display:block; font-size:11px; font-weight:700; margin-top:4px; line-height:1.45; }
             .snapshot-table td, .gst-table td, .gst-table th, .meta-table td, .meta-table th { font-size:10px; line-height:1.25; }
@@ -164,15 +146,6 @@ class TaxInvoiceGenerator : DocumentGenerator {
             .signatory .for-line { font-size:11px; font-weight:700; margin-bottom:22px; }
             .summary-wrap { padding:0; }
             .summary-wrap > table { width:100%; border-collapse:collapse; table-layout:fixed; }
-            .page-break { page-break-before:always; }
-            .no-break-inside { page-break-inside:avoid; }
-            .continuation-header { border-bottom:1px solid #000; padding:4px 0; margin-bottom:8px; font-size:10px; }
-            .page-number { text-align:center; font-size:9px; color:#666; margin-top:8px; }
-            @media print { 
-              body { -webkit-print-color-adjust:exact; }
-              .page-break { page-break-before:always; }
-              .no-break-inside { page-break-inside:avoid; }
-            }
           </style>
         </head>
         <body>
@@ -424,44 +397,6 @@ class TaxInvoiceGenerator : DocumentGenerator {
             </table>
             """.trimIndent()
             else -> "<div style='height:100%;min-height:40px;'></div>"
-        }
-    }
-    
-    private fun buildDeclaration(rawTerms: String): String {
-        return rawTerms.lines()
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .mapIndexed { index, line ->
-                val prefix = if (line.first().isDigit()) "" else "${index + 1}. "
-                "<span class='terms-line'>$prefix${escapeHtml(line)}</span>"
-            }
-            .joinToString("")
-    }
-    
-    private fun amountInWords(amount: Double): String {
-        val safeAmount = amount.coerceAtLeast(0.0)
-        val rupees = safeAmount.toLong()
-        val paise = ((safeAmount - rupees) * 100).toInt().coerceIn(0, 99)
-        var result = "INR ${numToWords(rupees).trim().ifBlank { "Zero" }}"
-        if (paise > 0) {
-            result += " and ${numToWords(paise.toLong()).trim()} Paise"
-        }
-        return "$result Only"
-    }
-    
-    private fun numToWords(n: Long): String {
-        if (n == 0L) return ""
-        val ones = arrayOf("", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
-            "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen")
-        val tens = arrayOf("", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety")
-        
-        return when {
-            n < 20 -> ones[n.toInt()] + " "
-            n < 100 -> tens[(n / 10).toInt()] + " " + numToWords(n % 10)
-            n < 1000 -> ones[(n / 100).toInt()] + " Hundred " + numToWords(n % 100)
-            n < 100000 -> numToWords(n / 1000) + "Thousand " + numToWords(n % 1000)
-            n < 10000000 -> numToWords(n / 100000) + "Lakh " + numToWords(n % 100000)
-            else -> numToWords(n / 10000000) + "Crore " + numToWords(n % 10000000)
         }
     }
     

@@ -31,6 +31,7 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -40,12 +41,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.R
 import com.mavo.app.data.Utils
+import com.mavo.app.ui.AppViewModel
 import com.mavo.app.ui.components.CircleIconButton
 import com.mavo.app.ui.components.StepProgress
 import com.mavo.app.ui.components.WizardTitle
 import com.mavo.app.ui.components.ZbField
 import com.mavo.app.ui.theme.AppColors
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 
@@ -54,6 +57,78 @@ data class PinLookupResult(
     val state: String,
     val stateCode: String
 )
+
+/**
+ * Debounced PIN auto-fill: runs [fetchPinLookup] once `pin` is 6 digits.
+ * Callbacks: [onStart]/[onFinish] wrap the fetch (for loading flags),
+ * [onResolved] on success, [onFailed] on lookup miss, [onInvalid] for
+ * non-6-digit input (also use to clear stale flags/messages).
+ */
+@Composable
+fun PinAutoFillEffect(
+    pin: String,
+    debounceMs: Long = 300L,
+    onResolved: (PinLookupResult) -> Unit,
+    onFailed: () -> Unit = {},
+    onInvalid: () -> Unit = {},
+    onStart: () -> Unit = {},
+    onFinish: () -> Unit = {}
+) {
+    LaunchedEffect(pin) {
+        if (pin.length == 6 && pin.all(Char::isDigit)) {
+            delay(debounceMs)
+            onStart()
+            val result = try {
+                fetchPinLookup(pin)
+            } finally {
+                onFinish()
+            }
+            if (result != null) onResolved(result) else onFailed()
+        } else {
+            onInvalid()
+        }
+    }
+}
+
+/**
+ * Normalize an IFSC code: uppercase, strip whitespace.
+ */
+fun normalizeIfsc(input: String): String =
+    input.uppercase().replace("\\s".toRegex(), "")
+
+fun ifscVerifiedMessage(bankName: String, branchName: String): String = buildString {
+    append("Bank verified: ")
+    append(bankName)
+    if (branchName.isNotBlank()) {
+        append(", ")
+        append(branchName)
+    }
+}
+
+/**
+ * Auto-verify an 11-character IFSC via [AppViewModel.fetchIfscDetails].
+ */
+@Composable
+fun IfscVerifyEffect(
+    viewModel: AppViewModel,
+    ifsc: String,
+    onResolved: (bankName: String, branchName: String, message: String) -> Unit,
+    onStart: () -> Unit = {},
+    onFinish: () -> Unit = {}
+) {
+    LaunchedEffect(ifsc) {
+        if (ifsc.length == 11) {
+            onStart()
+            viewModel.fetchIfscDetails(ifsc) { bankName, branchName ->
+                onFinish()
+                if (!bankName.isNullOrBlank()) {
+                    val branch = branchName.orEmpty()
+                    onResolved(bankName, branch, ifscVerifiedMessage(bankName, branch))
+                }
+            }
+        }
+    }
+}
 
 suspend fun fetchPinLookup(pinCode: String): PinLookupResult? = withContext(Dispatchers.IO) {
     runCatching {
@@ -158,7 +233,7 @@ fun WizardScaffold(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (onBack != null) {
@@ -187,7 +262,7 @@ fun WizardScaffold(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(modifier = Modifier.height(4.dp))
             if (stepProgress != null) {
@@ -204,7 +279,7 @@ fun WizardScaffold(
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 16.dp, top = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (hint != null) {
                 Text(

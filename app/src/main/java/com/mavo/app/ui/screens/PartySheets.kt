@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.mavo.app.data.filterDecimalInput
 import com.mavo.app.data.Party
+import com.mavo.app.data.Utils
 import com.mavo.app.ui.theme.AppColors
 import com.mavo.app.ui.theme.GstinValidationFeedback
 import com.mavo.app.ui.theme.parseGstinInput
@@ -76,50 +76,40 @@ fun CreatePartyInlineSheet(
     var pinLookupSuccess by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    val stateGstCodes = mapOf(
-        "Jammu and Kashmir" to "01", "Himachal Pradesh" to "02", "Punjab" to "03",
-        "Chandigarh" to "04", "Uttarakhand" to "05", "Haryana" to "06", "Delhi" to "07",
-        "Rajasthan" to "08", "Uttar Pradesh" to "09", "Bihar" to "10", "Sikkim" to "11",
-        "Arunachal Pradesh" to "12", "Nagaland" to "13", "Manipur" to "14", "Mizoram" to "15",
-        "Tripura" to "16", "Meghalaya" to "17", "Assam" to "18", "West Bengal" to "19",
-        "Jharkhand" to "20", "Odisha" to "21", "Chhattisgarh" to "22", "Madhya Pradesh" to "23",
-        "Gujarat" to "24", "Maharashtra" to "27", "Karnataka" to "29", "Goa" to "30",
-        "Kerala" to "32", "Tamil Nadu" to "33", "Telangana" to "36", "Andhra Pradesh" to "37"
-    )
+    val stateGstCodes = Utils.STATE_CODE_BY_NAME
 
     val fieldColors = mavoInputColors()
 
-    LaunchedEffect(pin) {
-        if (pin.length == 6 && pin.all { it.isDigit() }) {
-            delay(300)
-            pinLoading = true
-            val result = fetchPinLookup(pin)
-            pinLoading = false
-            if (result != null) {
-                city = result.city
-                state = result.state
-                stateCode = result.stateCode.ifBlank { stateGstCodes[result.state] ?: stateCode }
-                pinLookupMessage = "City: ${result.city}, ${result.state}"
-                pinLookupSuccess = true
-            } else {
-                pinLookupMessage = "City not found — enter manually"
-                pinLookupSuccess = false
-            }
-        } else {
+    PinAutoFillEffect(
+        pin = pin,
+        onInvalid = {
             pinLoading = false
             pinLookupMessage = ""
             pinLookupSuccess = false
+        },
+        onStart = { pinLoading = true },
+        onResolved = { result ->
+            city = result.city
+            state = result.state
+            stateCode = result.stateCode.ifBlank { Utils.STATE_CODE_BY_NAME[result.state] ?: stateCode }
+            pinLookupMessage = "City: ${result.city}, ${result.state}"
+            pinLookupSuccess = true
+        },
+        onFailed = {
+            pinLookupMessage = "City not found — enter manually"
+            pinLookupSuccess = false
         }
-    }
+    )
 
     ModalBottomSheet(
         modifier = modifier,
         onDismissRequest = onDismiss,
-        containerColor = AppColors.cardBg
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .graphPaperCanvas()
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .imePadding()
@@ -162,7 +152,10 @@ fun CreatePartyInlineSheet(
                     )
                 }
             }
-            Spacer(Modifier.height(8.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
 
             Text("Phone (optional)", color = AppColors.labelText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
             OutlinedTextField(
@@ -184,7 +177,10 @@ fun CreatePartyInlineSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = fieldColors
             )
-            Spacer(Modifier.height(8.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
 
             Text("GSTIN (optional)", color = AppColors.labelText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
             OutlinedTextField(
@@ -232,7 +228,10 @@ fun CreatePartyInlineSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = fieldColors
             )
-            Spacer(Modifier.height(8.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
 
             Text("PIN Code (optional)", color = AppColors.labelText, fontSize = 12.sp, fontWeight = FontWeight.Medium)
             OutlinedTextField(
@@ -249,7 +248,7 @@ fun CreatePartyInlineSheet(
             if (pinLookupMessage.isNotBlank()) {
                 Text(
                     text = pinLookupMessage,
-                    color = if (pinLookupSuccess) Color(0xFF2E7D32) else Color.Gray,
+                    color = if (pinLookupSuccess) AppColors.success else AppColors.textSecondary,
                     fontSize = 11.sp
                 )
             }
@@ -396,7 +395,7 @@ fun CreatePartyInlineSheet(
                         )
                     )
                 },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary)
             ) {
                 Text("Save & Select", color = AppColors.textOnPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
@@ -424,7 +423,7 @@ fun BusinessImageUploadSection(
     ) { uri -> uri?.let { onImageSelected(it) } }
 
     Card(
-        modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 8.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
         border = BorderStroke(1.dp, AppColors.border),
         shape = RoundedCornerShape(12.dp)
@@ -440,7 +439,7 @@ fun BusinessImageUploadSection(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(90.dp, 70.dp)
+                        .size(88.dp, 72.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .border(1.dp, AppColors.border, RoundedCornerShape(8.dp))
                         .background(AppColors.inputBg)
@@ -473,18 +472,18 @@ fun BusinessImageUploadSection(
                         border = BorderStroke(1.dp, AppColors.primary)
                     ) {
                         Icon(Icons.Outlined.Image, null, tint = AppColors.primary, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(8.dp))
                         Text("Gallery / Image", color = AppColors.primary, fontSize = 12.sp)
                     }
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(8.dp))
                     OutlinedButton(
                         onClick = { docLauncher.launch(arrayOf("image/*", "application/pdf")) },
                         modifier = Modifier.fillMaxWidth(),
                         border = BorderStroke(1.dp, AppColors.border)
                     ) {
-                        Icon(Icons.Outlined.PictureAsPdf, null, tint = Color(0xFF555555), modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("PDF / Document", color = Color(0xFF555555), fontSize = 12.sp)
+                        Icon(Icons.Outlined.PictureAsPdf, null, tint = AppColors.textSecondary, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("PDF / Document", color = AppColors.textSecondary, fontSize = 12.sp)
                     }
                 }
             }

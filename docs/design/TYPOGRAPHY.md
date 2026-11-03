@@ -1,6 +1,6 @@
 # TYPOGRAPHY.md — Mavo
 
-> Last updated: 2026-10-24  
+> Last updated: 2026-11-02  
 > Source of truth: `app/src/main/java/com/mavo/app/ui/theme/Type.kt`
 
 ## Typography System
@@ -8,7 +8,7 @@
 Mavo enforces a dedicated, self-contained typography hierarchy independent of device settings:
 - **Headers & Headlines (`display*`, `headline*`):** `Playwrite Polska` (`PlaywritePolskaFontFamily`, bundled in `res/font/playwrite_polska.ttf`).
 - **Body, Titles, and Labels (`title*`, `body*`, `label*`):** `DynaPuff` (`DynaPuffFontFamily`, bundled in `res/font/dynapuff.ttf`).
-- **Numerics & Financial Figures:** `FontFamily.Default` / `FontFamily.Monospace` via `NumericFontFamily` to ensure clean tabular alignment and decimal legibility.
+- **Numerics & Financial Figures:** `Tomorrow` (`NumericFontFamily`, bundled weights Regular→Black in `res/font/tomorrow_*.ttf`) to sit visually with the other two families while keeping digit shapes clean and legible.
 - **Device Override Protection:** `MavoTheme` enforces `LocalDensity` with fixed `fontScale = 1.0f`, guaranteeing external OS display size or font settings do not distort the visual hierarchy or break retail layouts.
 
 ---
@@ -35,11 +35,38 @@ Mavo enforces a dedicated, self-contained typography hierarchy independent of de
 
 ---
 
-## Numeric Formatting & Monospace Rules
+## Numeric Formatting Rules
 
 - **Financial amounts / Currency figures:** Use consistent decimal alignment (`₹XX,XXX.XX`).
 - **HSN & GSTIN numbers:** Display in uppercase with standard letter spacing to prevent misreading characters (`0` vs `O`, `1` vs `I`).
 - **Tabular figures:** In reports (Trial Balance, P&L, Day Book), right-align numeric amounts and use `titleMedium` or `bodyMedium`.
+
+---
+
+## Screen-Level Text Rules
+
+Screens set `fontSize` directly instead of theme styles. Those literals must
+stay on this ladder — anything off it gets normalized:
+
+| Step | Where it is used |
+|------|------------------|
+| 10 / 11 sp | Captions, micro-labels, table meta |
+| 12 / 13 sp | List rows, helper text, badges |
+| 14 / 15 sp | Body, inputs, secondary list text |
+| 16 / 17 sp | Emphasised body, row titles |
+| 18 / 20 sp | Screen sub-headings |
+| 22 / 24 sp | Screen titles, hero labels |
+| 28 / 32 sp | Dashboard figures, page headers |
+
+Rules:
+
+- **Weights:** Normal → Bold only. `Black` / `ExtraBold` are flattened to
+  `Bold`; hierarchy comes from size and color, not heavier weight.
+- **No tracked uppercase labels.** Section labels and field labels are sentence
+  case with `letterSpacing = 0`. `.uppercase()` remains only for input
+  normalization (PAN, GSTIN, IFSC, HSN).
+- **Negative tracking** only on display text (≥ 24 sp), at most -0.5 sp.
+- **Figures:** right-aligned / `textAlign.End` in numeric columns.
 
 ---
 

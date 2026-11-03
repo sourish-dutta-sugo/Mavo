@@ -212,462 +212,14 @@ fun SettingsScreen(
             )
             return
         }
-        if (false && activeSubMode == "BUSINESS") {
-            // Business Profile Form Editor
-            val profile = origProfile ?: BusinessProfile(
-                businessName = "", ownerName = "", address = "", city = "", state = "West Bengal", stateCode = "19",
-                pin = "", phone = "", email = "", gstin = "", pan = "", bankName = "", accountNo = "", ifsc = "",
-                logoPath = null, signaturePath = null
-            )
-
-            var bName by remember { mutableStateOf(profile.businessName) }
-            var owner by remember { mutableStateOf(profile.ownerName) }
-            var address by remember { mutableStateOf(profile.address) }
-            var city by remember { mutableStateOf(profile.city) }
-            var pinCode by remember { mutableStateOf(profile.pin) }
-            var selectedStateInfo by remember { mutableStateOf(Utils.INDIAN_STATES.find { it.first == profile.state } ?: Utils.INDIAN_STATES[18]) }
-            var phone by remember { mutableStateOf(profile.phone) }
-            var email by remember { mutableStateOf(profile.email) }
-            var gstin by remember { mutableStateOf(profile.gstin) }
-            var gstinValid by remember { mutableStateOf<Boolean?>(null) }
-            var pan by remember { mutableStateOf(profile.pan) }
-            var bankName by remember { mutableStateOf(profile.bankName) }
-            var accountNo by remember { mutableStateOf(profile.accountNo) }
-            var ifsc by remember { mutableStateOf(profile.ifsc) }
-            var bankBranch by remember { mutableStateOf(profile.branchName) }
-            var isIfscLoading by remember { mutableStateOf(false) }
-            var ifscVerifiedMessage by remember { mutableStateOf("") }
-            var isPinLoading by remember { mutableStateOf(false) }
-            var pinLookupMessage by remember { mutableStateOf("") }
-            var pinLookupSuccess by remember { mutableStateOf(false) }
-            var stateDropdownExpanded by remember { mutableStateOf(false) }
-            var logoPath by remember { mutableStateOf(profile.logoPath) }
-            var uploadedSignaturePath by remember { mutableStateOf(profile.signaturePath) }
-            var termsAndConditions by remember {
-                mutableStateOf(profile.termsAndConditions.ifBlank { DEFAULT_TERMS_AND_CONDITIONS })
-            }
-            val profileScope = rememberCoroutineScope()
-            val formScroll = rememberScrollState()
-
-            LaunchedEffect(pinCode) {
-                if (pinCode.length == 6 && pinCode.all { it.isDigit() }) {
-                    delay(300)
-                    isPinLoading = true
-                    val result = fetchPinLookup(pinCode)
-                    isPinLoading = false
-                    if (result != null) {
-                        city = result.city
-                        pinLookupMessage = "City: ${result.city}, ${result.state}"
-                        pinLookupSuccess = true
-                        Utils.INDIAN_STATES.find {
-                            it.second == result.stateCode || it.first.equals(result.state, ignoreCase = true)
-                        }?.let { selectedStateInfo = it }
-                    } else {
-                        pinLookupMessage = "City not found — enter manually"
-                        pinLookupSuccess = false
-                    }
-                } else {
-                    isPinLoading = false
-                    pinLookupMessage = ""
-                    pinLookupSuccess = false
-                }
-            }
-
-            val signatureUploadLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-                contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
-            ) { uri ->
-                if (uri != null) {
-                    profileScope.launch {
-                        val ext = when {
-                            context.contentResolver.getType(uri)?.contains("pdf") == true -> ".pdf"
-                            else -> ".jpg"
-                        }
-                        val path = withContext(kotlinx.coroutines.Dispatchers.IO) {
-                            com.mavo.app.utils.copyUriToInternalStorage(
-                                context, uri,
-                                "business_signature_${System.currentTimeMillis()}$ext"
-                            )
-                        }
-                        path?.let {
-                            uploadedSignaturePath = it
-                            android.widget.Toast.makeText(context, "Signature uploaded!", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            }
-
-        Scaffold(
-            containerColor = AppColors.screenBg,
-            topBar = {
-                TopAppBar(
-                    title = { Text("Business Profile", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
-                    navigationIcon = {
-                        if (!isDesktop) {
-                            IconButton(onClick = { activeSubMode = "MENU" }) {
-                                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AppColors.textPrimary)
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
-                )
-            }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(AppColors.screenBg)
-                    .verticalScroll(formScroll)
-                    .imePadding()
-                    .padding(innerPadding)
-                    .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                RetailTextField(
-                    value = bName,
-                    onValueChange = { bName = it },
-                    label = "Business Name *",
-                    modifier = Modifier.fillMaxWidth().testTag("edit_bname")
-                )
-
-                RetailTextField(
-                    value = owner,
-                    onValueChange = { owner = it },
-                    label = "Owner / Proprietor *"
-                )
-
-                RetailTextField(
-                    value = address,
-                    onValueChange = { address = it },
-                    label = "Business Address *"
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    RetailTextField(
-                        value = pinCode,
-                        onValueChange = { pinCode = it.filter(Char::isDigit).take(6) },
-                        label = "PIN Code *",
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        trailingIcon = {
-                            if (isPinLoading) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                            }
-                        }
-                    )
-
-                    RetailTextField(
-                        value = city,
-                        onValueChange = { city = it },
-                        label = "City *",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                if (pinLookupMessage.isNotBlank()) {
-                    Text(
-                        text = pinLookupMessage,
-                        color = if (pinLookupSuccess) Color(0xFF2E7D32) else Color.Gray,
-                        fontSize = 11.sp
-                    )
-                }
-
-                // State Selector Dropdown
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    RetailTextField(
-                        value = "${selectedStateInfo.first} (${selectedStateInfo.second})",
-                        onValueChange = {},
-                        label = "State Code Dropdown *",
-                        readOnly = true,
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = null,
-                                tint = AppColors.textSecondary,
-                                modifier = Modifier.clickable { stateDropdownExpanded = true }
-                            )
-                        }
-                    )
-                    DropdownMenu(
-                        expanded = stateDropdownExpanded,
-                        onDismissRequest = { stateDropdownExpanded = false },
-                        modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .height(240.dp)
-                            .background(AppColors.cardBg)
-                    ) {
-                        Utils.INDIAN_STATES.forEach { item ->
-                            DropdownMenuItem(
-                                text = { Text(item.first, color = AppColors.textPrimary) },
-                                onClick = {
-                                    selectedStateInfo = item
-                                    stateDropdownExpanded = false
-                                },
-                                colors = MenuDefaults.itemColors(textColor = AppColors.textPrimary)
-                            )
-                        }
-                    }
-                }
-
-                RetailTextField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    label = "Phone Number *",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-                )
-
-                RetailTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = "Email Address *",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                )
-
-                Text(
-                    "GSTIN Number (Optional)",
-                    color = AppColors.labelText,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                OutlinedTextField(
-                    value = gstin,
-                    onValueChange = { value ->
-                        val result = parseGstinInput(
-                            value, pan, selectedStateInfo.first, selectedStateInfo.second
-                        )
-                        gstin = result.gstin
-                        gstinValid = result.valid
-                        if (result.valid == true) {
-                            pan = result.pan
-                            result.stateName?.let { name ->
-                                Utils.INDIAN_STATES.find { it.first == name }
-                                    ?.let { selectedStateInfo = it }
-                            }
-                        }
-                    },
-                    placeholder = { Text("15-digit GSTIN", color = AppColors.inputPlaceholder) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = com.mavo.app.ui.theme.mavoInputColors(),
-                    singleLine = true
-                )
-                GstinValidationFeedback(
-                    gstin, gstinValid, pan, selectedStateInfo.first, selectedStateInfo.second
-                )
-
-                RetailTextField(
-                    value = pan,
-                    onValueChange = { pan = it.uppercase() },
-                    label = "PAN Card Number (Optional)"
-                )
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                Text("BANK DETAILS SETUP", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
-
-                RetailTextField(
-                    value = accountNo,
-                    onValueChange = { accountNo = it.filter(Char::isDigit) },
-                    label = "Account Number *",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
-
-                RetailTextField(
-                    value = ifsc,
-                    onValueChange = { input ->
-                        val uppercaseIn = input.uppercase().replace("\\s".toRegex(), "")
-                        if (uppercaseIn.length <= 11) {
-                            ifsc = uppercaseIn
-                            ifscVerifiedMessage = ""
-                            if (uppercaseIn.length == 11) {
-                                isIfscLoading = true
-                                viewModel.fetchIfscDetails(uppercaseIn) { resolvedBank, resolvedBranch ->
-                                    isIfscLoading = false
-                                    if (!resolvedBank.isNullOrBlank()) {
-                                        bankName = resolvedBank
-                                        bankBranch = resolvedBranch.orEmpty()
-                                        ifscVerifiedMessage = buildString {
-                                            append("Bank verified: ")
-                                            append(resolvedBank)
-                                            if (!resolvedBranch.isNullOrBlank()) {
-                                                append(", ")
-                                                append(resolvedBranch)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    label = "IFSC Code *",
-                    trailingIcon = {
-                        if (isIfscLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        }
-                    }
-                )
-
-                if (ifscVerifiedMessage.isNotBlank()) {
-                    Text(ifscVerifiedMessage, color = Color(0xFF2E7D32), fontSize = 12.sp)
-                }
-
-                RetailTextField(
-                    value = bankName,
-                    onValueChange = { bankName = it },
-                    label = "Bank Name *"
-                )
-
-                RetailTextField(
-                    value = bankBranch,
-                    onValueChange = { bankBranch = it },
-                    label = "Bank Branch"
-                )
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                Text("BRANDING & INVOICE IMAGES", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
-
-                BusinessImageUploadSection(
-                    title = "Business Logo",
-                    subtitle = "Appears on invoice header. PNG or JPG recommended.",
-                    currentPath = logoPath,
-                    onImageSelected = { uri ->
-                        profileScope.launch {
-                            val path = withContext(Dispatchers.IO) {
-                                copyUriToInternalStorage(
-                                    context, uri,
-                                    "business_logo_${System.currentTimeMillis()}.jpg"
-                                )
-                            }
-                            path?.let { logoPath = it }
-                        }
-                    }
-                )
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    border = BorderStroke(1.dp, AppColors.border),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            "Authorized Signature",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            color = com.mavo.app.ui.theme.TextDark
-                        )
-                        Text(
-                            "Upload a photo of your signature",
-                            fontSize = 11.sp,
-                            color = AppColors.textSecondary,
-                            modifier = Modifier.padding(top = 2.dp, bottom = 12.dp)
-                        )
-                        val sigFile = uploadedSignaturePath?.let { java.io.File(it) }
-                        if (sigFile != null && sigFile.exists() && !sigFile.extension.equals("pdf", ignoreCase = true)) {
-                            coil.compose.AsyncImage(
-                                model = sigFile,
-                                contentDescription = "Signature preview",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(80.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .border(1.dp, AppColors.border, RoundedCornerShape(8.dp)),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Fit
-                            )
-                            Spacer(Modifier.height(10.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(
-                                    onClick = {
-                                        signatureUploadLauncher.launch(arrayOf("image/*", "application/pdf"))
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Change", color = com.mavo.app.ui.theme.TextDark, fontSize = 12.sp)
-                                }
-                                OutlinedButton(
-                                    onClick = { uploadedSignaturePath = null },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Remove", color = AppColors.error, fontSize = 12.sp)
-                                }
-                            }
-                        } else if (sigFile != null && sigFile.exists()) {
-                            Text("PDF signature uploaded: ${sigFile.name}", color = com.mavo.app.ui.theme.TextDark, fontSize = 12.sp)
-                            Spacer(Modifier.height(8.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = {
-                                    signatureUploadLauncher.launch(arrayOf("image/*", "application/pdf"))
-                                }, modifier = Modifier.weight(1f)) {
-                                    Text("Change", color = com.mavo.app.ui.theme.TextDark, fontSize = 12.sp)
-                                }
-                                OutlinedButton(onClick = { uploadedSignaturePath = null }, modifier = Modifier.weight(1f)) {
-                                    Text("Remove", color = AppColors.error, fontSize = 12.sp)
-                                }
-                            }
-                        } else {
-                            Button(
-                                onClick = {
-                                    signatureUploadLauncher.launch(arrayOf("image/*", "application/pdf"))
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary)
-                            ) {
-                                Text("Upload Signature", color = AppColors.textOnPrimary)
-                            }
-                        }
-                    }
-                }
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                Text("INVOICE SETTINGS", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
-                RetailTextField(
-                    value = termsAndConditions,
-                    onValueChange = { termsAndConditions = it },
-                    label = "Terms & Conditions / Declaration",
-                    placeholder = "Enter your default terms and conditions that will appear on every invoice",
-                    singleLine = false,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {
-                        if (bName.isBlank() || owner.isBlank() || address.isBlank() || city.isBlank() || phone.isBlank() || bankName.isBlank() || accountNo.isBlank() || ifsc.isBlank()) {
-                            Toast.makeText(context, "Please fill in all required fields accurately", Toast.LENGTH_SHORT).show()
-                        } else if (gstin.isNotBlank() && gstin.length != 15) {
-                            Toast.makeText(context, "GSTIN must be exactly 15 characters long if provided", Toast.LENGTH_SHORT).show()
-                        } else {
-                            val nextProfile = profile.copy(
-                                businessName = bName, ownerName = owner, address = address, city = city,
-                                pin = pinCode,
-                                state = selectedStateInfo.first, stateCode = selectedStateInfo.second,
-                                phone = phone, email = email, gstin = gstin, pan = pan,
-                                bankName = bankName, accountNo = accountNo, ifsc = ifsc, branchName = bankBranch,
-                                logoPath = logoPath,
-                                signaturePath = uploadedSignaturePath,
-                                termsAndConditions = termsAndConditions.ifBlank { DEFAULT_TERMS_AND_CONDITIONS }
-                            )
-                            viewModel.updateProfile(nextProfile) {
-                                Toast.makeText(context, "Business Profile successfully updated!", Toast.LENGTH_SHORT).show()
-                                activeSubMode = "MENU"
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().height(48.dp).testTag("save_business_profile"),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                    Text("Save Alterations Settings", fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    } else if (activeSubMode == "LOCK") {
+        if (activeSubMode == "LOCK") {
         // App security control
         val sp = context.getSharedPreferences("mavo_pref", Context.MODE_PRIVATE)
         var pinEnabled by remember { mutableStateOf(sp.getBoolean("pin_enabled", false)) }
         var enteredPin by remember { mutableStateOf(sp.getString("lock_pin", "") ?: "") }
 
         Scaffold(
+            containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = { Text("App Pin Protection Lock", fontWeight = FontWeight.Bold) },
@@ -685,7 +237,7 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(AppColors.screenBg)
+                    .background(Color.Transparent)
                     .padding(innerPadding)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -725,7 +277,7 @@ fun SettingsScreen(
                     Text("Current stored code will be prompted next time you trigger the app.", fontSize = 11.sp, color = Color.Gray)
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Button(
                     onClick = {
                         activeSubMode = "MENU"
@@ -742,6 +294,7 @@ fun SettingsScreen(
     } else if (activeSubMode == "ABOUT") {
         // About & compliance view
         Scaffold(
+            containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = { Text("About Mavo Detail", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
@@ -803,7 +356,7 @@ fun SettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -969,7 +522,7 @@ fun SettingsScreen(
                             imageVector = Icons.Outlined.CalendarMonth,
                             contentDescription = null,
                             tint = AppColors.textSecondary,
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
@@ -984,7 +537,7 @@ fun SettingsScreen(
                     )
                     if (showSwitchEditor) {
                         Column(
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp)
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                         ) {
                             ZbField(
                                 value = fyStartYearText,
@@ -1091,6 +644,7 @@ fun SettingsScreen(
         Row(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.width(360.dp).fillMaxHeight()) {
                 Scaffold(
+                    containerColor = Color.Transparent,
                     topBar = {
                         TopAppBar(
                             title = { Text("Application Settings", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
@@ -1159,20 +713,20 @@ fun SettingsScreen(
                         Text(
                             text = "Version ${entry.version}",
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF111827)
+                            color = AppColors.textPrimary
                         )
                         entry.changes.forEach { change ->
                             Text(
                                 text = "• $change",
-                                color = Color(0xFF111827)
+                                color = AppColors.textSecondary
                             )
                         }
                     }
                 }
             },
-            containerColor = Color.White,
-            textContentColor = Color(0xFF111827),
-            titleContentColor = Color(0xFF111827)
+            containerColor = AppColors.cardBg,
+            textContentColor = AppColors.textPrimary,
+            titleContentColor = AppColors.textPrimary
         )
     }
 }
@@ -1194,15 +748,14 @@ fun SettingsMenuSection(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppColors.screenBg)
+            .background(Color.Transparent)
             .verticalScroll(scrollState)
             .imePadding()
             .statusBarsPadding()
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        // Big screen title + profile hero (mockup 15): no colored hero card,
-        // just an initials circle, business name and proprietor line.
+        // Keep the business identity on an opaque surface above the shared canvas.
         WizardTitle(
             text = "Settings",
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp)
@@ -1210,43 +763,54 @@ fun SettingsMenuSection(
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+            border = BorderStroke(1.dp, AppColors.border),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(AppColors.primary),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = profile?.businessName?.filter { it.isLetter() }?.take(2)?.uppercase(Locale.getDefault()) ?: "--",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.textOnPrimary
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = profile?.businessName?.ifBlank { "Business Profile" } ?: "Business Profile",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.textPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                val proprietor = profile?.ownerName.orEmpty()
-                if (proprietor.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(AppColors.primary),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = proprietor,
-                        fontSize = 15.sp,
-                        color = AppColors.textSecondary,
+                        text = profile?.businessName?.filter { it.isLetter() }?.take(2)?.uppercase(Locale.getDefault()) ?: "--",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppColors.textOnPrimary
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = profile?.businessName?.ifBlank { "Business Profile" } ?: "Business Profile",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppColors.textPrimary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    val proprietor = profile?.ownerName.orEmpty()
+                    if (proprietor.isNotBlank()) {
+                        Text(
+                            text = proprietor,
+                            fontSize = 15.sp,
+                            color = AppColors.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }
@@ -1259,7 +823,7 @@ fun SettingsMenuSection(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(AppColors.screenBg)
+                .background(Color.Transparent)
                 .padding(start = 20.dp, top = 4.dp, end = 20.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
@@ -1359,7 +923,7 @@ private fun SettingsGroup(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionLabel(text = label)
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         ZbCard(contentPadding = 0, content = content)
     }
 }
@@ -1375,8 +939,8 @@ private fun SettingsRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
@@ -1384,7 +948,7 @@ private fun SettingsRow(
                 imageVector = icon,
                 contentDescription = null,
                 tint = AppColors.textSecondary,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
         Column(
@@ -1449,7 +1013,7 @@ private fun DataManagementContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppColors.screenBg)
+            .background(Color.Transparent)
     ) {
         WizardHeader(stepLabel = "", onBack = onBack, onClose = onBack)
         Column(
@@ -1471,13 +1035,13 @@ private fun DataManagementContent(
             ZbCard {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
                             .size(52.dp)
-                            .clip(RoundedCornerShape(15.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(AppColors.primary),
                         contentAlignment = Alignment.Center
                     ) {
@@ -1616,7 +1180,7 @@ private fun AuditLogContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppColors.screenBg)
+            .background(Color.Transparent)
     ) {
         WizardHeader(stepLabel = "", onBack = onBack, onClose = onBack)
         Column(
@@ -1648,7 +1212,7 @@ private fun AuditLogContent(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(
@@ -1703,7 +1267,7 @@ fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
     }
 
     Scaffold(
-        containerColor = AppColors.screenBg,
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text("Customize", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
@@ -1719,7 +1283,7 @@ fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppColors.screenBg)
+                .background(Color.Transparent)
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
                 .padding(16.dp),
@@ -1739,7 +1303,7 @@ fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
                         "WALLET_STACK" to "Wallet Stack (Default)",
                         "SPOTLIGHT_CAROUSEL" to "Spotlight Carousel"
                     )
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         animationModes.forEach { (mode, label) ->
                             Row(
                                 modifier = Modifier
@@ -1747,7 +1311,7 @@ fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
                                     .border(
                                         1.dp,
                                         if (kpiAnimationMode == mode) AppColors.primary else AppColors.border,
-                                        RoundedCornerShape(10.dp)
+                                        RoundedCornerShape(12.dp)
                                     )
                                     .clickable {
                                         kpiAnimationMode = mode
@@ -1759,7 +1323,7 @@ fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
                             ) {
                                 Text(label, fontSize = 13.sp, color = AppColors.textPrimary, fontWeight = if (kpiAnimationMode == mode) FontWeight.Bold else FontWeight.Normal)
                                 if (kpiAnimationMode == mode) {
-                                    Icon(Icons.Default.Check, contentDescription = "Selected", tint = AppColors.primary, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Check, contentDescription = "Selected", tint = AppColors.primary, modifier = Modifier.size(20.dp))
                                 }
                             }
                         }
@@ -1816,7 +1380,7 @@ fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
                                 Toast.makeText(context, "Dashboard settings saved", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary, contentColor = AppColors.textOnPrimary)
                     ) {
                         Text("Save")
@@ -1833,13 +1397,11 @@ private fun ThemePickerRow(
     onThemeSelected: (String) -> Unit
 ) {
     val themeOptions = listOf(
-        Triple("ZERO", "Zero", Color(0xFF0A0A0A)),
-        Triple("SAFFRON", "Saffron", Color(0xFFFDF6EC)),
-        Triple("SLATE", "Slate", Color(0xFF22755F)),
-        Triple("LEDGER", "Ledger", Color(0xFF22A06B)),
-        Triple("INK", "Ink", Color(0xFF7C3AED)),
-        Triple("NIGHT", "Night", Color(0xFF18211F))
-    )
+        AppTheme.ZERO to "Zero",
+        AppTheme.SAFFRON to "Saffron",
+        AppTheme.SLATE to "Slate",
+        AppTheme.LEDGER to "Ledger"
+    ).map { (theme, label) -> Triple(theme.name, label, theme.accentPrimary) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1850,24 +1412,20 @@ private fun ThemePickerRow(
             val isSelected = selectedThemeName == name
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .weight(1f)
                     .premiumClickable { onThemeSelected(name) }
             ) {
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(21.dp))
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(20.dp))
                         .background(swatch)
                         .border(
-                            width = if (name == "SAFFRON") 2.dp else 1.dp,
-                            color = when {
-                                isSelected -> AppColors.primary
-                                name == "SAFFRON" -> Color(0xFF8D6E63)
-                                else -> AppColors.border
-                            },
-                            shape = RoundedCornerShape(21.dp)
+                            width = 1.dp,
+                            color = if (isSelected) AppColors.primary else AppColors.border,
+                            shape = RoundedCornerShape(20.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -1875,8 +1433,8 @@ private fun ThemePickerRow(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = label,
-                            tint = if (name == "SAFFRON") AppColors.textPrimary else Color.White,
-                            modifier = Modifier.size(18.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

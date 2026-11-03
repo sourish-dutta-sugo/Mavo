@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — Mavo
 
-> Last updated: 2026-09-29
+> Last updated: 2026-10-24
 
 ## Folder structure
 
@@ -55,7 +55,8 @@ app/src/main/java/com/mavo/app/
 ├── ui/
 │   ├── AdaptiveLayout.kt    # Window-size decisions and app-level size local
 │   ├── components/
-│   │   └── AdaptiveAppShell.kt # Material 3 bottom navigation and rail
+│   │   ├── AdaptiveAppShell.kt # Material 3 bottom navigation and rail
+│   │   └── GraphPaperBackground.kt # Shared light-theme canvas
 │   ├── AppViewModel.kt       # Main ViewModel (DB init, all state)
 │   ├── DashboardViewModel.kt # Dashboard-specific ViewModel
 │   ├── UiDataCache.kt        # Process-local cached UI snapshots and read states
@@ -89,6 +90,10 @@ Settings, and Reports use their existing wider layouts; billing uses a
 product/cart split pane. Catalog and register screens cap content width on
 wider windows. `ResponsivePaneLayout` owns billing-pane measurement and
 placement, while `BillingScreen` retains cart state and business actions.
+
+`MainActivity` draws `GraphPaperBackground` behind all routes. Light-theme
+screen backgrounds are transparent where they use theme background tokens;
+Material 3 cards and fields keep opaque surfaces.
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────┐

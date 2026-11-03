@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Check
@@ -30,6 +33,7 @@ import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,6 +44,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -153,6 +159,7 @@ private fun OnboardingPage(
         modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
+            .graphPaperCanvas()
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 24.dp)
@@ -162,10 +169,10 @@ private fun OnboardingPage(
             modifier = Modifier
 
                 .padding(bottom = 24.dp)
-                .size(130.dp)
-                .clip(RoundedCornerShape(34.dp))
+                .size(128.dp)
+                .clip(RoundedCornerShape(32.dp))
                 .background(AppColors.cardBg)
-                .border(1.dp, AppColors.border, RoundedCornerShape(34.dp)),
+                .border(1.dp, AppColors.border, RoundedCornerShape(32.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -175,21 +182,30 @@ private fun OnboardingPage(
                 modifier = Modifier.size(56.dp)
             )
         }
-        Spacer(modifier = Modifier.height(56.dp))
-        Text(
-            text = title,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = AppColors.textPrimary,
-            lineHeight = 38.sp
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = body,
-            fontSize = 17.sp,
-            color = AppColors.textSecondary,
-            lineHeight = 25.sp
-        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.textPrimary,
+                    lineHeight = 38.sp
+                )
+                Text(
+                    text = body,
+                    fontSize = 17.sp,
+                    color = AppColors.textSecondary,
+                    lineHeight = 25.sp
+                )
+            }
+        }
         Spacer(modifier = Modifier.weight(1f))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -215,6 +231,7 @@ private fun TermsPage(
         modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
+            .graphPaperCanvas()
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 24.dp)
@@ -222,10 +239,10 @@ private fun TermsPage(
         Spacer(modifier = Modifier.height(48.dp))
         Box(
             modifier = Modifier
-                .size(130.dp)
-                .clip(RoundedCornerShape(34.dp))
+                .size(128.dp)
+                .clip(RoundedCornerShape(32.dp))
                 .background(AppColors.cardBg)
-                .border(1.dp, AppColors.border, RoundedCornerShape(34.dp)),
+                .border(1.dp, AppColors.border, RoundedCornerShape(32.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -236,21 +253,30 @@ private fun TermsPage(
             )
         }
         Spacer(modifier = Modifier.height(44.dp))
-        Text(
-            text = "A quick note before you begin.",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = AppColors.textPrimary,
-            lineHeight = 38.sp
-        )
-        Spacer(modifier = Modifier.height(14.dp))
-        Text(
-            text = "Please review our terms and privacy practices. Your data stays on your device unless you choose to back it up.",
-            fontSize = 17.sp,
-            color = AppColors.textSecondary,
-            lineHeight = 25.sp
-        )
-        Spacer(modifier = Modifier.height(24.dp))
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "A quick note before you begin.",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.textPrimary,
+                    lineHeight = 38.sp
+                )
+                Text(
+                    text = "Please review our terms and privacy practices. Your data stays on your device unless you choose to back it up.",
+                    fontSize = 17.sp,
+                    color = AppColors.textSecondary,
+                    lineHeight = 25.sp
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
         DocumentRow(
             label = "Read Terms & Conditions",
             onClick = { showDocumentText = !showDocumentText }
@@ -260,9 +286,11 @@ private fun TermsPage(
             label = "Read Privacy Policy",
             onClick = { showDocumentText = !showDocumentText }
         )
-        if (showDocumentText) {
-            Spacer(modifier = Modifier.height(12.dp))
-            TermsBody()
+        AnimatedVisibility(visible = showDocumentText) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(modifier = Modifier.height(4.dp))
+                TermsBody()
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(
@@ -347,7 +375,7 @@ private fun OnboardingDots(
             if (index == activeIndex) {
                 Box(
                     modifier = Modifier
-                        .width(22.dp)
+                        .width(24.dp)
                         .height(8.dp)
                         .background(AppColors.primary, RoundedCornerShape(4.dp))
                 )
@@ -375,7 +403,7 @@ private fun PillButton(
             .clip(RoundedCornerShape(28.dp))
             .background(if (enabled) AppColors.primary else AppColors.primary.copy(alpha = 0.35f))
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 26.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -390,7 +418,7 @@ private fun PillButton(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
                 tint = AppColors.textOnPrimary,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
     }
@@ -454,6 +482,7 @@ private fun PermissionStep(
         modifier = modifier
             .fillMaxSize()
             .background(AppColors.screenBg)
+            .graphPaperCanvas()
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 24.dp)
@@ -461,7 +490,7 @@ private fun PermissionStep(
         Spacer(modifier = Modifier.height(72.dp))
         Box(
             modifier = Modifier
-                .size(130.dp)
+                .size(128.dp)
                 .background(AppColors.cardBg, CircleShape)
                 .border(1.dp, AppColors.border, CircleShape),
             contentAlignment = Alignment.Center
@@ -473,21 +502,30 @@ private fun PermissionStep(
                 modifier = Modifier.size(52.dp)
             )
         }
-        Spacer(modifier = Modifier.height(56.dp))
-        Text(
-            text = "Allow location access",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = AppColors.textPrimary,
-            lineHeight = 38.sp
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "We use your location once to auto-fill your pin code, city and state during setup. Nothing is uploaded \u2014 you can also enter these manually.",
-            fontSize = 17.sp,
-            color = AppColors.textSecondary,
-            lineHeight = 25.sp
-        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Allow location access",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.textPrimary,
+                    lineHeight = 38.sp
+                )
+                Text(
+                    text = "We use your location once to auto-fill your pin code, city and state during setup. Nothing is uploaded \u2014 you can also enter these manually.",
+                    fontSize = 17.sp,
+                    color = AppColors.textSecondary,
+                    lineHeight = 25.sp
+                )
+            }
+        }
         Spacer(modifier = Modifier.weight(1f))
         PrimaryButton(
             label = if (granted) "Continue" else "Allow location",
@@ -499,6 +537,7 @@ private fun PermissionStep(
                     permissionsState.launchMultiplePermissionRequest()
                 }
             }
+
         )
         Spacer(modifier = Modifier.height(12.dp))
         SecondaryButton(label = "Enter manually", onClick = onNext)

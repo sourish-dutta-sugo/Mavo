@@ -1,6 +1,10 @@
 # USER_FLOWS.md — Mavo
 
-> Last updated: 2026-10-05
+> Last updated: 2026-11-02
+
+The app uses one graph-paper canvas across screens. Appearance settings offer
+four light accent themes; selecting a theme does not change navigation or
+accounting behavior.
 
 ## Flow 1: First launch (wizard)
 
@@ -134,7 +138,15 @@ content, and retryable read failures remain distinct states.
 | 2 | Tap Edit / Share / PDF / Print | Edit → NewVoucherScreen in edit mode; Share/PDF/Print → InvoiceScreen actions | voucherId | Edit or invoice view | — |
 | 3 | Detail "…" → Delete | VoucherDeleteSheet: counts of vouchers and ledger entries to reverse, total value | `ledgerEntries` for the voucher | Confirm or cancel | — |
 | 4 | Confirm delete | `deleteVoucher(id)` runs, returns to list | Voucher + linked ledger rows | Voucher removed, ledger postings reversed, stock restored | — |
-| 5 | Long-press a row (or tap while selecting) | Black selection bar: X, "N selected", "…" menu (Select/Deselect all), Export + Delete tiles; row checkboxes appear | `UniversalSelectionController` | Selection mode active | — |
+| 5 | Long-press a row (or tap while selecting) | Selection surface: X, "N selected", "…" menu (Select/Deselect all), Export + Delete actions; row checkboxes appear | `UniversalSelectionController` | Selection mode active | — |
 | 6 | Tap Export tile | CSV written of selected vouchers | `ExportStorageManager` | Toast with save location | Storage error → export fails |
 | 7 | Tap Delete tile | Same VoucherDeleteSheet with multi-select counts and summed value | Selected voucher ids | Confirm → all deleted, selection cleared, snackbar shows count | — |
 | 8 | Tap X (or "…" → Deselect all) | Selection bar and checkboxes disappear | — | Back to normal list | — |
+
+## Flow 10: Choose app appearance
+
+| Step | Trigger | What shows | Result |
+|------|---------|------------|--------|
+| 1 | Settings → Theme & Colors | Four light accent choices: Zero, Saffron, Slate, Ledger | Current accent is selected |
+| 2 | Select an accent | App theme updates immediately and persists in `selected_theme` | Canvas stays graph paper; accounting actions do not change |
+| 3 | Load a saved `NIGHT` preference | Zero light theme | Existing installs remain usable without a dark theme |

@@ -30,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -94,7 +93,7 @@ fun StockReportScreen(products: List<Product>) {
         ) {
             Text(
                 text = "Stock Summary",
-                fontSize = 26.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.textPrimary
             )
@@ -122,7 +121,7 @@ fun StockReportScreen(products: List<Product>) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             StatCard(label = "SKUs", value = products.size.toString(), modifier = Modifier.weight(1f))
             StatCard(label = "Stock Value", value = stockValueLabel(stockValue), modifier = Modifier.weight(1f))
@@ -211,7 +210,7 @@ fun StockReportScreen(products: List<Product>) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
@@ -253,7 +252,7 @@ private fun StatCard(
             fontSize = 13.sp,
             color = AppColors.textSecondary
         )
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = value,
             fontSize = 17.sp,
@@ -274,27 +273,32 @@ private fun StatusPill(product: Product) {
         low -> "Low"
         else -> "In stock"
     }
-    val textColor = when {
-        out -> AppColors.textOnPrimary
-        low -> AppColors.textPrimary
-        else -> AppColors.textSecondary
+    val backgroundColor = when {
+        out -> AppColors.errorBg
+        low -> AppColors.warningBg
+        else -> AppColors.successBg
+    }
+    val statusColor = when {
+        out -> AppColors.error
+        low -> AppColors.warning
+        else -> AppColors.success
     }
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(if (out) AppColors.primary else Color.Transparent)
+            .background(backgroundColor)
             .border(
                 1.dp,
-                if (out || low) AppColors.primary else ScreenBorder,
+                statusColor,
                 RoundedCornerShape(16.dp)
             )
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Text(
             text = label,
             fontSize = 12.sp,
             fontWeight = if (out || low) FontWeight.SemiBold else FontWeight.Medium,
-            color = textColor
+            color = statusColor
         )
     }
 }

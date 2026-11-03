@@ -1,13 +1,17 @@
 # SCREENS.md — Mavo
 
-> Last updated: 2026-10-05
+> Last updated: 2026-11-02
+
+All screens share the graph-paper canvas. Content surfaces stay opaque for
+readability. Theme selection offers four light accents (Zero, Saffron, Slate,
+Ledger); saved Night and legacy Ink preferences resolve to Zero.
 
 ## Navigation structure
 
 ```
 App Launch
-  ├─ SplashScreen (Zero brand splash: dark icon tile + "Mavo" wordmark)
-  ├─ Initialising (dark logo tile, "INITIALIZING", thin progress bar)
+  ├─ SplashScreen (Mavo wordmark on shared graph-paper canvas)
+  ├─ Initialising (database progress and retry states on shared canvas)
   ├─ (no profile) → FirstRunFlow wizard
   │     Onboarding 1 → Onboarding 2 (pager dots, pill Next)
   │       → Terms & Privacy page (checkbox + document rows) → Location permission
@@ -34,8 +38,8 @@ The shell is hidden during onboarding, PIN entry, and full-screen entry flows.
 
 | Screen file | Route | Purpose | Entry from | Exit to |
 |-------------|-------|---------|------------|---------|
-| `SplashScreen.kt` | (initial) | Zero brand splash: dark rounded icon tile + "Mavo" wordmark on light bg | App launch | Initialising, Setup or Dashboard |
-| `MainActivity.kt` (`MainAppEntry` / `AppContent`) | (initial) | Initialising screens: Zero logo tile + "INITIALIZING" progress bar, DB error/retry | App launch | Wizard, PIN or Dashboard |
+| `SplashScreen.kt` | (initial) | Mavo splash on shared graph-paper canvas | App launch | Initialising, Setup or Dashboard |
+| `MainActivity.kt` (`MainAppEntry` / `AppContent`) | (initial) | Database loading progress, retryable DB error, setup and PIN gates | App launch | Wizard, PIN or Dashboard |
 | `FirstRunFlow.kt` | (initial, no profile) | First-run wizard: step order, Back handling, shared `SetupDraft`; two onboarding pages, Terms & Privacy page, permission step (all Zero restyle) | Splash (no profile) | Dashboard (after profile save) |
 | `SetupScreen.kt` | (wizard steps 1–3) | Setup 1 "Basic details", Setup 2 "Where you are", Setup 3 "Tax & bank"; Zero header (circle back + "Step N of 3"), 3-segment progress, pill CTA | FirstRunFlow | FirstRunFlow → Dashboard |
 | `DashboardScreen.kt` | `dashboard` | Action-first daily workspace with cached totals, loading/retry states, stock alerts, recent activity, and width-constrained content | Adaptive Home destination | Any feature screen |
@@ -99,3 +103,29 @@ graph TD
     N --> O
     F --> P2["PartyDetailScreen"]
 ```
+
+### Mavo · Redesign (Penpot design artifacts)
+
+A premium Material 3 Expressive redesign of all 36 retail POS/accounting screens was built as Penpot-only design artifacts (no code changes). Original **Mavo UI mockups** boards are preserved intact; the redesign lives on new pages.
+
+| Page | Purpose |
+|------|---------|
+| **Mavo · Redesign** | All 36 screens, 6 boards per row, 40 px gaps |
+| **Mavo · System** | Foundations + component sheet (palette, type, components, motion, layout rules) |
+
+**Board grid:** 390 × 844 boards, rows y = 0, 900, 1800, 2700, 3600, 4500. Original boards must not be deleted or overwritten.
+
+| Row | y | Screens |
+|-----|-----|---------|
+| 1 | 0 | 01 · Home / Dashboard, 02 · Vouchers, 03 · Parties, 04 · More / Settings, 05 · Counter Sale, 06 · Voucher Detail |
+| 2 | 900 | 07 · Splash, 08 · Initialising, 09 · Database Error, 10 · Onboarding 1, 11 · Onboarding 2, 12 · Terms & Privacy |
+| 3 | 1800 | 13 · Location Permission, 14 · Setup 1 · Basic details, 15 · Setup 2 · Where you are, 16 · Setup 3 · Tax & bank, 17 · Sample Data Prompt, 18 · PIN Lock |
+| 4 | 2700 | 19 · Products, 20 · Product Editor, 21 · Low Stock, 22 · Reports Hub, 23 · Trial Balance, 24 · Stock Report |
+| 5 | 3600 | 25 · Bank & Cash, 26 · Expenses, 27 · Expense Entry, 28 · Ledger Books, 29 · Party Detail, 30 · Add Party |
+| 6 | 4500 | 31 · New Voucher · Details, 32 · New Voucher · Line items, 33 · New Voucher · Review, 34 · Invoice, 35 · Profit & Loss, 36 · GST Summary |
+
+**Shared chrome on every screen:** status bar, header (eyebrow + title + optional back/action icons), content area, floating dock (Home / Vouchers / Parties / More + New Sale FAB), thin home indicator. Helpers live in `lib2.js` (Penpot plugin context): `status`, `header`, `section`, `card`, `btn`, `chip`, `field`, `avatar`, `divider`, `metric`, `listRow`, `dock`, `segmented`, `searchbar`, `tabs`, `sheet`, `logo`, `grid`, `bars`, `empty`.
+
+**Home board id:** `6e51fff9-1717-80b9-8008-df7cd5b2b9d8` (01 · Home / Dashboard).
+
+

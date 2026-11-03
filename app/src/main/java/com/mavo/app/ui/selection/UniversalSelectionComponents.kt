@@ -89,7 +89,7 @@ fun UniversalSelectionIndicator(
     Box(
         modifier = modifier
             .size(24.dp)
-            .border(1.8.dp, animatedBorder, CircleShape)
+            .border(2.dp, animatedBorder, CircleShape)
             .background(animatedBackground, CircleShape),
         contentAlignment = Alignment.Center
     ) {

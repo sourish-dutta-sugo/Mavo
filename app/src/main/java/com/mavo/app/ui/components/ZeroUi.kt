@@ -129,7 +129,7 @@ fun WizardHeader(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (onBack != null) {
@@ -146,7 +146,7 @@ fun WizardHeader(
             text = stepLabel,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 1.2.sp,
+            letterSpacing = 0.sp,
             color = AppColors.textSecondary,
             textAlign = TextAlign.Center
         )
@@ -172,7 +172,7 @@ fun WizardTitle(
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = text,
-            fontSize = 30.sp,
+            fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = AppColors.textPrimary,
             lineHeight = 36.sp
@@ -244,13 +244,13 @@ fun ZbField(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = label.uppercase(),
+            text = label,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.8.sp,
+            letterSpacing = 0.sp,
             color = AppColors.textSecondary
         )
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
@@ -264,7 +264,7 @@ fun ZbField(
             trailingIcon = trailingIcon,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(16.dp),
             isError = isError,
             supportingText = supportingText,
             colors = mavoInputColors()
@@ -333,7 +333,7 @@ fun ZbCard(
         modifier = modifier
             .fillMaxWidth()
             .then(onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
@@ -355,10 +355,10 @@ fun SectionLabel(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = text.uppercase(),
+            text = text,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 1.sp,
+            letterSpacing = 0.sp,
             color = AppColors.textTertiary
         )
         Spacer(modifier = Modifier.weight(1f))
@@ -460,7 +460,7 @@ fun EmptyState(
                 imageVector = icon,
                 contentDescription = null,
                 tint = AppColors.textSecondary,
-                modifier = Modifier.size(26.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -470,7 +470,7 @@ fun EmptyState(
             fontWeight = FontWeight.SemiBold,
             color = AppColors.textPrimary
         )
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = message,
             fontSize = 14.sp,

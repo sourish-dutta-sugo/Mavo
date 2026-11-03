@@ -13,7 +13,7 @@
             #FAF8F5
         </item>
         <item name="windowSplashScreenAnimatedIcon">
-            @drawable/logo_transparent
+            @drawable/logo_icon
         </item>
         <item name="windowSplashScreenIconBackgroundColor">
             @android:color/transparent

@@ -134,6 +134,7 @@ fun PartiesScreen(
             Box(modifier = Modifier.width(360.dp).fillMaxHeight()) {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    containerColor = Color.Transparent,
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                     topBar = {
                         if (selectionController.isSelectionActive) {
@@ -163,22 +164,45 @@ fun PartiesScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(AppColors.screenBg)
+                            .background(Color.Transparent)
                             .padding(innerPadding)
                             .imePadding()
                     ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
+                            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 100.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = "Parties",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AppColors.textPrimary
-                        )
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Parties",
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AppColors.textPrimary
+                                    )
+                                    Text(
+                                        text = if (parties.size == 1) "1 ledger" else "${parties.size} ledgers",
+                                        fontSize = 15.sp,
+                                        color = AppColors.textSecondary
+                                    )
+                                }
 
                         // Search Box using RetailTextField
                         RetailTextField(
@@ -193,7 +217,7 @@ fun PartiesScreen(
                         // Filter Buttons Row
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             val filters = listOf("ALL", "CUSTOMER", "SUPPLIER")
                             filters.forEach { filter ->
@@ -210,20 +234,34 @@ fun PartiesScreen(
                                 )
                             }
                         }
+                            }
+                        }
 
                         UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
                         UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
                         if (partyContentBlocked) {
                             Spacer(modifier = Modifier.weight(1f))
                         } else if (filteredParties.isEmpty()) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("No matching parties found.", color = AppColors.textSecondary, fontSize = 14.sp)
+                            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                                ) {
+                                    Text(
+                                        "No matching parties found.",
+                                        color = AppColors.textSecondary,
+                                        fontSize = 14.sp,
+                                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                                    )
+                                }
                             }
                         } else {
                             LazyColumn(
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier
-                                    .fillMaxSize()
+                                    .weight(1f)
+                                    .fillMaxWidth()
                                     .imePadding(),
                                 contentPadding = PaddingValues(start = 0.dp, end = 0.dp, bottom = 120.dp)
                             ) {
@@ -270,7 +308,10 @@ fun PartiesScreen(
                                                         text = party.name,
                                                         fontWeight = FontWeight.Bold,
                                                         fontSize = 12.sp,
-                                                        color = AppColors.textPrimary
+                                                        color = AppColors.textPrimary,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        modifier = Modifier.weight(1f, fill = false)
                                                     )
                                                     Spacer(modifier = Modifier.width(4.dp))
                                                     Card(
@@ -279,7 +320,7 @@ fun PartiesScreen(
                                                     ) {
                                                         Text(
                                                             text = party.type,
-                                                            fontSize = 8.sp,
+                                                            fontSize = 10.sp,
                                                             fontWeight = FontWeight.Bold,
                                                             color = AppColors.primary,
                                                             modifier = Modifier.padding(horizontal = 2.dp, vertical = 1.dp)
@@ -315,7 +356,7 @@ fun PartiesScreen(
                                                 )
                                                 Text(
                                                     text = balLabel,
-                                                    fontSize = 8.sp,
+                                                    fontSize = 10.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = AppColors.textSecondary
                                                 )
@@ -379,6 +420,7 @@ fun PartiesScreen(
         } else {
             Scaffold(
                 modifier = modifier.fillMaxSize(),
+                containerColor = Color.Transparent,
                 snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                 topBar = {
                     if (selectionController.isSelectionActive) {
@@ -408,7 +450,7 @@ fun PartiesScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(AppColors.screenBg)
+                        .background(Color.Transparent)
                         .padding(innerPadding)
                         .imePadding()
                 ) {
@@ -425,7 +467,7 @@ fun PartiesScreen(
                     ) {
                         Text(
                             text = "Parties",
-                            fontSize = 30.sp,
+                            fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                             color = AppColors.textPrimary
                         )
@@ -436,6 +478,18 @@ fun PartiesScreen(
                         )
                     }
 
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                    ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                     SearchField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
@@ -468,6 +522,8 @@ fun PartiesScreen(
                             )
                         }
                     }
+                    }
+                    }
 
                     val totalReceivables = partyBalances.values.filter { it > 0.005 }.sum()
                     val totalPayables = partyBalances.values.filter { it < -0.005 }.sumOf { -it }
@@ -483,7 +539,7 @@ fun PartiesScreen(
                                 color = AppColors.textTertiary,
                                 letterSpacing = 0.5.sp
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 Utils.formatIndianCurrency(totalReceivables),
                                 fontSize = 24.sp,
@@ -499,7 +555,7 @@ fun PartiesScreen(
                                 color = AppColors.textTertiary,
                                 letterSpacing = 0.5.sp
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 Utils.formatIndianCurrency(totalPayables),
                                 fontSize = 24.sp,
@@ -516,38 +572,57 @@ fun PartiesScreen(
                         Spacer(modifier = Modifier.weight(1f))
                     } else if (parties.isEmpty()) {
                         Box(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(32.dp)
+                            Card(
+                                modifier = Modifier.padding(16.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    tint = AppColors.textTertiary,
-                                    modifier = Modifier.size(56.dp)
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text = "No parties added yet. Tap + to add.",
-                                    color = AppColors.textPrimary,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = AppColors.textTertiary,
+                                        modifier = Modifier.size(56.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        text = "No parties added yet. Tap + to add.",
+                                        color = AppColors.textPrimary,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                }
                             }
                         }
                     } else if (filteredParties.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("No matching parties found.", color = AppColors.textSecondary, fontSize = 14.sp)
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                            ) {
+                                Text(
+                                    "No matching parties found.",
+                                    color = AppColors.textSecondary,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                                )
+                            }
                         }
                     } else {
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier
-                                .fillMaxSize()
+                                .weight(1f)
+                                .fillMaxWidth()
                                 .imePadding(),
                             contentPadding = PaddingValues(start = 0.dp, end = 0.dp, bottom = 120.dp)
                         ) {
@@ -575,7 +650,7 @@ fun PartiesScreen(
                                     colors = CardDefaults.cardColors(containerColor = if (selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg)
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -698,25 +773,24 @@ fun AddPartyForm(
 
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(pin) {
-        if (pin.length == 6 && pin.all(Char::isDigit)) {
-            delay(300)
-            val result = fetchPinLookup(pin)
-            if (result != null) {
-                city = result.city
-                selectedStateInfo = Utils.INDIAN_STATES.firstOrNull { it.first.equals(result.state, ignoreCase = true) }
-                    ?: (result.state to result.stateCode.ifBlank { selectedStateInfo.second })
-                pinLookupMessage = "Auto-filled city and state from PIN"
-                pinLookupSuccess = true
-            } else {
-                pinLookupMessage = "PIN lookup failed. You can enter city and state manually."
-                pinLookupSuccess = false
-            }
-        } else {
+    PinAutoFillEffect(
+        pin = pin,
+        onInvalid = {
             pinLookupMessage = ""
             pinLookupSuccess = false
+        },
+        onResolved = { result ->
+            city = result.city
+            selectedStateInfo = Utils.INDIAN_STATES.firstOrNull { it.first.equals(result.state, ignoreCase = true) }
+                ?: (result.state to result.stateCode.ifBlank { selectedStateInfo.second })
+            pinLookupMessage = "Auto-filled city and state from PIN"
+            pinLookupSuccess = true
+        },
+        onFailed = {
+            pinLookupMessage = "PIN lookup failed. You can enter city and state manually."
+            pinLookupSuccess = false
         }
-    }
+    )
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -746,7 +820,7 @@ fun AddPartyForm(
                 .verticalScroll(scrollState)
                 .imePadding()
                 .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp),
-            verticalArrangement = Arrangement.spacedBy(11.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedTextField(
                 value = name,
@@ -812,7 +886,7 @@ fun AddPartyForm(
             if (pinLookupMessage.isNotBlank()) {
                 Text(
                     text = pinLookupMessage,
-                    color = if (pinLookupSuccess) Color(0xFF2E7D32) else Color(0xFF8A8A8A),
+                    color = if (pinLookupSuccess) AppColors.success else AppColors.textTertiary,
                     fontSize = 11.sp
                 )
             }
@@ -911,7 +985,7 @@ fun AddPartyForm(
                     shape = RoundedCornerShape(8.dp)
                 )
                 
-                Row(modifier = Modifier.weight(0.8f).padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(modifier = Modifier.weight(0.8f).padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     listOf("DR", "CR").forEach { bType ->
                         FilterChip(
                             selected = balanceType == bType,
@@ -1030,25 +1104,24 @@ fun EditPartyForm(
     var pinLookupMessage by remember(party.id) { mutableStateOf("") }
     var pinLookupSuccess by remember(party.id) { mutableStateOf(false) }
 
-    LaunchedEffect(pin) {
-        if (pin.length == 6 && pin.all(Char::isDigit)) {
-            delay(300)
-            val result = fetchPinLookup(pin)
-            if (result != null) {
-                city = result.city
-                selectedStateInfo = Utils.INDIAN_STATES.firstOrNull { it.first.equals(result.state, ignoreCase = true) }
-                    ?: (result.state to result.stateCode.ifBlank { selectedStateInfo.second })
-                pinLookupMessage = "Auto-filled city and state from PIN"
-                pinLookupSuccess = true
-            } else {
-                pinLookupMessage = "PIN lookup failed. You can enter city and state manually."
-                pinLookupSuccess = false
-            }
-        } else {
+    PinAutoFillEffect(
+        pin = pin,
+        onInvalid = {
             pinLookupMessage = ""
             pinLookupSuccess = false
+        },
+        onResolved = { result ->
+            city = result.city
+            selectedStateInfo = Utils.INDIAN_STATES.firstOrNull { it.first.equals(result.state, ignoreCase = true) }
+                ?: (result.state to result.stateCode.ifBlank { selectedStateInfo.second })
+            pinLookupMessage = "Auto-filled city and state from PIN"
+            pinLookupSuccess = true
+        },
+        onFailed = {
+            pinLookupMessage = "PIN lookup failed. You can enter city and state manually."
+            pinLookupSuccess = false
         }
-    }
+    )
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -1071,7 +1144,7 @@ fun EditPartyForm(
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
                 .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp),
-            verticalArrangement = Arrangement.spacedBy(11.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Party Name *") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1086,7 +1159,7 @@ fun EditPartyForm(
             if (pinLookupMessage.isNotBlank()) {
                 Text(
                     text = pinLookupMessage,
-                    color = if (pinLookupSuccess) Color(0xFF2E7D32) else Color(0xFF8A8A8A),
+                    color = if (pinLookupSuccess) AppColors.success else AppColors.textTertiary,
                     fontSize = 11.sp
                 )
             }
@@ -1177,7 +1250,7 @@ fun PartyDetailScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AppColors.screenBg,
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(party?.name ?: "Party Ledger", fontWeight = FontWeight.Bold) },
@@ -1215,20 +1288,21 @@ fun PartyDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(AppColors.screenBg)
+                    .background(Color.Transparent)
                     .padding(innerPadding)
                     .imePadding()
                     .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Party Details Box
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(0.5.dp, Color(0xFFEAEAEA), RoundedCornerShape(8.dp)),
+                        .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                 ) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Phone,
@@ -1236,7 +1310,7 @@ fun PartyDetailScreen(
                                 modifier = Modifier.size(16.dp),
                                 tint = AppColors.textSecondary
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text("Phone: ${p.phone} | Email: ${p.email}", fontSize = 12.sp, color = AppColors.textSecondary)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1246,23 +1320,31 @@ fun PartyDetailScreen(
                                 modifier = Modifier.size(16.dp),
                                 tint = AppColors.textSecondary
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text("GSTIN: ${p.gstin ?: "Unregistered"} | State: ${p.state}", fontSize = 12.sp, color = AppColors.textSecondary)
                         }
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                        Row(
+                        Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow
                         ) {
-                            Text("Outstanding Balance:", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            val color = if (finalOutstanding >= 0) AppColors.debit else AppColors.credit
-                            Text(
-                                text = Utils.formatIndianCurrency(Math.abs(finalOutstanding)) + if (finalOutstanding >= 0) " DR" else " CR",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = color
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Outstanding Balance:", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                val color = if (finalOutstanding >= 0) AppColors.debit else AppColors.credit
+                                Text(
+                                    text = Utils.formatIndianCurrency(Math.abs(finalOutstanding)) + if (finalOutstanding >= 0) " DR" else " CR",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = color
+                                )
+                            }
                         }
                     }
                 }
@@ -1303,30 +1385,32 @@ fun PartyDetailScreen(
                             }
                         },
                         modifier = Modifier.fillMaxWidth().height(44.dp),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Icon(imageVector = Icons.Default.Email, contentDescription = null, modifier = Modifier.padding(end = 6.dp))
+                        Icon(imageVector = Icons.Default.Email, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
                         Text("Send Email Payment Reminder")
                     }
                 }
 
                 // Statement Header
-                Text("LEDGER STATEMENT", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Gray)
+                Text("LEDGER STATEMENT", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppColors.textPrimary)
 
                 // Sub-statement Table Grid
-                Box(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .border(0.5.dp, Color.LightGray, RoundedCornerShape(4.dp))
+                        .weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                 ) {
-                    Column {
+                    Column(modifier = Modifier.fillMaxSize()) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color(0xFFFAF9F9))
-                                .padding(8.dp),
+                                .background(AppColors.sectionHeaderBg)
+                                .padding(horizontal = 12.dp, vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Date", fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.9f))
@@ -1336,13 +1420,17 @@ fun PartyDetailScreen(
                         }
 
                         if (statementRows.isEmpty()) {
-                            Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                                Text("No ledger activities recorded", fontSize = 13.sp, color = Color.Gray)
+                            Box(
+                                modifier = Modifier.weight(1f).fillMaxWidth().padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No ledger activities recorded", fontSize = 13.sp, color = AppColors.textSecondary)
                             }
                         } else {
                             LazyColumn(
                                 modifier = Modifier
-                                    .fillMaxSize()
+                                    .weight(1f)
+                                    .fillMaxWidth()
                                     .imePadding(),
                                 contentPadding = PaddingValues(start = 0.dp, end = 0.dp, bottom = 120.dp)
                             ) {
@@ -1350,7 +1438,7 @@ fun PartyDetailScreen(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(8.dp),
+                                            .padding(horizontal = 12.dp, vertical = 12.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(Utils.formatDate(row.entry.date), fontSize = 11.sp, modifier = Modifier.weight(0.9f))
@@ -1363,7 +1451,7 @@ fun PartyDetailScreen(
 
                                         Text(displayStr, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = color, modifier = Modifier.weight(1.2f))
                                     }
-                                    HorizontalDivider(color = Color(0xFFF1F1F1))
+                                    HorizontalDivider(color = AppColors.border)
                                 }
                             }
                         }
@@ -1386,12 +1474,12 @@ private fun PartyDetailSkeleton(
             .background(AppColors.screenBg)
             .padding(innerPadding)
             .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         LoadingCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(0.5.dp, Color(0xFFEAEAEA), RoundedCornerShape(8.dp))
+                .border(1.dp, AppColors.border, RoundedCornerShape(8.dp))
         ) {
             repeat(3) {
                 LoadingListItem(
@@ -1404,9 +1492,9 @@ private fun PartyDetailSkeleton(
         LoadingCard(modifier = Modifier.fillMaxWidth()) {
             LoadingText(
                 modifier = Modifier.fillMaxWidth(0.45f),
-                height = 18.dp
+                height = 20.dp
             )
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             repeat(5) {
                 LoadingListItem(
                     modifier = Modifier.fillMaxWidth(),

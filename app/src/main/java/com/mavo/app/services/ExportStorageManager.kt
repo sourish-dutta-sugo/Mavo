@@ -96,14 +96,6 @@ object ExportStorageManager {
         }
     }
 
-    fun openFile(context: Context, exportResult: ExportResult) {
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(exportResult.uri, exportResult.mimeType)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(Intent.createChooser(intent, "Open File"))
-    }
-
     fun shareFile(context: Context, exportResult: ExportResult) {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = exportResult.mimeType

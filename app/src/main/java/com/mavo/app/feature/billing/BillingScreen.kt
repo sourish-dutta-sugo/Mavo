@@ -1,12 +1,6 @@
 package com.mavo.app.feature.billing
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -86,10 +80,11 @@ import com.mavo.app.ui.AppViewModel
 import com.mavo.app.ui.components.UiLoadStateNotice
 import com.mavo.app.ui.components.blocksContent
 import com.mavo.app.ui.components.valueOrEmpty
-import com.mavo.app.ui.animation.m3PulseHighlight
 import com.mavo.app.ui.animation.m3SpringPress
 import com.mavo.app.ui.animation.premiumClickable
 import com.mavo.app.ui.theme.LocalAppTheme
+import com.mavo.app.ui.theme.NumericFontFamily
+import com.mavo.app.ui.screens.graphPaperCanvas
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -125,14 +120,14 @@ fun BillingScreen(
     val total = cart.sumOf { it.totalAmount }
 
     Scaffold(
-        modifier = modifier,
-        containerColor = theme.backgroundPrimary,
+        modifier = modifier.graphPaperCanvas(),
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Surface(
                             shape = CircleShape,
@@ -180,7 +175,7 @@ fun BillingScreen(
                         AssistChip(
                             onClick = { cart.clear() },
                             label = { Text("Clear Cart (${cart.sumOf { it.qty.toInt() }})", fontSize = 12.sp) },
-                            leadingIcon = { Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(14.dp)) },
+                            leadingIcon = { Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(16.dp)) },
                             colors = AssistChipDefaults.assistChipColors(
                                 containerColor = theme.backgroundTertiary,
                                 labelColor = theme.textSecondary
@@ -212,7 +207,7 @@ fun BillingScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(14.dp),
+                    modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
@@ -244,18 +239,14 @@ fun BillingScreen(
                                 if (it) selectedPartyId = null
                             },
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
+                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                                 checkedTrackColor = theme.accentPrimary,
                                 uncheckedBorderColor = theme.textTertiary
                             )
                         )
                     }
 
-                    AnimatedVisibility(
-                        visible = !walkInCustomer,
-                        enter = fadeIn() + slideInVertically(),
-                        exit = fadeOut() + slideOutVertically()
-                    ) {
+                    if (!walkInCustomer) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
                             if (partiesReadState.blocksContent()) {
@@ -269,7 +260,7 @@ fun BillingScreen(
                             } else {
                                 FlowRow(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     parties.filter { it.type == "CUSTOMER" || it.type == "BOTH" }.take(8).forEach { party ->
@@ -279,11 +270,11 @@ fun BillingScreen(
                                             onClick = { selectedPartyId = if (isSelected) null else party.id },
                                             label = { Text(party.name, fontSize = 12.sp) },
                                             leadingIcon = if (isSelected) {
-                                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp)) }
+                                                { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                                             } else null,
                                             colors = FilterChipDefaults.filterChipColors(
                                                 selectedContainerColor = theme.accentPrimary,
-                                                selectedLabelColor = Color.White,
+                                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
                                                 containerColor = theme.backgroundTertiary,
                                                 labelColor = theme.textPrimary
                                             ),
@@ -333,7 +324,7 @@ fun BillingScreen(
 
                     // Unit Filter Chips
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         listOf("ALL" to "All")
@@ -346,7 +337,7 @@ fun BillingScreen(
                                     label = { Text(label, fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = theme.accentPrimary,
-                                        selectedLabelColor = Color.White,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
                                         containerColor = theme.backgroundSecondary,
                                         labelColor = theme.textSecondary
                                     ),
@@ -415,7 +406,7 @@ fun BillingScreen(
                                     Text(
                                         Utils.formatIndianCurrency(product.saleRate),
                                         fontWeight = FontWeight.Bold,
-                                        fontFamily = FontFamily.Monospace,
+                                        fontFamily = NumericFontFamily,
                                         fontSize = 14.sp,
                                         color = theme.accentPrimary
                                     )
@@ -430,7 +421,7 @@ fun BillingScreen(
                                             tint = theme.accentPrimary,
                                             modifier = Modifier
                                                 .padding(4.dp)
-                                                .size(14.dp)
+                                                .size(16.dp)
                                         )
                                     }
                                 }
@@ -454,13 +445,13 @@ fun BillingScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
                                 Icons.Default.ShoppingCart,
                                 contentDescription = null,
                                 tint = theme.accentPrimary,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                             Text(
                                 "Current Cart",
@@ -473,7 +464,6 @@ fun BillingScreen(
                             Surface(
                                 shape = CircleShape,
                                 color = theme.accentPrimary,
-                                modifier = Modifier.m3PulseHighlight(active = cart.isNotEmpty())
                             ) {
                                 Text(
                                     "${cart.sumOf { it.qty.toInt() }} items",
@@ -489,22 +479,19 @@ fun BillingScreen(
                     // Cart Items List
                     LazyColumn(
                         modifier = Modifier
-                            .weight(1f)
-                            .animateContentSize(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                            .weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(cart, key = { it.id }) { item ->
                             OutlinedCard(
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.outlinedCardColors(containerColor = theme.backgroundSecondary),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateItem()
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(10.dp),
+                                        .padding(12.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -518,7 +505,7 @@ fun BillingScreen(
                                         Text(
                                             "${item.qty.toInt()} x ${Utils.formatIndianCurrency(item.rate)}",
                                             fontSize = 11.sp,
-                                            fontFamily = FontFamily.Monospace,
+                                            fontFamily = NumericFontFamily,
                                             color = theme.textSecondary
                                         )
                                     }
@@ -555,7 +542,7 @@ fun BillingScreen(
                                         Text(
                                             Utils.formatIndianCurrency(item.totalAmount),
                                             fontWeight = FontWeight.Bold,
-                                            fontFamily = FontFamily.Monospace,
+                                            fontFamily = NumericFontFamily,
                                             fontSize = 13.sp,
                                             color = theme.textPrimary,
                                             modifier = Modifier.padding(horizontal = 4.dp)
@@ -590,7 +577,7 @@ fun BillingScreen(
 
                     // Payment Mode Selector
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         listOf("CASH" to "Cash", "UPI" to "UPI QR", "CARD" to "Bank/Card").forEach { (mode, label) ->
@@ -604,7 +591,7 @@ fun BillingScreen(
                                 } else null,
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = theme.accentPrimary,
-                                    selectedLabelColor = Color.White,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
                                     containerColor = theme.backgroundSecondary,
                                     labelColor = theme.textPrimary
                                 ),
@@ -622,9 +609,7 @@ fun BillingScreen(
                             containerColor = theme.accentLight
                         ),
                         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .m3PulseHighlight(active = cart.isNotEmpty())
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
                             modifier = Modifier
@@ -649,8 +634,8 @@ fun BillingScreen(
                             Text(
                                 Utils.formatIndianCurrency(total),
                                 fontSize = 22.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = NumericFontFamily,
                                 color = theme.accentPrimary
                             )
                         }
@@ -690,15 +675,15 @@ fun BillingScreen(
                                         partyName = parties.find { it.id == selectedPartyId }?.name
                                     ) {
                                         cart.clear()
-                                        Toast.makeText(viewModel.getApplication(), "Counter sale invoice saved!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(viewModel.getApplication(), "Counter sale invoice saved", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
                         },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = theme.accentPrimary,
-                            contentColor = Color.White
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
                         modifier = Modifier
                             .fillMaxWidth()

@@ -1,6 +1,6 @@
 # TESTING.md — Mavo
 
-> Last updated: 2026-09-29
+> Last updated: 2026-10-24
 
 ## Test setup
 
@@ -31,6 +31,9 @@
 
 # Adaptive navigation, pane, and dashboard width decisions
 ./gradlew :app:testDebugUnitTest --tests "com.mavo.app.ui.AdaptiveLayoutTest"
+
+# Light theme compatibility
+./gradlew :app:testDebugUnitTest --tests "com.mavo.app.ui.theme.AppThemeTest"
 ```
 
 ## What must pass before finishing a task
@@ -68,6 +71,7 @@ app/src/androidTest/java/   # Instrumentation tests (Espresso)
 | ViewModels | Unit test | State flow emissions, error handling |
 | UI data cache | Unit test | Snapshot replay, Room replacement, FY isolation, cached and cold errors |
 | Adaptive shell | Unit test | Compact bottom bar; medium/expanded rail and pane decisions |
+| Theme compatibility | Unit test | Saved Night selection resolves to the light Zero theme |
 | Compose screens | Screenshot test | Visual regression via Roborazzi |
 | Responsive billing layout | Unit test + screenshot test | Compact/medium stack; expanded split pane |
 | Full user flows | Instrumentation test | End-to-end with Espresso + Compose test APIs |

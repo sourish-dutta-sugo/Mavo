@@ -97,7 +97,10 @@ fun LedgerListScreen(
                 text = "Full ledger chart with current debit / credit balances",
                 color = AppColors.textSecondary,
                 fontSize = 13.sp,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(AppColors.cardBg, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
             )
             UiLoadStateNotice(ledgerAccountsReadState, viewModel::retryFailedReads)
             UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
@@ -114,15 +117,16 @@ fun LedgerListScreen(
                         .fillMaxSize()
                         .imePadding(),
                     contentPadding = PaddingValues(start = 0.dp, end = 0.dp, bottom = 120.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     groupedAccounts.forEach { (groupName, accounts) ->
                         item(key = "header_$groupName") {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(AppColors.sectionHeaderBg, RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                                    .background(AppColors.sectionHeaderBg, RoundedCornerShape(16.dp))
+                                    .border(1.dp, AppColors.border, RoundedCornerShape(16.dp))
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
                             ) {
                                 Text(
                                     groupName,
@@ -216,14 +220,13 @@ private fun LedgerAccountRow(
 ) {
     val isDr = balance >= 0
     val absBal = kotlin.math.abs(balance)
-    val rowBg = if (rowIndex % 2 == 0) AppColors.tableRowEven else AppColors.tableRowOdd
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(rowBg)
-            .border(0.5.dp, AppColors.divider)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .background(AppColors.cardBg, RoundedCornerShape(16.dp))
+            .border(1.dp, AppColors.border, RoundedCornerShape(16.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -257,10 +260,10 @@ private fun EditableLedgerAccountRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(rowBg)
-            .border(0.5.dp, AppColors.divider)
+            .background(if (rowIndex % 2 == 0) AppColors.cardBg else rowBg, RoundedCornerShape(16.dp))
+            .border(1.dp, AppColors.border, RoundedCornerShape(16.dp))
             .clickable(onClick = onView)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -323,7 +326,7 @@ private fun EditLedgerSheet(
             OutlinedTextField(
                 value = ledgerName,
                 onValueChange = { ledgerName = it },
-                label = { Text("Ledger Name", color = Color(0xFF444444)) },
+                label = { Text("Ledger Name", color = AppColors.textSecondary) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = ledger.isSystem == 0,
                 singleLine = true,
@@ -338,7 +341,7 @@ private fun EditLedgerSheet(
             OutlinedTextField(
                 value = groupName,
                 onValueChange = { groupName = it },
-                label = { Text("Under Group", color = Color(0xFF444444)) },
+                label = { Text("Under Group", color = AppColors.textSecondary) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = ledger.isSystem == 0,
                 singleLine = true,
@@ -361,7 +364,7 @@ private fun EditLedgerSheet(
             OutlinedTextField(
                 value = openingBalance,
                 onValueChange = { openingBalance = it.filter { ch -> ch.isDigit() || ch == '.' } },
-                label = { Text("Opening Balance", color = Color(0xFF444444)) },
+                label = { Text("Opening Balance", color = AppColors.textSecondary) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
@@ -388,7 +391,7 @@ private fun EditLedgerSheet(
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Phone", color = Color(0xFF444444)) },
+                    label = { Text("Phone", color = AppColors.textSecondary) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -401,7 +404,7 @@ private fun EditLedgerSheet(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email", color = Color(0xFF444444)) },
+                    label = { Text("Email", color = AppColors.textSecondary) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -414,7 +417,7 @@ private fun EditLedgerSheet(
                 OutlinedTextField(
                     value = address,
                     onValueChange = { address = it },
-                    label = { Text("Address", color = Color(0xFF444444)) },
+                    label = { Text("Address", color = AppColors.textSecondary) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = AppColors.inputBg,

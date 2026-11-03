@@ -6,6 +6,7 @@ import com.mavo.app.data.Voucher
 import com.mavo.app.data.VoucherItem
 import com.mavo.app.services.InvoiceGenerator
 import com.mavo.app.services.documents.DocumentGenerator
+import com.mavo.app.services.documents.DocumentHtmlComponents
 import com.mavo.app.services.documents.DocumentHtmlComponents.escapeHtml
 import com.mavo.app.services.documents.DocumentHtmlComponents.formatMoney
 import com.mavo.app.services.documents.DocumentHtmlComponents.formatQty
@@ -80,44 +81,17 @@ class SalesOrderGenerator : DocumentGenerator {
           <meta charset='UTF-8'/>
           <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
           <style>
-            * { margin:0; padding:0; box-sizing:border-box; }
-            body { font-family:Arial,Helvetica,sans-serif; font-size:11px; color:#111; background:#fff; }
-            @page { 
-              size: A4 portrait; 
-              margin: 10mm 12mm;
-            }
-            .page { width:100%; max-width:794px; margin:0 auto; padding:14px 18px; background:#fff; }
+            ${DocumentHtmlComponents.buildBaseStyles()}
             table { width:100%; border-collapse:collapse; }
             td, th { border:1px solid #000; padding:6px 8px; vertical-align:top; word-wrap:break-word; overflow-wrap:break-word; }
             .title { text-align:center; font-size:18px; font-weight:700; letter-spacing:0.5px; padding:8px 0; border:2px solid #000; margin-bottom:12px; }
-            .center { text-align:center; }
-            .right { text-align:right; }
-            .bold { font-weight:700; }
             .items-header th { background:#eef2fa; font-size:10px; font-weight:700; text-align:center; border:1px solid #000; }
-            .small-label { font-size:9px; color:#666; margin-bottom:4px; }
-            .meta-value { font-size:11px; font-weight:700; margin-top:2px; }
-            .company-name { font-size:14px; font-weight:700; color:#000; display:block; margin-bottom:4px; }
-            .section-body { line-height:1.45; font-size:11px; }
-            .seller-head { font-size:9px; color:#666; margin-bottom:6px; }
-            .seller-grid { width:100%; border-collapse:collapse; table-layout:fixed; }
-            .seller-grid td { border:none; padding:0; vertical-align:top; }
-            .seller-logo { width:86px; padding-right:8px; }
-            .seller-logo img { max-width:80px; max-height:80px; object-fit:contain; display:block; }
             .confirm-text { font-size:11px; font-weight:bold; margin:12px 0; }
             .accept-text { font-size:11px; margin:12px 0; }
             .signature-section { display:flex; justify-content:space-between; margin-top:60px; }
             .buyer-sig { text-align:left; }
             .seller-sig { text-align:right; }
             .sig-line { border-top:1px solid #000; width:200px; display:inline-block; margin-top:60px; }
-            .page-break { page-break-before:always; }
-            .no-break-inside { page-break-inside:avoid; }
-            .continuation-header { border-bottom:1px solid #000; padding:4px 0; margin-bottom:8px; font-size:10px; }
-            .page-number { text-align:center; font-size:9px; color:#666; margin-top:8px; }
-            @media print { 
-              body { -webkit-print-color-adjust:exact; }
-              .page-break { page-break-before:always; }
-              .no-break-inside { page-break-inside:avoid; }
-            }
           </style>
         </head>
         <body>

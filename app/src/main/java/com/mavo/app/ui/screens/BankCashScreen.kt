@@ -143,14 +143,20 @@ fun BankCashScreen(
                 } else Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(0.5.dp, Color(0xFFE8E8E8), RoundedCornerShape(8.dp)),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                        .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Text("CASH BALANCE", fontSize = 11.sp, color = AppColors.textSecondary, fontWeight = FontWeight.SemiBold)
                             Text(
                                 Utils.formatIndianCurrency(cashTotal),
@@ -159,13 +165,15 @@ fun BankCashScreen(
                                 color = if (cashTotal >= 0) AppColors.credit else AppColors.debit
                             )
                         }
-                        Box(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .height(38.dp)
-                                .background(Color.LightGray)
+                        androidx.compose.material3.VerticalDivider(
+                            modifier = Modifier.height(48.dp),
+                            color = AppColors.divider
                         )
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Text("BANK BALANCE", fontSize = 11.sp, color = AppColors.textSecondary, fontWeight = FontWeight.SemiBold)
                             Text(
                                 Utils.formatIndianCurrency(bankTotal),
@@ -188,7 +196,7 @@ fun BankCashScreen(
                             selected = activeTab == tab,
                             onClick = { activeTab = tab },
                             label = { Text(tab, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp)) },
-                            shape = RoundedCornerShape(4.dp)
+                            shape = RoundedCornerShape(12.dp)
                         )
                     }
                 }
@@ -198,14 +206,14 @@ fun BankCashScreen(
                     text = "TRANSACTION LOG",
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = AppColors.textSecondary
                 )
 
                 if (transactionsReadState.blocksContent()) {
                     Spacer(modifier = Modifier.weight(1f))
                 } else if (matchedTransactions.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No cash or bank transactions registered in this selected view.", color = Color.Gray, fontSize = 14.sp)
+                        Text("No cash or bank transactions registered in this selected view.", color = AppColors.textSecondary, fontSize = 14.sp)
                     }
                 } else {
                     LazyColumn(
@@ -219,7 +227,8 @@ fun BankCashScreen(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(0.5.dp, Color(0xFFE8E8E8), RoundedCornerShape(8.dp)),
+                                    .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                                shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                             ) {
                                 Row(
@@ -236,16 +245,16 @@ fun BankCashScreen(
                                             modifier = Modifier.size(24.dp),
                                             tint = iconColor
                                         )
-                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Spacer(modifier = Modifier.width(12.dp))
                                         Column {
                                             Text(
                                                 text = tx.partyName ?: "General Direct",
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 13.sp,
-                                                color = Color(0xFF1A1A1A)
+                                                color = AppColors.textPrimary
                                             )
-                                            Text(text = "Mode: ${tx.mode} | ${tx.narration}", fontSize = 11.sp, color = Color.Gray)
-                                            Text(text = Utils.formatDate(tx.date), fontSize = 10.sp, color = Color.LightGray)
+                                            Text(text = "Mode: ${tx.mode} | ${tx.narration}", fontSize = 11.sp, color = AppColors.textSecondary)
+                                            Text(text = Utils.formatDate(tx.date), fontSize = 10.sp, color = AppColors.textTertiary)
                                         }
                                     }
 
@@ -253,7 +262,7 @@ fun BankCashScreen(
                                         text = "${if (tx.type == "RECEIPT") "+" else "-"} ${Utils.formatIndianCurrency(tx.amount)}",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp,
-                                        color = if (tx.type == "RECEIPT") AppColors.credit else Color(0xFF1A1A1A)
+                                        color = if (tx.type == "RECEIPT") AppColors.credit else AppColors.debit
                                     )
                                 }
                             }
@@ -450,7 +459,7 @@ fun AddTransactionForm(
                 Text("Please fill in the amount with valid number values.", color = Color.Red, fontSize = 12.sp)
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = {
                     val amt = amountStr.toDoubleOrNull()

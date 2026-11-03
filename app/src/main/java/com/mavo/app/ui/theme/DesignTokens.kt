@@ -15,8 +15,8 @@ object Semantic {
     val errorBg = Color(0xFFFEF0F0)
     val warning = Color(0xFFD97706)
     val warningBg = Color(0xFFFFF7E6)
-    val info = Color(0xFF6366F1)
-    val infoBg = Color(0xFFEEF2FF)
+    val info = Color(0xFF0F766E)
+    val infoBg = Color(0xFFDCEFEA)
 
     val debit = Color(0xFFE24B4A)
     val debitBg = Color(0xFFFEF0F0)
@@ -30,11 +30,13 @@ object Semantic {
     val chartIncome = Color(0xFF22A06B)
     val chartExpense = Color(0xFFE24B4A)
     val chartPending = Color(0xFFD97706)
-    val chartNeutral = Color(0xFF9CA3AF)
+    val chartNeutral = Color(0xFF9C978C)
 }
 
 object Surface {
-    val background = Color(0xFFF7F5EF)
+    val background = Color.Transparent
+    val paperBackground = Color(0xFFF4F0E5)
+    val paperGrid = Color(0xFFCEC8BC)
     val card = Color(0xFFFFFCF7)
     val cardBorder = Color(0xFFE5E0D6)
     val input = Color(0xFFFFFCF7)
@@ -69,8 +71,8 @@ object Badge {
     val purchaseText = Color(0xFFE24B4A)
     val receiptBg = Color(0xFFFFF7E6)
     val receiptText = Color(0xFFD97706)
-    val paymentBg = Color(0xFFEEF2FF)
-    val paymentText = Color(0xFF6366F1)
+    val paymentBg = Color(0xFFF0ECE4)
+    val paymentText = Color(0xFF4D4A43)
     val returnBg = Color(0xFFFEF0F0)
     val returnText = Color(0xFFE24B4A)
     val overdueBg = Color(0xFFFEF0F0)
@@ -85,7 +87,6 @@ object ThemeNames {
     const val ZERO = "ZERO"
     const val SAFFRON = "SAFFRON"
     const val SLATE = "SLATE"
-    const val INK = "INK"
     const val LEDGER = "LEDGER"
     const val NIGHT = "NIGHT"
 }

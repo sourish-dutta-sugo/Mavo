@@ -46,7 +46,6 @@ import com.mavo.app.ui.theme.AppColors
 import kotlin.math.roundToInt
 
 private const val PressedScale = 0.97f
-private const val PressedOffsetDp = 0.75f
 private const val SelectedNavScale = 1.02f
 
 private data class PremiumMotionPrefs(
@@ -172,16 +171,9 @@ fun Modifier.pressScale(
         animationSpec = premiumSpringSpec(prefs),
         label = "premium_press_scale"
     )
-    val offset by animateFloatAsState(
-        targetValue = if (enabled && isPressed) 1f else 0f,
-        animationSpec = premiumSpringSpec(prefs),
-        label = "premium_press_offset"
-    )
-    val density = LocalDensity.current
     return graphicsLayer {
         scaleX = scale
         scaleY = scale
-        translationY = if (enabled && isPressed) with(density) { PressedOffsetDp.dp.toPx() * offset } else 0f
     }
 }
 
@@ -197,28 +189,6 @@ fun Modifier.m3SpringPress(
         targetValue = if (enabled && isPressed) pressedScale else 1f,
         animationSpec = premiumSpringSpec(prefs),
         label = "m3_spring_press_scale"
-    )
-    val translationYPx by animateFloatAsState(
-        targetValue = if (enabled && isPressed) 1.5f else 0f,
-        animationSpec = premiumSpringSpec(prefs),
-        label = "m3_spring_press_y"
-    )
-    return graphicsLayer {
-        scaleX = scale
-        scaleY = scale
-        translationY = translationYPx
-    }
-}
-
-@Composable
-fun Modifier.m3PulseHighlight(active: Boolean): Modifier {
-    val prefs = rememberPremiumMotionPrefs()
-    val scale by animateFloatAsState(
-        targetValue = if (active) 1.04f else 1f,
-        animationSpec = if (prefs.animationsEnabled) {
-            spring(dampingRatio = if (prefs.reducedMotion) 0.92f else 0.6f, stiffness = 300f)
-        } else snap(),
-        label = "m3_pulse_highlight"
     )
     return graphicsLayer {
         scaleX = scale

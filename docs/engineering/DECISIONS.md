@@ -1,6 +1,6 @@
 # DECISIONS.md — Mavo
 
-> Last updated: 2026-09-29  
+> Last updated: 2026-10-24  
 > Purpose: Document why specific technical choices were made so agents don't undo them.
 
 ## D1: Single Activity + Jetpack Navigation Compose
@@ -33,11 +33,13 @@
 **Over:** Global data with date-range filtering.  
 **Why:** Indian accounting is legally FY-based (April–March). Carry-forward of balances, FY close/lock, and FY-wise reporting all require explicit FY scoping. Date filtering alone doesn't handle opening balances correctly.
 
-## D6: 5 named themes (not dynamic Material You)
+## D6: Curated accent themes (not dynamic Material You)
 
-**Chose:** 5 hand-crafted themes (Saffron, Slate, Ledger, Ink, Night) stored in `AppTheme` data class.  
+**Chose:** 4 hand-crafted light themes (Zero, Saffron, Slate, Ledger) stored in `AppTheme` data class.  
 **Over:** Dynamic color from wallpaper (Material You / dynamic color).  
-**Why:** Brand consistency matters for a professional accounting app. Dynamic color can produce unpredictable combinations that clash with semantic colors (red=debit, green=credit). The curated themes ensure readability of financial data in all modes.
+**Why:** Brand consistency matters for a professional accounting app. Dynamic color can produce unpredictable combinations that clash with semantic colors (red=debit, green=credit). Curated accents keep financial data readable on the shared light canvas.
+
+**Revision (2026-11-02):** the purple **Ink** theme was retired — every accent now sits on the paper palette, and Saffron (`#A85F00`) / Slate (`#4D4A43`) were recolored so the four choices read as four distinct accents instead of four near-identical teals. Saved `INK` / `PURPLE` / `DARK` selections resolve to Zero.
 
 ## D7: HTML → WebView → PDF for invoices
 
@@ -96,3 +98,13 @@ modifier parameter, with `offset`, size, and padding modifiers at call sites.
 **Why:** Compose already provides position, size, and spacing controls.
 Composable modifier parameters let source callers tune individual surfaces
 without adding state, dependencies, or changing default layout.
+
+## D15: Light-only graph-paper canvas
+
+**Chose:** Draw a warm graph-paper canvas behind all screens and keep all
+selectable themes light.
+**Over:** Dark mode, wallpaper-driven dynamic color, or a new image-rendering
+dependency.
+**Why:** The supplied paper is the requested app background. Existing opaque
+Material 3 surfaces preserve text and financial-data contrast. Saved Night
+preferences map to Zero without changing user data or theme persistence.

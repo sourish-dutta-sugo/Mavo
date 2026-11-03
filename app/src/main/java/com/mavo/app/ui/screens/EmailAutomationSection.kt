@@ -6,8 +6,8 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +32,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -47,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -131,11 +133,12 @@ fun EmailAutomationSection(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Default.Email, contentDescription = null, tint = AppColors.primary)
                     Text("Email Automation", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppColors.textPrimary)
@@ -205,8 +208,9 @@ fun EmailAutomationSection(
 
         if (recipients.isEmpty()) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -216,8 +220,9 @@ fun EmailAutomationSection(
             }
         } else {
             Card(
-                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -227,7 +232,8 @@ fun EmailAutomationSection(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, AppColors.border, RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.Top
@@ -241,7 +247,7 @@ fun EmailAutomationSection(
                                     Text("Schedule ${rule.schedule} • ${rule.frequency.lowercase().replaceFirstChar { it.titlecase(Locale.getDefault()) }}", fontSize = 12.sp, color = AppColors.primary)
                                 }
                             }
-                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { editingRule = existingRule ?: EmailAutomationRule(id = "", customerId = recipient.customerId, customerName = recipient.customerName, customerEmail = recipient.customerEmail, subject = EmailAutomationService.defaultSubject(profile?.businessName.orEmpty()), template = EmailAutomationService.defaultTemplate(), dueAmount = recipient.dueAmount, dueDateLabel = recipient.dueDateLabel, invoiceReference = recipient.invoiceReference) }) {
                                     Text("Edit")
                                 }
@@ -259,11 +265,12 @@ fun EmailAutomationSection(
 
         if (missingEmailRecipients.isNotEmpty()) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Customer email unavailable", fontWeight = FontWeight.SemiBold, color = AppColors.textPrimary)
                     missingEmailRecipients.forEach { party ->
                         Text("• ${party.name}", fontSize = 13.sp, color = AppColors.textSecondary)
@@ -274,8 +281,9 @@ fun EmailAutomationSection(
         }
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -302,7 +310,7 @@ fun EmailAutomationSection(
             onDismissRequest = { showConsentDialog = false },
             title = { Text("Email Automation Consent") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("I agree to provide my email information to this application for Gmail automation purposes.", fontWeight = FontWeight.Bold)
                     Text("By enabling this feature, you allow this application to securely connect with your Gmail account through Google Authentication and send automated transaction-related emails, payment reminders, invoices, and notifications to your customers.")
                     Row(verticalAlignment = Alignment.CenterVertically) {

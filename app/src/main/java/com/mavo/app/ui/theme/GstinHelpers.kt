@@ -2,27 +2,27 @@ package com.mavo.app.ui.theme
 import com.mavo.app.ui.theme.AppColors
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-val STATE_CODE_TO_NAME = mapOf(
-    "01" to "Jammu and Kashmir", "02" to "Himachal Pradesh", "03" to "Punjab",
-    "04" to "Chandigarh", "05" to "Uttarakhand", "06" to "Haryana", "07" to "Delhi",
-    "08" to "Rajasthan", "09" to "Uttar Pradesh", "10" to "Bihar", "11" to "Sikkim",
-    "12" to "Arunachal Pradesh", "13" to "Nagaland", "14" to "Manipur", "15" to "Mizoram",
-    "16" to "Tripura", "17" to "Meghalaya", "18" to "Assam", "19" to "West Bengal",
-    "20" to "Jharkhand", "21" to "Odisha", "22" to "Chhattisgarh", "23" to "Madhya Pradesh",
-    "24" to "Gujarat", "27" to "Maharashtra", "29" to "Karnataka", "30" to "Goa",
-    "32" to "Kerala", "33" to "Tamil Nadu", "34" to "Puducherry", "36" to "Telangana",
-    "37" to "Andhra Pradesh", "38" to "Ladakh"
-)
+import com.mavo.app.data.Utils
+
+val STATE_CODE_TO_NAME = Utils.STATE_NAME_BY_CODE
 
 private val GSTIN_REGEX = Regex(
     "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
@@ -74,15 +74,26 @@ fun GstinValidationFeedback(
     when {
         gstin.length == 15 && gstinValid == true -> {
             Column(modifier = modifier.padding(top = 4.dp)) {
-                Text(
-                    "✓ Valid GSTIN",
-                    color = AppColors.success,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
                         .background(AppColors.successBg, RoundedCornerShape(4.dp))
                         .padding(horizontal = 8.dp, vertical = 2.dp)
-                )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Valid",
+                        tint = AppColors.success,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        "Valid GSTIN",
+                        color = AppColors.success,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
                 if (pan.isNotBlank()) {
                     Text(
                         "PAN: $pan (auto-extracted)",
@@ -101,16 +112,27 @@ fun GstinValidationFeedback(
             }
         }
         gstin.length == 15 && gstinValid == false -> {
-            Column(modifier = Modifier.padding(top = 4.dp)) {
-                Text(
-                    "✗ Invalid GSTIN format",
-                    color = AppColors.error,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
+            Column(modifier = modifier.padding(top = 4.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
                         .background(AppColors.errorBg, RoundedCornerShape(4.dp))
                         .padding(horizontal = 8.dp, vertical = 2.dp)
-                )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Invalid",
+                        tint = AppColors.error,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        "Invalid GSTIN format",
+                        color = AppColors.error,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
                 Text(
                     "Check: 2 digits + 5 letters + 4 digits + letter + digit/letter + Z + digit/letter",
                     color = AppColors.textTertiary,

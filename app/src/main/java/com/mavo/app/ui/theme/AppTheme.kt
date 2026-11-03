@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -38,10 +37,10 @@ data class AppTheme(
     val isDark: Boolean = false
 ) {
     companion object {
-        // Shared warm surfaces keep theme choices focused on brand accent.
+        // Graph-paper canvas stays fixed while theme choices change the accent.
         val ZERO = AppTheme(
             name = ThemeNames.ZERO,
-            backgroundPrimary = Color(0xFFF7F5EF),
+            backgroundPrimary = Color.Transparent,
             backgroundSecondary = Color(0xFFFFFCF7),
             backgroundTertiary = Color(0xFFF0ECE4),
             accentPrimary = Color(0xFF006B5F),
@@ -55,11 +54,11 @@ data class AppTheme(
 
         val SAFFRON = AppTheme(
             name = ThemeNames.SAFFRON,
-            backgroundPrimary = Color(0xFFF7F5EF),
+            backgroundPrimary = Color.Transparent,
             backgroundSecondary = Color(0xFFFFFCF7),
             backgroundTertiary = Color(0xFFF0ECE4),
-            accentPrimary = Color(0xFF1A5C4B),
-            accentLight = Color(0xFFDCEFEA),
+            accentPrimary = Color(0xFFA85F00),
+            accentLight = Color(0xFFFFF0DA),
             textPrimary = Color(0xFF211F1A),
             textSecondary = Color(0xFF4D4A43),
             textTertiary = Color(0xFF77736B),
@@ -69,11 +68,11 @@ data class AppTheme(
 
         val SLATE = AppTheme(
             name = ThemeNames.SLATE,
-            backgroundPrimary = Color(0xFFF7F5EF),
+            backgroundPrimary = Color.Transparent,
             backgroundSecondary = Color(0xFFFFFCF7),
             backgroundTertiary = Color(0xFFF0ECE4),
-            accentPrimary = Color(0xFF22755F),
-            accentLight = Color(0xFFDCEFEA),
+            accentPrimary = Color(0xFF4D4A43),
+            accentLight = Color(0xFFEDEAE2),
             textPrimary = Color(0xFF211F1A),
             textSecondary = Color(0xFF4D4A43),
             textTertiary = Color(0xFF77736B),
@@ -83,7 +82,7 @@ data class AppTheme(
 
         val LEDGER = AppTheme(
             name = ThemeNames.LEDGER,
-            backgroundPrimary = Color(0xFFF7F5EF),
+            backgroundPrimary = Color.Transparent,
             backgroundSecondary = Color(0xFFFFFCF7),
             backgroundTertiary = Color(0xFFF0ECE4),
             accentPrimary = Color(0xFF176B4A),
@@ -95,40 +94,15 @@ data class AppTheme(
             statusBarDarkIcons = true
         )
 
-        val INK = AppTheme(
-            name = ThemeNames.INK,
-            backgroundPrimary = Color(0xFFF7F5EF),
-            backgroundSecondary = Color(0xFFFFFCF7),
-            backgroundTertiary = Color(0xFFF0ECE4),
-            accentPrimary = Color(0xFF7C3AED),
-            accentLight = Color(0xFFEDE6FF),
-            textPrimary = Color(0xFF211F1A),
-            textSecondary = Color(0xFF4D4A43),
-            textTertiary = Color(0xFF77736B),
-            statusBarColor = Color(0xFFF7F5EF),
-            statusBarDarkIcons = true
-        )
+        // Ink (purple) retired: every accent now sits on the paper palette.
+        // Legacy saved names ("INK", "PURPLE", "DARK") fall through to ZERO.
 
-        val NIGHT = AppTheme(
-            name = ThemeNames.NIGHT,
-            backgroundPrimary = Color(0xFF101615),
-            backgroundSecondary = Color(0xFF18211F),
-            backgroundTertiary = Color(0xFF22302C),
-            accentPrimary = Color(0xFF72D2B2),
-            accentLight = Color(0xFF213C35),
-            textPrimary = Color(0xFFF1F5F3),
-            textSecondary = Color(0xFFB8C8C2),
-            textTertiary = Color(0xFF81938C),
-            statusBarColor = Color(0xFF101615),
-            statusBarDarkIcons = false,
-            isDark = true
-        )
+        val NIGHT = ZERO
 
         fun fromName(name: String?): AppTheme = when (name?.uppercase()) {
             ThemeNames.SLATE, "BLUE" -> SLATE
             ThemeNames.LEDGER, "GREEN" -> LEDGER
-            ThemeNames.INK, "PURPLE", "DARK" -> INK
-            ThemeNames.NIGHT -> NIGHT
+            ThemeNames.NIGHT -> ZERO
             ThemeNames.SAFFRON, "BEACH", "TEAL" -> SAFFRON
             ThemeNames.ZERO -> ZERO
             else -> ZERO
@@ -191,32 +165,7 @@ fun MavoTheme(
     appTheme: AppTheme = LocalAppTheme.current,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = (if (appTheme.isDark) darkColorScheme(
-        primary = appTheme.accentPrimary,
-        onPrimary = Color(0xFF082018),
-        primaryContainer = appTheme.accentLight,
-        onPrimaryContainer = appTheme.textPrimary,
-        secondary = appTheme.textSecondary,
-        onSecondary = appTheme.backgroundPrimary,
-        secondaryContainer = appTheme.backgroundTertiary,
-        onSecondaryContainer = appTheme.textPrimary,
-        tertiary = Color(0xFFFFB95C),
-        onTertiary = Color(0xFF452B00),
-        tertiaryContainer = Color(0xFF49371D),
-        onTertiaryContainer = Color(0xFFFFDEA6),
-        error = Color(0xFFFFB4AB),
-        onError = Color(0xFF690005),
-        errorContainer = Color(0xFF93000A),
-        onErrorContainer = Color(0xFFFFDAD6),
-        background = appTheme.backgroundPrimary,
-        surface = appTheme.backgroundSecondary,
-        outline = appTheme.textTertiary.copy(alpha = 0.45f),
-        outlineVariant = appTheme.textTertiary.copy(alpha = 0.24f),
-        onBackground = appTheme.textPrimary,
-        onSurface = appTheme.textPrimary,
-        surfaceVariant = appTheme.backgroundTertiary,
-        onSurfaceVariant = appTheme.textSecondary
-    ) else lightColorScheme(
+    val colorScheme = lightColorScheme(
         primary = appTheme.accentPrimary,
         onPrimary = TextColors.onPrimary,
         primaryContainer = appTheme.accentLight,
@@ -229,10 +178,10 @@ fun MavoTheme(
         onTertiary = Color(0xFFFFFFFF),
         tertiaryContainer = Semantic.warningBg,
         onTertiaryContainer = Color(0xFF4A2800),
-        error = Color(0xFFB3261E),
+        error = Semantic.error,
         onError = Color(0xFFFFFFFF),
-        errorContainer = Color(0xFFFFDAD6),
-        onErrorContainer = Color(0xFF410002),
+        errorContainer = Semantic.errorBg,
+        onErrorContainer = appTheme.textPrimary,
         background = appTheme.backgroundPrimary,
         surface = appTheme.backgroundSecondary,
         outline = Color(0xFF77736B),
@@ -241,7 +190,7 @@ fun MavoTheme(
         onSurface = appTheme.textPrimary,
         surfaceVariant = appTheme.backgroundTertiary,
         onSurfaceVariant = appTheme.textSecondary
-    ))
+    )
 
     val currentDensity = LocalDensity.current
     val fixedDensity = remember(currentDensity.density) {

@@ -36,7 +36,7 @@ object Utils {
         "Daman & Diu" to "25",
         "Dadra & Nagar Haveli" to "26",
         "Maharashtra" to "27",
-        "Andhra Pradesh" to "28",
+        "Andhra Pradesh (old)" to "28",
         "Karnataka" to "29",
         "Goa" to "30",
         "Lakshadweep" to "31",
@@ -45,9 +45,14 @@ object Utils {
         "Puducherry" to "34",
         "Andaman & Nicobar Islands" to "35",
         "Telangana" to "36",
-        "Andhra Pradesh (New)" to "37",
+        "Andhra Pradesh" to "37",
         "Ladakh" to "38"
     )
+
+    val STATE_CODE_BY_NAME = INDIAN_STATES.toMap()
+    val STATE_NAME_BY_CODE = INDIAN_STATES
+        .map { it.second to it.first.removeSuffix(" (old)") }
+        .toMap()
 
     fun formatIndianCurrency(amount: Double): String =
         (if (amount < 0) "-" else "") + "₹" + DecimalFormat("#,##,##0.00").format(Math.abs(amount))

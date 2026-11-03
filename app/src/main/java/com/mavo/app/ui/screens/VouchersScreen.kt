@@ -80,7 +80,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.mavo.app.data.*
-import com.mavo.app.data.EmailReminderScheduler
 import com.mavo.app.services.ExportStorageManager
 import com.mavo.app.services.ExportTarget
 import com.mavo.app.services.InvoiceGenerator
@@ -171,31 +170,31 @@ private data class VoucherTabGroup(
 
 private fun voucherTypeTabs(): List<VoucherTabGroup> = listOf(
     VoucherTabGroup("Sales & Orders", Icons.AutoMirrored.Filled.ReceiptLong, listOf(
-        VoucherTypeCardData("QUOTATION", "Quotation", "Create estimate or quote", Icons.Default.RequestQuote, Color(0xFF4F46E5)),
-        VoucherTypeCardData("SALES_ORDER", "Sales Order", "Confirm customer order", Icons.Default.SwapHoriz, Color(0xFF7C3AED)),
-        VoucherTypeCardData("DELIVERY_CHALLAN", "Delivery Challan", "Record goods dispatch", Icons.Default.LocalShipping, Color(0xFF0891B2)),
-        VoucherTypeCardData("SALE", "Tax Invoice", "Record sales to customers", Icons.AutoMirrored.Filled.ReceiptLong, Color(0xFF16A34A)),
-        VoucherTypeCardData("CREDIT_NOTE", "Credit Note", "Issue credit to party", Icons.Default.Description, Color(0xFF1D4ED8))
+        VoucherTypeCardData("QUOTATION", "Quotation", "Create estimate or quote", Icons.Default.RequestQuote, voucherBadgeColor("QUOTATION")),
+        VoucherTypeCardData("SALES_ORDER", "Sales Order", "Confirm customer order", Icons.Default.SwapHoriz, voucherBadgeColor("SALES_ORDER")),
+        VoucherTypeCardData("DELIVERY_CHALLAN", "Delivery Challan", "Record goods dispatch", Icons.Default.LocalShipping, voucherBadgeColor("DELIVERY_CHALLAN")),
+        VoucherTypeCardData("SALE", "Tax Invoice", "Record sales to customers", Icons.AutoMirrored.Filled.ReceiptLong, voucherBadgeColor("SALE")),
+        VoucherTypeCardData("CREDIT_NOTE", "Credit Note", "Issue credit to party", Icons.Default.Description, voucherBadgeColor("CREDIT_NOTE"))
     )),
     VoucherTabGroup("Purchases", Icons.Default.Store, listOf(
-        VoucherTypeCardData("PURCHASE_ORDER", "Purchase Order", "Place order with supplier", Icons.Default.Store, Color(0xFF7C3AED)),
-        VoucherTypeCardData("GOODS_RECEIPT_NOTE", "Goods Receipt Note", "Record goods received", Icons.Default.Inventory2, Color(0xFF0F766E)),
-        VoucherTypeCardData("PURCHASE", "Purchase Invoice", "Record purchases from suppliers", Icons.Default.Store, Color(0xFF7C3AED)),
-        VoucherTypeCardData("DEBIT_NOTE", "Debit Note", "Raise debit against party", Icons.Default.Description, Color(0xFF9333EA))
+        VoucherTypeCardData("PURCHASE_ORDER", "Purchase Order", "Place order with supplier", Icons.Default.Store, voucherBadgeColor("PURCHASE_ORDER")),
+        VoucherTypeCardData("GOODS_RECEIPT_NOTE", "Goods Receipt Note", "Record goods received", Icons.Default.Inventory2, voucherBadgeColor("GOODS_RECEIPT_NOTE")),
+        VoucherTypeCardData("PURCHASE", "Purchase Invoice", "Record purchases from suppliers", Icons.Default.Store, voucherBadgeColor("PURCHASE")),
+        VoucherTypeCardData("DEBIT_NOTE", "Debit Note", "Raise debit against party", Icons.Default.Description, voucherBadgeColor("DEBIT_NOTE"))
     )),
     VoucherTabGroup("Banking & Accounts", Icons.Default.Payments, listOf(
-        VoucherTypeCardData("RECEIPT", "Receipt", "Receive customer payments", Icons.Default.Payments, Color(0xFF059669)),
-        VoucherTypeCardData("PAYMENT", "Payment", "Record outgoing payments", Icons.Default.CreditCard, Color(0xFFDC2626)),
-        VoucherTypeCardData("EXPENSE", "Expense", "Record a business expense", Icons.Default.Inventory2, Color(0xFFDB2777)),
-        VoucherTypeCardData("INCOME", "Income", "Track incoming funds", Icons.Default.Payments, Color(0xFF0D9488)),
-        VoucherTypeCardData("JOURNAL", "Journal", "Manual ledger adjustment", Icons.Outlined.Edit, Color(0xFF475569))
+        VoucherTypeCardData("RECEIPT", "Receipt", "Receive customer payments", Icons.Default.Payments, voucherBadgeColor("RECEIPT")),
+        VoucherTypeCardData("PAYMENT", "Payment", "Record outgoing payments", Icons.Default.CreditCard, voucherBadgeColor("PAYMENT")),
+        VoucherTypeCardData("EXPENSE", "Expense", "Record a business expense", Icons.Default.Inventory2, voucherBadgeColor("EXPENSE")),
+        VoucherTypeCardData("INCOME", "Income", "Track incoming funds", Icons.Default.Payments, voucherBadgeColor("INCOME")),
+        VoucherTypeCardData("JOURNAL", "Journal", "Manual ledger adjustment", Icons.Outlined.Edit, voucherBadgeColor("JOURNAL"))
     )),
     VoucherTabGroup("More", Icons.Default.Add, listOf(
-        VoucherTypeCardData("INQUIRY", "Inquiry / RFQ", "Request price from supplier", Icons.Default.RequestQuote, Color(0xFF0D9488)),
-        VoucherTypeCardData("PROFORMA", "Proforma Invoice", "Draft invoice for approval", Icons.AutoMirrored.Filled.Assignment, Color(0xFF4F46E5)),
-        VoucherTypeCardData("MATERIAL_NOTE", "Material In/Out", "Transfer stock between godowns", Icons.Default.Inventory2, Color(0xFFB91C1C)),
-        VoucherTypeCardData("REJECTION_NOTE", "Rejection In/Out", "Record rejected items", Icons.Default.SwapHoriz, Color(0xFFEA580C)),
-        VoucherTypeCardData("PETTY_CASH", "Petty Cash", "Record small cash expenses", Icons.Default.Payments, Color(0xFF0891B2))
+        VoucherTypeCardData("INQUIRY", "Inquiry / RFQ", "Request price from supplier", Icons.Default.RequestQuote, voucherBadgeColor("INQUIRY")),
+        VoucherTypeCardData("PROFORMA", "Proforma Invoice", "Draft invoice for approval", Icons.AutoMirrored.Filled.Assignment, voucherBadgeColor("PROFORMA")),
+        VoucherTypeCardData("MATERIAL_NOTE", "Material In/Out", "Transfer stock between godowns", Icons.Default.Inventory2, voucherBadgeColor("MATERIAL_NOTE")),
+        VoucherTypeCardData("REJECTION_NOTE", "Rejection In/Out", "Record rejected items", Icons.Default.SwapHoriz, voucherBadgeColor("REJECTION_NOTE")),
+        VoucherTypeCardData("PETTY_CASH", "Petty Cash", "Record small cash expenses", Icons.Default.Payments, voucherBadgeColor("PETTY_CASH"))
     ))
 )
 
@@ -308,30 +307,16 @@ private val voucherSortOptions = listOf(
     VoucherSortOption(SORT_PARTY_NAME_ZA, "Party Name (Z–A)")
 )
 
+// One hue per voucher group: money in, money out, pre-sale docs, returns and
+// adjustments, stock movement, cash in hand. Card accents and badges both read
+// this so the two lists can never drift apart.
 private fun voucherBadgeColor(type: String): Color = when (type) {
-    "SALE" -> Color(0xFF16A34A)
-    "PURCHASE" -> Color(0xFF7C3AED)
-    "RECEIPT" -> Color(0xFF059669)
-    "PAYMENT" -> Color(0xFFDC2626)
-    "JOURNAL" -> Color(0xFF475569)
-    "SALE_RETURN" -> Color(0xFFEA580C)
-    "PURCHASE_RETURN" -> Color(0xFFB91C1C)
-    "BILLS_RECEIVABLE" -> Color(0xFF0F766E)
-    "BILLS_PAYABLE" -> Color(0xFF92400E)
-    "DEBIT_NOTE" -> Color(0xFF9333EA)
-    "CREDIT_NOTE" -> Color(0xFF1D4ED8)
-    "QUOTATION" -> Color(0xFF4F46E5)
-    "DELIVERY_CHALLAN" -> Color(0xFF0891B2)
-    "INCOME" -> Color(0xFF0D9488)
-    "EXPENSE" -> Color(0xFFDB2777)
-    "INQUIRY" -> Color(0xFF0D9488)
-    "SALES_ORDER" -> Color(0xFF7C3AED)
-    "PURCHASE_ORDER" -> Color(0xFF4F46E5)
-    "GOODS_RECEIPT_NOTE" -> Color(0xFF0F766E)
-    "MATERIAL_NOTE" -> Color(0xFFB91C1C)
-    "REJECTION_NOTE" -> Color(0xFFEA580C)
-    "PETTY_CASH" -> Color(0xFF0891B2)
-    "PROFORMA" -> Color(0xFF4F46E5)
+    "SALE", "RECEIPT", "INCOME", "BILLS_RECEIVABLE" -> AppColors.success
+    "PURCHASE", "PAYMENT", "EXPENSE", "BILLS_PAYABLE" -> AppColors.error
+    "QUOTATION", "SALES_ORDER", "PURCHASE_ORDER", "PROFORMA", "INQUIRY" -> AppColors.warning
+    "SALE_RETURN", "PURCHASE_RETURN", "CREDIT_NOTE", "DEBIT_NOTE", "REJECTION_NOTE", "JOURNAL" -> Color(0xFF0F766E)
+    "DELIVERY_CHALLAN", "GOODS_RECEIPT_NOTE", "MATERIAL_NOTE" -> AppColors.badgePaymentText
+    "PETTY_CASH" -> AppColors.gold
     else -> AppColors.primary
 }
 
@@ -456,7 +441,7 @@ private fun JournalLinesEditor(
     rows: MutableList<JournalUiRow>,
     accounts: List<com.mavo.app.data.LedgerAccount>
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         rows.forEachIndexed { index, row ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -547,12 +532,12 @@ private fun JournalLinesEditor(
 
 @Composable
 private fun transportFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color(0xFF0D0D0D),
-    unfocusedTextColor = Color(0xFF0D0D0D),
+    focusedTextColor = AppColors.textPrimary,
+    unfocusedTextColor = AppColors.textPrimary,
     focusedContainerColor = Color(0xFFFFFFFF),
     unfocusedContainerColor = Color(0xFFFFFFFF),
-    focusedBorderColor = Color(0xFF1A73E8),
-    unfocusedBorderColor = Color(0xFFE0E4EA)
+    focusedBorderColor = AppColors.primary,
+    unfocusedBorderColor = AppColors.inputBorder
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -574,7 +559,7 @@ private fun TransportDetailField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, color = Color(0xFF444444)) },
+        label = { Text(label, color = AppColors.textSecondary) },
         placeholder = { Text(placeholder) },
         modifier = Modifier
             .fillMaxWidth()
@@ -695,7 +680,7 @@ private fun TransportDetailsSection(
             if (amount > 0.0 && transportName.isBlank()) {
                 Text(
                     "Transporter name recommended for records",
-                    color = Color.Gray,
+                    color = AppColors.textHint,
                     fontSize = 11.sp
                 )
             }
@@ -769,11 +754,11 @@ private fun DashedBadge(text: String) {
         }
         Text(
             text = text,
-            fontSize = 9.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.8.sp,
             color = AppColors.textSecondary,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
         )
     }
 }
@@ -794,27 +779,27 @@ private fun VoucherSelectionBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AppColors.primary)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .statusBarsPadding()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.12f))
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
                     .clickable(onClick = onClose),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Close selection",
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -823,7 +808,7 @@ private fun VoucherSelectionBar(
                 text = "${controller.selectedCount} selected",
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.weight(1f))
             Box {
@@ -831,14 +816,14 @@ private fun VoucherSelectionBar(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.12f))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
                         .clickable { menuOpen = true },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreHoriz,
                         contentDescription = "More selection options",
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -858,7 +843,7 @@ private fun VoucherSelectionBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SelectionTile(
@@ -887,7 +872,7 @@ private fun SelectionTile(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.White.copy(alpha = 0.12f))
+            .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable(onClick = onClick)
             .padding(vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -895,7 +880,7 @@ private fun SelectionTile(
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = Color.White,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -903,7 +888,7 @@ private fun SelectionTile(
             text = label,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }
 }
@@ -923,7 +908,7 @@ private fun VoucherListRow(
             .fillMaxWidth()
             .background(if (selected) AppColors.primary.copy(alpha = 0.06f) else Color.Transparent)
             .premiumCombinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -967,7 +952,7 @@ private fun VoucherListRow(
             color = AppColors.textSecondary
         )
         if (!isLast) {
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider(color = ScreenBorder, thickness = 1.dp)
         }
     }
@@ -1203,7 +1188,8 @@ fun VouchersScreen(
         Row(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.width(360.dp).fillMaxHeight()) {
                 Scaffold(
-                    containerColor = AppColors.screenBg,
+                    modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+                    containerColor = Color.Transparent,
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                     topBar = {
                         if (selectionController.isSelectionActive) {
@@ -1223,14 +1209,14 @@ fun VouchersScreen(
                             contentColor = AppColors.textOnPrimary,
                             shape = CircleShape,
                             elevation = FloatingActionButtonDefaults.elevation(
-                                defaultElevation = 6.dp,
-                                pressedElevation = 10.dp
+                                defaultElevation = 8.dp,
+                                pressedElevation = 12.dp
                             ),
                             modifier = Modifier
                                 .size(56.dp)
                                 .premiumFabEntrance()
                                 .pressScale()
-                                .shadow(8.dp, CircleShape, ambientColor = AppColors.primary.copy(alpha = 0.25f))
+                                .shadow(8.dp, CircleShape)
                                 .testTag("add_voucher_fab")
                         ) {
                             Icon(
@@ -1244,15 +1230,25 @@ fun VouchersScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(AppColors.screenBg)
+                            .background(Color.Transparent)
                             .padding(innerPadding),
                         verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
-                        Column(
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 0.dp)
+                                .padding(horizontal = 16.dp)
+                                .padding(top = 12.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, AppColors.border),
+                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                         ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                             Text(
                                 text = "Vouchers",
                                 fontSize = 24.sp,
@@ -1260,14 +1256,29 @@ fun VouchersScreen(
                                 color = AppColors.textPrimary,
                                 letterSpacing = (-0.25).sp
                             )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, AppColors.border),
+                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                        ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
+                                .padding(horizontal = 8.dp)
                         ) {
                             OutlinedTextField(
                                 value = searchQuery,
@@ -1294,7 +1305,7 @@ fun VouchersScreen(
                                                 imageVector = Icons.Default.Close,
                                                 contentDescription = "Clear",
                                                 tint = AppColors.textTertiary,
-                                                modifier = Modifier.size(18.dp)
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }
@@ -1322,8 +1333,8 @@ fun VouchersScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                .padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             BadgedBox(
@@ -1348,7 +1359,7 @@ fun VouchersScreen(
                                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                                 ) {
                                     Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text("Filter", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                                 }
                             }
@@ -1363,7 +1374,7 @@ fun VouchersScreen(
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                             ) {
                                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     if (appliedSortOption == SORT_DEFAULT) "Sort" else "Sort: ${voucherSortLabel(appliedSortOption)}",
                                     fontSize = 13.sp,
@@ -1373,20 +1384,20 @@ fun VouchersScreen(
                         }
 
                         if (appliedFilterState.activeFilterCount > 0) {
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
                             FlowRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    .padding(horizontal = 12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 appliedFilterState.toActiveChips().forEach { chip ->
                                     InputChip(
                                         selected = false,
                                         onClick = { appliedFilterState = appliedFilterState.removeFilter(chip.key) },
                                         label = { Text(chip.label, fontSize = 12.sp) },
-                                        trailingIcon = { Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(14.dp)) }
+                                        trailingIcon = { Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp)) }
                                     )
                                 }
                                 AssistChip(
@@ -1395,9 +1406,11 @@ fun VouchersScreen(
                                         pendingFilterState = VoucherFilterState()
                                     },
                                     label = { Text("Clear All", fontSize = 12.sp) },
-                                    leadingIcon = { Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(14.dp)) }
+                                    leadingIcon = { Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp)) }
                                 )
                             }
+                        }
+                        }
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -1411,32 +1424,40 @@ fun VouchersScreen(
                             UiLoadStateNotice(
                                 state = vouchersReadState,
                                 onRetry = viewModel::retryFailedReads,
-                                modifier = Modifier.padding(horizontal = 20.dp)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 20.dp)
                             )
                         } else if (displayedVouchers.isEmpty()) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
-                                    Icon(Icons.Default.FilterList, contentDescription = null, tint = AppColors.textTertiary, modifier = Modifier.size(48.dp))
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("No vouchers match your filters.", color = AppColors.textPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text("Adjust the filters or clear them to restore the full list.", color = AppColors.textSecondary, fontSize = 13.sp, textAlign = TextAlign.Center)
-                                    if (appliedFilterState.activeFilterCount > 0 || searchQuery.isNotBlank()) {
-                                        Spacer(modifier = Modifier.height(10.dp))
-                                        TextButton(onClick = {
-                                            searchQuery = ""
-                                            appliedFilterState = VoucherFilterState()
-                                            pendingFilterState = VoucherFilterState()
-                                        }) { Text("Clear Filters") }
+                            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = BorderStroke(1.dp, AppColors.border),
+                                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
+                                        Icon(Icons.Default.FilterList, contentDescription = null, tint = AppColors.textTertiary, modifier = Modifier.size(48.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text("No vouchers match your filters.", color = AppColors.textPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text("Adjust the filters or clear them to restore the full list.", color = AppColors.textSecondary, fontSize = 13.sp, textAlign = TextAlign.Center)
+                                        if (appliedFilterState.activeFilterCount > 0 || searchQuery.isNotBlank()) {
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            TextButton(onClick = {
+                                                searchQuery = ""
+                                                appliedFilterState = VoucherFilterState()
+                                                pendingFilterState = VoucherFilterState()
+                                            }) { Text("Clear Filters") }
+                                        }
                                     }
                                 }
                             }
                         } else {
                             LazyColumn(
                                 state = desktopVoucherListState,
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
                                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 88.dp),
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.weight(1f).fillMaxWidth()
                             ) {
                                 items(displayedVouchers, key = { it.id }) { voucher ->
                                     val partyName = voucher.partyId?.let { partyNameById[it] } ?: "Cash / Bank Account"
@@ -1445,11 +1466,11 @@ fun VouchersScreen(
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .shadow(3.dp, RoundedCornerShape(14.dp), ambientColor = Color(0x08000000))
+                                            .shadow(4.dp, RoundedCornerShape(16.dp))
                                             .border(
                                                 1.dp,
                                                 if (isSelected || selectionController.isSelected(voucher.id)) AppColors.primary.copy(alpha = 0.35f) else AppColors.border.copy(alpha = 0.5f),
-                                                RoundedCornerShape(14.dp)
+                                                RoundedCornerShape(16.dp)
                                             )
                                             .premiumCombinedClickable(
                                                 onClick = {
@@ -1466,7 +1487,7 @@ fun VouchersScreen(
                                         ),
                                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                                     ) {
-                                        Column(modifier = Modifier.padding(14.dp)) {
+                                        Column(modifier = Modifier.padding(16.dp)) {
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1476,10 +1497,13 @@ fun VouchersScreen(
                                                     text = voucher.voucherNo,
                                                     fontWeight = FontWeight.SemiBold,
                                                     fontSize = 13.sp,
-                                                    color = AppColors.textPrimary
+                                                    color = AppColors.textPrimary,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    modifier = Modifier.weight(1f, fill = false)
                                                 )
                                                 Surface(
-                                                    shape = RoundedCornerShape(6.dp),
+                                                    shape = RoundedCornerShape(8.dp),
                                                     color = badgeColor.copy(alpha = 0.1f)
                                                 ) {
                                                     Text(
@@ -1487,16 +1511,18 @@ fun VouchersScreen(
                                                         color = badgeColor,
                                                         fontSize = 10.sp,
                                                         fontWeight = FontWeight.SemiBold,
-                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                                     )
                                                 }
                                             }
-                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Spacer(modifier = Modifier.height(8.dp))
                                             Text(
                                                 text = partyName,
                                                 fontSize = 13.sp,
                                                 fontWeight = FontWeight.Medium,
-                                                color = AppColors.textSecondary
+                                                color = AppColors.textSecondary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                             Spacer(modifier = Modifier.height(8.dp))
                                             Row(
@@ -1548,7 +1574,7 @@ fun VouchersScreen(
         }
     } else {
         Scaffold(
-            containerColor = AppColors.screenBg,
+            containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             topBar = {
                 if (selectionController.isSelectionActive) {
@@ -1592,32 +1618,54 @@ fun VouchersScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(AppColors.screenBg)
+                    .background(Color.Transparent)
                     .padding(innerPadding)
             ) {
-                Row(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, AppColors.border),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                 ) {
-                    Text(
-                        text = "Vouchers",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AppColors.textPrimary
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        text = "FY ${profile?.fyLabel?.takeIf { it.isNotBlank() } ?: viewModel.financialYear.value}",
-                        fontSize = 15.sp,
-                        color = AppColors.textSecondary
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Vouchers",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.textPrimary
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "FY ${profile?.fyLabel?.takeIf { it.isNotBlank() } ?: viewModel.financialYear.value}",
+                            fontSize = 15.sp,
+                            color = AppColors.textSecondary
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, AppColors.border),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                 SearchField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -1648,7 +1696,7 @@ fun VouchersScreen(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Row(
                     modifier = Modifier
@@ -1670,7 +1718,7 @@ fun VouchersScreen(
                                     Badge(
                                         containerColor = AppColors.primary,
                                         contentColor = AppColors.textOnPrimary,
-                                        modifier = Modifier.size(7.dp)
+                                        modifier = Modifier.size(8.dp)
                                     ) {}
                                 }
                             }
@@ -1679,10 +1727,10 @@ fun VouchersScreen(
                                 imageVector = Icons.Default.FilterList,
                                 contentDescription = "Filter",
                                 tint = AppColors.textSecondary,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Filter",
                             fontSize = 15.sp,
@@ -1701,9 +1749,9 @@ fun VouchersScreen(
                             imageVector = Icons.Default.SwapVert,
                             contentDescription = "Sort",
                             tint = AppColors.textSecondary,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = if (appliedSortOption == SORT_DEFAULT) {
                                 "Sort \u00B7 Date"
@@ -1718,13 +1766,13 @@ fun VouchersScreen(
                 }
 
                 if (appliedFilterState.activeFilterCount > 0) {
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         appliedFilterState.toActiveChips().forEach { chip ->
                             InputChip(
@@ -1732,7 +1780,7 @@ fun VouchersScreen(
                                 onClick = { appliedFilterState = appliedFilterState.removeFilter(chip.key) },
                                 label = { Text(chip.label, fontSize = 12.sp) },
                                 trailingIcon = {
-                                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
                                 }
                             )
                         }
@@ -1743,13 +1791,15 @@ fun VouchersScreen(
                             },
                             label = { Text("Clear All", fontSize = 12.sp) },
                             leadingIcon = {
-                                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp))
                             }
                         )
                     }
                 }
+                }
+                }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider(color = ScreenBorder)
                 Spacer(modifier = Modifier.height(12.dp))
                 UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
@@ -1762,11 +1812,13 @@ fun VouchersScreen(
                     UiLoadStateNotice(
                         state = vouchersReadState,
                         onRetry = viewModel::retryFailedReads,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 16.dp)
                     )
                 } else if (vouchers.isEmpty()) {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
                         EmptyState(
@@ -1777,40 +1829,46 @@ fun VouchersScreen(
                     }
                 } else if (displayedVouchers.isEmpty()) {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(24.dp)
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, AppColors.border),
+                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.FilterList,
-                                contentDescription = null,
-                                tint = AppColors.textTertiary,
-                                modifier = Modifier.size(44.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "No vouchers match your filters.",
-                                color = AppColors.textPrimary,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                "Adjust the filters or clear them to restore the full list.",
-                                color = AppColors.textSecondary,
-                                fontSize = 13.sp,
-                                textAlign = TextAlign.Center
-                            )
-                            if (appliedFilterState.activeFilterCount > 0 || searchQuery.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                TextButton(onClick = {
-                                    searchQuery = ""
-                                    appliedFilterState = VoucherFilterState()
-                                    pendingFilterState = VoucherFilterState()
-                                }) { Text("Clear Filters") }
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FilterList,
+                                    contentDescription = null,
+                                    tint = AppColors.textTertiary,
+                                    modifier = Modifier.size(44.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "No vouchers match your filters.",
+                                    color = AppColors.textPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "Adjust the filters or clear them to restore the full list.",
+                                    color = AppColors.textSecondary,
+                                    fontSize = 13.sp,
+                                    textAlign = TextAlign.Center
+                                )
+                                if (appliedFilterState.activeFilterCount > 0 || searchQuery.isNotBlank()) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    TextButton(onClick = {
+                                        searchQuery = ""
+                                        appliedFilterState = VoucherFilterState()
+                                        pendingFilterState = VoucherFilterState()
+                                    }) { Text("Clear Filters") }
+                                }
                             }
                         }
                     }
@@ -1826,7 +1884,7 @@ fun VouchersScreen(
                     ) {
                         LazyColumn(
                             state = mobileVoucherListState,
-                            contentPadding = PaddingValues(top = 6.dp, bottom = 100.dp),
+                            contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(displayedVouchers, key = { it.id }) { voucher ->
@@ -2045,7 +2103,6 @@ fun NewVoucherScreen(
     var showQuickAddProductDialog by remember { mutableStateOf(false) }
     var quickAddInitialProductName by remember { mutableStateOf("") }
     var pendingSelectedProduct by remember { mutableStateOf<Product?>(null) }
-    var quickAddProductItemIndex by remember { mutableStateOf<Int?>(null) }
     var showItemEntrySheet by remember { mutableStateOf(false) }
     var editingItemIndex by remember { mutableStateOf<Int?>(null) }
     var showStockReportSheet by remember { mutableStateOf(false) }
@@ -2058,7 +2115,6 @@ fun NewVoucherScreen(
     var saveShouldPrint by remember { mutableStateOf(false) }
     var showPrintReceiptDialog by remember { mutableStateOf(false) }
     var printedVoucherId by remember { mutableStateOf<String?>(null) }
-    var isSavingAndPrinting by remember { mutableStateOf(false) }
     var pendingSaveAsPdfFile by remember { mutableStateOf<File?>(null) }
     var navigateBackAfterPdfSave by remember { mutableStateOf(false) }
     val saveInvoicePdfLauncher = rememberLauncherForActivityResult(
@@ -2428,7 +2484,7 @@ fun NewVoucherScreen(
                     ((debit > 0.0 || credit > 0.0) && row.accountHead.isBlank())
             }
             if (voucherNo.trim().isBlank()) {
-                android.widget.Toast.makeText(context, "Cannot save: Voucher Number is missing!", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(context, "Cannot save: Voucher Number is missing", android.widget.Toast.LENGTH_LONG).show()
             } else if (hasInvalidRows) {
                 android.widget.Toast.makeText(context, "Each journal row needs an account and one amount.", android.widget.Toast.LENGTH_LONG).show()
             } else if (!hasValidRows) {
@@ -2447,11 +2503,11 @@ fun NewVoucherScreen(
             } else if ((selectedType == "SALE_RETURN" || selectedType == "PURCHASE_RETURN") && lineItems.none { it.qty > 0.0 }) {
                 android.widget.Toast.makeText(context, "Cannot save: Keep at least one return quantity above zero.", android.widget.Toast.LENGTH_LONG).show()
             } else if (isBill && lineItems.isEmpty()) {
-                android.widget.Toast.makeText(context, "Cannot save: Add at least 1 item!", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(context, "Cannot save: Add at least 1 item", android.widget.Toast.LENGTH_LONG).show()
             } else if (isBill && lineItems.any { it.qty <= 0.0 }) {
-                android.widget.Toast.makeText(context, "Cannot save: Invalid quantities!", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(context, "Cannot save: Invalid quantities", android.widget.Toast.LENGTH_LONG).show()
             } else if (!isBill && netAmount.value <= 0.0) {
-                android.widget.Toast.makeText(context, "Cannot save: Invalid amount!", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(context, "Cannot save: Invalid amount", android.widget.Toast.LENGTH_LONG).show()
             } else if (selectedType in setOf("INCOME", "EXPENSE") && financialCategory.isBlank()) {
                 android.widget.Toast.makeText(context, "Choose a category before posting.", android.widget.Toast.LENGTH_LONG).show()
             } else if (selectedType == "SALE" && paymentMode == "PART PAYMENT" && (partialAmountPaidText.toDoubleOrNull() ?: 0.0) <= 0.0) {
@@ -2459,11 +2515,11 @@ fun NewVoucherScreen(
             } else if (selectedType == "SALE" && paymentMode == "PART PAYMENT" && (partialAmountPaidText.toDoubleOrNull() ?: 0.0) >= netAmount.value) {
                 android.widget.Toast.makeText(context, "Cannot save: Part payment must be less than net total.", android.widget.Toast.LENGTH_LONG).show()
             } else if (paymentMode == "CHEQUE" && (chequeNo.isBlank() || bankName.isBlank())) {
-                android.widget.Toast.makeText(context, "Cannot save: Main Cheque details are missing!", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(context, "Cannot save: Main Cheque details are missing", android.widget.Toast.LENGTH_LONG).show()
             } else if (voucherNo.trim().isBlank()) {
-                android.widget.Toast.makeText(context, "Cannot save: Voucher Number is missing!", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(context, "Cannot save: Voucher Number is missing", android.widget.Toast.LENGTH_LONG).show()
             } else if (selectedType in partyRequiredTypes && selectedParty == null) {
-                android.widget.Toast.makeText(context, "Cannot save: Party is required for this voucher type!", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(context, "Cannot save: Party is required for this voucher type", android.widget.Toast.LENGTH_LONG).show()
             } else {
                 saveShouldPrint = shouldPrint
                 showConfirmSaveDialog = true
@@ -2715,33 +2771,36 @@ fun NewVoucherScreen(
         val typeTiles = voucherTypeTabs().flatMap { it.types }
 
         Scaffold(
-            containerColor = AppColors.screenBg,
+            modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+            containerColor = Color.Transparent,
             topBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            "Create new",
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AppColors.textPrimary
-                        )
-                        Text(
-                            "Choose a voucher type",
-                            fontSize = 15.sp,
-                            color = AppColors.textSecondary
+                Surface(color = MaterialTheme.colorScheme.surface) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                            .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Create new",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.textPrimary
+                            )
+                            Text(
+                                "Choose a voucher type",
+                                fontSize = 15.sp,
+                                color = AppColors.textSecondary
+                            )
+                        }
+                        CircleIconButton(
+                            icon = Icons.Default.Close,
+                            contentDescription = "Close",
+                            onClick = onNavigateBack
                         )
                     }
-                    CircleIconButton(
-                        icon = Icons.Default.Close,
-                        contentDescription = "Close",
-                        onClick = onNavigateBack
-                    )
                 }
             }
         ) { innerPadding ->
@@ -2760,8 +2819,8 @@ fun NewVoucherScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(AppColors.cardBg)
-                            .border(1.dp, ScreenBorder, RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                             .clickable {
                                 selectedType = type.key
                                 formStep = 1
@@ -2774,9 +2833,9 @@ fun NewVoucherScreen(
                             type.icon,
                             contentDescription = type.title,
                             tint = AppColors.textPrimary,
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(24.dp)
                         )
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             type.title,
                             fontSize = 14.sp,
@@ -2795,7 +2854,8 @@ fun NewVoucherScreen(
         if (selectedType == "BILLS_RECEIVABLE") {
             val billsReceivable by viewModel.billsReceivable.collectAsState()
             Scaffold(
-                containerColor = AppColors.screenBg,
+                modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+                containerColor = Color.Transparent,
                 topBar = {
                     TopAppBar(
                         title = { Text("Bills Receivable", fontWeight = FontWeight.Bold) },
@@ -2820,7 +2880,8 @@ fun NewVoucherScreen(
         }
         if (selectedType == "BILLS_PAYABLE") {
             Scaffold(
-                containerColor = AppColors.screenBg,
+                modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+                containerColor = Color.Transparent,
                 topBar = {
                     TopAppBar(
                         title = { Text("Bills Payable", fontWeight = FontWeight.Bold) },
@@ -2845,7 +2906,8 @@ fun NewVoucherScreen(
         }
         if (selectedType == "JOURNAL" && isEditMode) {
             Scaffold(
-                containerColor = AppColors.screenBg,
+                modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+                containerColor = Color.Transparent,
                 topBar = {
                     TopAppBar(
                         title = { Text("Journal Entry", fontWeight = FontWeight.Bold) },
@@ -2877,7 +2939,7 @@ fun NewVoucherScreen(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = AppColors.textTertiary,
-                        letterSpacing = 0.8.sp
+                        letterSpacing = 0.sp
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -3083,18 +3145,18 @@ fun NewVoucherScreen(
         }
 
         Scaffold(
-            containerColor = AppColors.screenBg,
+            containerColor = Color.Transparent,
             topBar = {
                 Column(modifier = Modifier.background(AppColors.cardBg)) {
                     WizardHeader(
                         stepLabel = if (isThreeStepVoucher) {
-                            "STEP $formStep OF 3"
+                            "Step $formStep of 3"
                         } else if (isEditMode) {
                             // ponytail: no undo/redo or revision timeline — needs a revisions table.
                             // upgrade path: voucher_revisions migration + restore actions.
-                            "EDITING"
+                            "Editing"
                         } else {
-                            "NEW ${wizardName.uppercase(Locale.getDefault())}"
+                            ""
                         },
                         onBack = {
                             if (isThreeStepVoucher && pagerState.currentPage > 0) {
@@ -3154,7 +3216,7 @@ fun NewVoucherScreen(
                                     Text(if (isEditMode) "Update Draft" else "Save Draft")
                                 }
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     SecondaryButton(
@@ -3194,7 +3256,7 @@ fun NewVoucherScreen(
                     }
                 }
             },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().graphPaperCanvas()
         ) { innerPadding ->
             @Composable
             fun FormContent(showStickyBar: Boolean, forcedStep: Int? = null) {
@@ -3228,7 +3290,7 @@ fun NewVoucherScreen(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = AppColors.textTertiary,
-                        letterSpacing = 0.8.sp
+                        letterSpacing = 0.sp
                     )
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         RetailTextField(
@@ -3365,20 +3427,20 @@ fun NewVoucherScreen(
                                     showReturnInvoiceSheet = true
                                 },
                             shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFFFFFFFF),
-                            border = BorderStroke(1.dp, Color(0xFFE0E4EA))
+                                color = MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                         ) {
-                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text("Return against which invoice?", fontSize = 11.sp, color = Color(0xFF444444), fontWeight = FontWeight.Medium)
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("Return against which invoice?", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
                                 if (sourceVoucher == null) {
-                                    Text("Tap to search by voucher number or party name", fontSize = 14.sp, color = Color(0xFF777777))
+                                        Text("Tap to search by voucher number or party name", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 } else {
                                     val sourcePartyName = parties.find { it.id == sourceVoucher.partyId }?.name.orEmpty()
-                                    Text(sourceVoucher.voucherNo, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D0D0D))
+                                        Text(sourceVoucher.voucherNo, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                                     Text(
                                         "$sourcePartyName  •  ${Utils.formatDate(sourceVoucher.date)}  •  ${Utils.formatIndianCurrency(sourceVoucher.netAmount)}",
                                         fontSize = 12.sp,
-                                        color = Color(0xFF777777)
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -3387,24 +3449,24 @@ fun NewVoucherScreen(
                         if (sourceVoucher != null) {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
-                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text(
                                         "Original Invoice Amount: ${Utils.formatIndianCurrency(sourceVoucher.netAmount)}",
-                                        color = Color(0xFF444444),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 12.sp
                                     )
                                     Text(
                                         "Return Amount: ${Utils.formatIndianCurrency(netAmount.value)}",
-                                        color = Color(0xFFC62828),
+                                        color = MaterialTheme.colorScheme.error,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
                                     )
                                     Text(
                                         "Invoice-level additional charges are not copied into return vouchers.",
-                                        color = Color(0xFF777777),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 11.sp
                                     )
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -3420,7 +3482,7 @@ fun NewVoucherScreen(
                                         }
                                         Text(
                                             "Party locked from source invoice",
-                                            color = Color(0xFF777777),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontSize = 11.sp
                                         )
                                     }
@@ -3435,7 +3497,7 @@ fun NewVoucherScreen(
                                 value = returnReason,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Reason", color = Color(0xFF444444)) },
+                                label = { Text("Reason", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                 modifier = Modifier.fillMaxWidth(),
                                 trailingIcon = {
                                     Icon(
@@ -3445,25 +3507,25 @@ fun NewVoucherScreen(
                                     )
                                 },
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = Color(0xFFFFFFFF),
-                                    unfocusedContainerColor = Color(0xFFFFFFFF),
-                                    focusedTextColor = Color(0xFF0D0D0D),
-                                    unfocusedTextColor = Color(0xFF0D0D0D)
+                                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                             DropdownMenu(
                                 expanded = reasonExpanded,
                                 onDismissRequest = { reasonExpanded = false },
-                                modifier = Modifier.background(Color(0xFFFFFFFF))
+                                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                             ) {
                                 reasonOptions.forEach { option ->
                                     DropdownMenuItem(
-                                        text = { Text(option, color = Color(0xFF0D0D0D)) },
+                                        text = { Text(option, color = MaterialTheme.colorScheme.onSurface) },
                                         onClick = {
                                             returnReason = option
                                             reasonExpanded = false
                                         },
-                                        colors = MenuDefaults.itemColors(textColor = Color(0xFF0D0D0D))
+                                        colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.onSurface)
                                     )
                                 }
                             }
@@ -3513,35 +3575,35 @@ fun NewVoucherScreen(
                                 showPartyPickerSheet = true
                             },
                         shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFFFFFFF),
+                        color = MaterialTheme.colorScheme.surface,
                         border = BorderStroke(
                             1.dp,
-                            if (selectedParty == null) Color(0xFFE0E4EA) else Color(0xFF1A73E8)
+                            if (selectedParty == null) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
                                     text = "Select Party",
                                     fontSize = 11.sp,
-                                    color = Color(0xFF444444),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontWeight = FontWeight.Medium
                                 )
                                 if (selectedParty == null) {
                                     Text(
                                         text = "Tap to select or add party",
                                         fontSize = 14.sp,
-                                        color = Color(0xFF777777)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 } else {
                                     val selectedBalance = partyBalanceMap[selectedParty?.id].orEmptyBalance()
                                     Text(
                                         text = selectedParty?.name.orEmpty(),
                                         fontSize = 15.sp,
-                                        color = Color(0xFF0D0D0D),
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
@@ -3550,7 +3612,7 @@ fun NewVoucherScreen(
                                             "Balance ${Utils.formatIndianCurrency(selectedBalance)}"
                                         ).joinToString("  •  "),
                                         fontSize = 12.sp,
-                                        color = Color(0xFF777777)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -3569,7 +3631,7 @@ fun NewVoucherScreen(
                                 Icon(
                                     imageVector = if (selectedParty == null) Icons.Default.Search else Icons.Default.Close,
                                     contentDescription = if (selectedParty == null) "Search party" else "Clear party",
-                                    tint = if (selectedParty == null) Color(0xFF777777) else Color(0xFF1A73E8)
+                                    tint = if (selectedParty == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
@@ -3597,7 +3659,7 @@ fun NewVoucherScreen(
                                         "Party State: ${selectedParty?.state} | Interstate/IGST: ${if (isInterstate) "YES" else "NO"}",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isInterstate) Color(0xFFFD7E14) else Color(0xFF1A73E8)
+                                        color = if (isInterstate) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
                                     )
                                 }
                                 TextButton(
@@ -3643,14 +3705,14 @@ fun NewVoucherScreen(
                             Column(Modifier.padding(16.dp)) {
                                 Text("Attach Supplier Bill", color = AppColors.textPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                                 Text("Upload image or PDF to auto-read items", color = AppColors.textTertiary, fontSize = 11.sp)
-                                Spacer(Modifier.height(10.dp))
+                                Spacer(Modifier.height(12.dp))
                                 if (!savedAttachmentPath.isNullOrBlank()) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .background(AppColors.primaryLight, RoundedCornerShape(8.dp))
-                                            .padding(10.dp)
+                                            .padding(12.dp)
                                     ) {
                                         Icon(Icons.Outlined.AttachFile, null, tint = AppColors.primary, modifier = Modifier.size(20.dp))
                                         Spacer(Modifier.width(8.dp))
@@ -3711,7 +3773,7 @@ fun NewVoucherScreen(
                                         Spacer(Modifier.height(8.dp))
                                         Text(
                                             billExtractMessage,
-                                            color = if (billExtractMessage.startsWith("Could not") || billExtractMessage.startsWith("Bill attached")) Color.Gray else AppColors.credit,
+                                            color = if (billExtractMessage.startsWith("Could not") || billExtractMessage.startsWith("Bill attached")) AppColors.textHint else AppColors.credit,
                                             fontSize = 11.sp
                                         )
                                     }
@@ -3721,7 +3783,7 @@ fun NewVoucherScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         border = BorderStroke(1.dp, AppColors.primary)
                                     ) {
-                                        Icon(Icons.Outlined.Upload, null, tint = AppColors.primary, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Outlined.Upload, null, tint = AppColors.primary, modifier = Modifier.size(20.dp))
                                         Spacer(Modifier.width(8.dp))
                                         Text("Upload Supplier Bill", color = AppColors.primary)
                                     }
@@ -3742,7 +3804,7 @@ fun NewVoucherScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 6.dp),
+                                .padding(vertical = 8.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (globalGstEnabled) AppColors.primaryLight else AppColors.cardBg
                             ),
@@ -3752,7 +3814,7 @@ fun NewVoucherScreen(
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Column(Modifier.padding(14.dp)) {
+                            Column(Modifier.padding(16.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -3787,14 +3849,14 @@ fun NewVoucherScreen(
                                     )
                                 }
                                 if (globalGstEnabled) {
-                                    Spacer(Modifier.height(10.dp))
+                                    Spacer(Modifier.height(12.dp))
                                     Text(
                                         "GST Rate for All Items",
                                         color = AppColors.labelText,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium
                                     )
-                                    Spacer(Modifier.height(6.dp))
+                                    Spacer(Modifier.height(8.dp))
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         listOf(0.0, 5.0, 12.0, 18.0, 28.0).forEach { rate ->
                                             FilterChip(
@@ -3856,7 +3918,7 @@ fun NewVoucherScreen(
                                         shape = RoundedCornerShape(4.dp),
                                         modifier = Modifier.testTag("add_item_button")
                                     ) {
-                                        Text("Add Item", fontSize = 11.sp, color = Color(0xFFFFFFFF))
+                                        Text("Add Item", fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimary)
                                     }
                                 }
                             }
@@ -3904,7 +3966,7 @@ fun NewVoucherScreen(
                                             Text(
                                                 "HSN ${item.hsnCode}",
                                                 fontSize = 10.sp,
-                                                color = Color(0xFF777777)
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
                                         Text(
@@ -3914,7 +3976,7 @@ fun NewVoucherScreen(
                                         )
                                         if ((selectedType == "SALE_RETURN" || selectedType == "PURCHASE_RETURN") && originalItem != null) {
                                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                                Text("Original Qty: ${originalItem.qty}", fontSize = 10.sp, color = Color(0xFF777777))
+                                                Text("Original Qty: ${originalItem.qty}", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                                 OutlinedTextField(
                                                     value = if (item.qty == 0.0) "" else item.qty.toString(),
                                                     onValueChange = { qtyText ->
@@ -3935,10 +3997,10 @@ fun NewVoucherScreen(
                                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                                     singleLine = true,
                                                     colors = OutlinedTextFieldDefaults.colors(
-                                                        focusedContainerColor = Color(0xFFFFFFFF),
-                                                        unfocusedContainerColor = Color(0xFFFFFFFF),
-                                                        focusedTextColor = Color(0xFF0D0D0D),
-                                                        unfocusedTextColor = Color(0xFF0D0D0D)
+                                                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                                                     )
                                                 )
                                             }
@@ -3972,7 +4034,7 @@ fun NewVoucherScreen(
                                                     Icons.Default.Delete,
                                                     contentDescription = "Remove",
                                                     tint = AppColors.error,
-                                                    modifier = Modifier.size(18.dp)
+                                                    modifier = Modifier.size(20.dp)
                                                 )
                                             }
                                         }
@@ -4028,16 +4090,16 @@ fun NewVoucherScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
-                                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                                border = BorderStroke(1.dp, AppColors.inputBorder)
                             ) {
-                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text(selectedParty?.name.orEmpty(), fontWeight = FontWeight.Bold, color = Color(0xFF0D0D0D))
+                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(selectedParty?.name.orEmpty(), fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
                                     Text(
                                         "Total Outstanding: ${Utils.formatIndianCurrency(checkedInvoicesTotal)}",
-                                        color = Color(0xFFC62828),
+                                        color = AppColors.error,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    Text("(${pendingInvoices.size} pending invoices)", color = Color(0xFF777777), fontSize = 12.sp)
+                                    Text("(${pendingInvoices.size} pending invoices)", color = AppColors.textHint, fontSize = 12.sp)
                                 }
                             }
 
@@ -4046,11 +4108,11 @@ fun NewVoucherScreen(
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
-                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                                    border = BorderStroke(1.dp, AppColors.inputBorder)
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(12.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                                         verticalAlignment = Alignment.Top
                                     ) {
                                         Checkbox(
@@ -4064,12 +4126,12 @@ fun NewVoucherScreen(
                                             }
                                         )
                                         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                            Text(invoice.voucherNo, fontWeight = FontWeight.Bold, color = Color(0xFF0D0D0D))
-                                            Text("Invoice date: ${Utils.formatDate(invoice.date)}", fontSize = 12.sp, color = Color(0xFF777777))
+                                            Text(invoice.voucherNo, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
+                                            Text("Invoice date: ${Utils.formatDate(invoice.date)}", fontSize = 12.sp, color = AppColors.textHint)
                                             val invoiceOutstanding = invoice.outstandingAmount.coerceAtLeast(0.0)
-                                            Text("Original: ${Utils.formatIndianCurrency(invoice.netAmount)}", fontSize = 12.sp, color = Color(0xFF444444))
-                                            Text("Paid so far: ${Utils.formatIndianCurrency((invoice.netAmount - invoiceOutstanding).coerceAtLeast(0.0))}", fontSize = 12.sp, color = Color(0xFF444444))
-                                            Text("Remaining: ${Utils.formatIndianCurrency(invoiceOutstanding)}", fontSize = 12.sp, color = Color(0xFFC62828), fontWeight = FontWeight.Bold)
+                                            Text("Original: ${Utils.formatIndianCurrency(invoice.netAmount)}", fontSize = 12.sp, color = AppColors.textSecondary)
+                                            Text("Paid so far: ${Utils.formatIndianCurrency((invoice.netAmount - invoiceOutstanding).coerceAtLeast(0.0))}", fontSize = 12.sp, color = AppColors.textSecondary)
+                                            Text("Remaining: ${Utils.formatIndianCurrency(invoiceOutstanding)}", fontSize = 12.sp, color = AppColors.error, fontWeight = FontWeight.Bold)
                                         }
                                     }
                                 }
@@ -4118,14 +4180,14 @@ fun NewVoucherScreen(
                             }
                             val amountValue = netAmount.value
                             val statusText = when {
-                                amountValue == checkedInvoicesTotal -> "Full Payment ✓"
-                                amountValue < checkedInvoicesTotal -> "Partial Payment - ${Utils.formatIndianCurrency(checkedInvoicesTotal - amountValue)} still due"
-                                else -> "Advance ${Utils.formatIndianCurrency(amountValue - checkedInvoicesTotal)} will be credited to account"
+                                amountValue == checkedInvoicesTotal -> "Full payment"
+                                amountValue < checkedInvoicesTotal -> "Partial payment: ${Utils.formatIndianCurrency(checkedInvoicesTotal - amountValue)} still due"
+                                else -> "Advance of ${Utils.formatIndianCurrency(amountValue - checkedInvoicesTotal)} will be credited to your account"
                             }
                             val statusColor = when {
-                                amountValue == checkedInvoicesTotal -> Color(0xFF2E7D32)
-                                amountValue < checkedInvoicesTotal -> Color(0xFFEF6C00)
-                                else -> Color(0xFF1A73E8)
+                                amountValue == checkedInvoicesTotal -> AppColors.success
+                                amountValue < checkedInvoicesTotal -> AppColors.warning
+                                else -> AppColors.primary
                             }
                             Text(statusText, color = statusColor, fontWeight = FontWeight.Medium, fontSize = 12.sp)
                         }
@@ -4136,10 +4198,10 @@ fun NewVoucherScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        border = BorderStroke(1.dp, AppColors.inputBorder),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text("References", fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
                             RetailTextField(
                                 value = saleReferenceNo,
@@ -4174,7 +4236,7 @@ fun NewVoucherScreen(
                         modifier = Modifier
                             .weight(1f)
                             .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         modes.forEach { mode ->
@@ -4192,10 +4254,10 @@ fun NewVoucherScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    border = BorderStroke(1.dp, AppColors.inputBorder),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
                             text = "$paymentMode DETAILS",
                             fontWeight = FontWeight.Bold,
@@ -4272,7 +4334,7 @@ fun NewVoucherScreen(
                         
                         if (paymentMode == "UPI") {
                             Text(
-                                text = "UPI Mode active. For sales, saving the transaction will show an on-screen UPI QR Code scanner linked to your business account to automatically pull, verify, and auto-print customer invoices.",
+                                text = "UPI mode is on. Saving the sale opens your UPI QR code on screen for the customer to scan, then prints the invoice.",
                                 fontSize = 11.sp,
                                 color = AppColors.textSecondary
                             )
@@ -4302,7 +4364,7 @@ fun NewVoucherScreen(
                             },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                         )
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 listOf("CASH", "BANK", "UPI", "CHEQUE").forEach { mode ->
                                     FilterChip(
                                         selected = partialPaymentSubmode == mode,
@@ -4328,7 +4390,7 @@ fun NewVoucherScreen(
                                 color = AppColors.inputBg,
                                 border = BorderStroke(1.dp, AppColors.border)
                             ) {
-                                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+                                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                                     Text("Credit due date for remaining amount", fontSize = 11.sp, color = AppColors.textSecondary)
                                     Text(
                                         text = creditDueDateText.ifBlank { "Select optional due date" },
@@ -4354,7 +4416,7 @@ fun NewVoucherScreen(
                                 color = AppColors.inputBg,
                                 border = BorderStroke(1.dp, AppColors.border)
                             ) {
-                                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+                                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                                     Text("Due Date", fontSize = 11.sp, color = AppColors.textSecondary)
                                     Text(
                                         text = creditDueDateText.ifBlank { "Select optional due date" },
@@ -4365,7 +4427,7 @@ fun NewVoucherScreen(
                             }
                             Text(
                                 text = "${Utils.formatIndianCurrency(netAmount.value)} due",
-                                color = Color(0xFFEF6C00),
+                                color = MaterialTheme.colorScheme.tertiary,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -4388,16 +4450,16 @@ fun NewVoucherScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Additional Charges", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color(0xFF0D0D0D))
+                                Text("Additional Charges", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                                 IconButton(
                                     onClick = {
                                         additionalCharges.add(
@@ -4411,7 +4473,7 @@ fun NewVoucherScreen(
                                         )
                                     }
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = "Add charge", tint = Color(0xFF1A73E8))
+                                    Icon(Icons.Default.Add, contentDescription = "Add charge", tint = MaterialTheme.colorScheme.primary)
                                 }
                             }
 
@@ -4428,8 +4490,8 @@ fun NewVoucherScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .animateContentSize(),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
-                                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
                                 Column(
@@ -4448,7 +4510,7 @@ fun NewVoucherScreen(
                                                     value = if (isOtherCharge) "Other" else charge.label,
                                                     onValueChange = {},
                                                     readOnly = true,
-                                                    label = { Text("Charge type", color = Color(0xFF444444)) },
+                                                    label = { Text("Charge type", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                                     modifier = Modifier.fillMaxWidth(),
                                                     trailingIcon = {
                                                         Icon(
@@ -4458,26 +4520,26 @@ fun NewVoucherScreen(
                                                         )
                                                     },
                                                     colors = OutlinedTextFieldDefaults.colors(
-                                                        focusedContainerColor = Color(0xFFFFFFFF),
-                                                        unfocusedContainerColor = Color(0xFFFFFFFF),
-                                                        focusedTextColor = Color(0xFF0D0D0D),
-                                                        unfocusedTextColor = Color(0xFF0D0D0D)
+                                                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                                                     )
                                                 )
                                                 DropdownMenu(
                                                     expanded = chargeTypeExpanded,
                                                     onDismissRequest = { chargeTypeExpanded = false },
-                                                    modifier = Modifier.background(Color(0xFFFFFFFF))
+                                                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                                                 ) {
                                                     chargeTypes.forEach { type ->
                                                         DropdownMenuItem(
-                                                            text = { Text(type, color = Color(0xFF0D0D0D)) },
+                                                            text = { Text(type, color = MaterialTheme.colorScheme.onSurface) },
                                                             onClick = {
                                                                 additionalCharges[index] = charge.copy(label = if (type == "Other") "" else type)
                                                                 transportExpanded = isTransportChargeType(type)
                                                                 chargeTypeExpanded = false
                                                             },
-                                                            colors = MenuDefaults.itemColors(textColor = Color(0xFF0D0D0D))
+                                                            colors = MenuDefaults.itemColors(textColor = MaterialTheme.colorScheme.onSurface)
                                                         )
                                                     }
                                                 }
@@ -4487,13 +4549,13 @@ fun NewVoucherScreen(
                                                 OutlinedTextField(
                                                     value = charge.label,
                                                     onValueChange = { additionalCharges[index] = charge.copy(label = it) },
-                                                    label = { Text("Label", color = Color(0xFF444444)) },
+                                                    label = { Text("Label", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                                     modifier = Modifier.fillMaxWidth(),
                                                     colors = OutlinedTextFieldDefaults.colors(
-                                                        focusedContainerColor = Color(0xFFFFFFFF),
-                                                        unfocusedContainerColor = Color(0xFFFFFFFF),
-                                                        focusedTextColor = Color(0xFF0D0D0D),
-                                                        unfocusedTextColor = Color(0xFF0D0D0D)
+                                                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                                                     )
                                                 )
                                             }
@@ -4508,9 +4570,9 @@ fun NewVoucherScreen(
                                                     onValueChange = {
                                                         additionalCharges[index] = charge.copy(amount = filterDecimalInput(it).toDoubleOrNull() ?: 0.0)
                                                     },
-                                                    label = { Text("Amount", color = Color(0xFF444444)) },
+                                                    label = { Text("Amount", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                                     modifier = Modifier.weight(1f),
-                                                    prefix = { Text("Rs", color = Color(0xFF0D0D0D)) },
+                                                    prefix = { Text("Rs", color = MaterialTheme.colorScheme.onSurface) },
                                                     keyboardOptions = KeyboardOptions(
                                                         keyboardType = KeyboardType.Decimal,
                                                         imeAction = ImeAction.Next
@@ -4518,13 +4580,13 @@ fun NewVoucherScreen(
                                                     colors = OutlinedTextFieldDefaults.colors(
                                                         focusedContainerColor = Color(0xFFFFFFFF),
                                                         unfocusedContainerColor = Color(0xFFFFFFFF),
-                                                        focusedTextColor = Color(0xFF0D0D0D),
-                                                        unfocusedTextColor = Color(0xFF0D0D0D)
+                                                        focusedTextColor = AppColors.textPrimary,
+                                                        unfocusedTextColor = AppColors.textPrimary
                                                     )
                                                 )
 
                                                 IconButton(onClick = { additionalCharges.removeAt(index) }) {
-                                                    Icon(Icons.Default.Delete, contentDescription = "Delete charge", tint = Color(0xFFC62828))
+                                                    Icon(Icons.Default.Delete, contentDescription = "Delete charge", tint = AppColors.error)
                                                 }
                                             }
                                         }
@@ -4539,7 +4601,7 @@ fun NewVoucherScreen(
                                                     value = if (isOtherCharge) "Other" else charge.label,
                                                     onValueChange = {},
                                                 readOnly = true,
-                                                label = { Text("Charge type", color = Color(0xFF444444)) },
+                                                label = { Text("Charge type", color = AppColors.textSecondary) },
                                                 modifier = Modifier.fillMaxWidth(),
                                                 trailingIcon = {
                                                     Icon(
@@ -4551,8 +4613,8 @@ fun NewVoucherScreen(
                                                 colors = OutlinedTextFieldDefaults.colors(
                                                     focusedContainerColor = Color(0xFFFFFFFF),
                                                     unfocusedContainerColor = Color(0xFFFFFFFF),
-                                                    focusedTextColor = Color(0xFF0D0D0D),
-                                                    unfocusedTextColor = Color(0xFF0D0D0D)
+                                                    focusedTextColor = AppColors.textPrimary,
+                                                    unfocusedTextColor = AppColors.textPrimary
                                                 )
                                             )
                                             DropdownMenu(
@@ -4562,13 +4624,13 @@ fun NewVoucherScreen(
                                             ) {
                                                 chargeTypes.forEach { type ->
                                                     DropdownMenuItem(
-                                                        text = { Text(type, color = Color(0xFF0D0D0D)) },
+                                                        text = { Text(type, color = AppColors.textPrimary) },
                                                         onClick = {
                                                             additionalCharges[index] = charge.copy(label = if (type == "Other") "" else type)
                                                             transportExpanded = isTransportChargeType(type)
                                                             chargeTypeExpanded = false
                                                         },
-                                                        colors = MenuDefaults.itemColors(textColor = Color(0xFF0D0D0D))
+                                                        colors = MenuDefaults.itemColors(textColor = AppColors.textPrimary)
                                                     )
                                                 }
                                             }
@@ -4578,13 +4640,13 @@ fun NewVoucherScreen(
                                                 OutlinedTextField(
                                                     value = charge.label,
                                                     onValueChange = { additionalCharges[index] = charge.copy(label = it) },
-                                                    label = { Text("Label", color = Color(0xFF444444)) },
+                                                    label = { Text("Label", color = AppColors.textSecondary) },
                                                     modifier = Modifier.weight(1f),
                                                     colors = OutlinedTextFieldDefaults.colors(
                                                         focusedContainerColor = Color(0xFFFFFFFF),
                                                         unfocusedContainerColor = Color(0xFFFFFFFF),
-                                                        focusedTextColor = Color(0xFF0D0D0D),
-                                                        unfocusedTextColor = Color(0xFF0D0D0D)
+                                                        focusedTextColor = AppColors.textPrimary,
+                                                        unfocusedTextColor = AppColors.textPrimary
                                                     )
                                                 )
                                             }
@@ -4594,9 +4656,9 @@ fun NewVoucherScreen(
                                                 onValueChange = {
                                                     additionalCharges[index] = charge.copy(amount = filterDecimalInput(it).toDoubleOrNull() ?: 0.0)
                                                 },
-                                                label = { Text("Amount", color = Color(0xFF444444)) },
+                                                label = { Text("Amount", color = AppColors.textSecondary) },
                                                 modifier = Modifier.weight(0.9f),
-                                                prefix = { Text("Rs", color = Color(0xFF0D0D0D)) },
+                                                prefix = { Text("Rs", color = AppColors.textPrimary) },
                                                 keyboardOptions = KeyboardOptions(
                                                     keyboardType = KeyboardType.Decimal,
                                                     imeAction = ImeAction.Next
@@ -4604,13 +4666,13 @@ fun NewVoucherScreen(
                                                 colors = OutlinedTextFieldDefaults.colors(
                                                     focusedContainerColor = Color(0xFFFFFFFF),
                                                     unfocusedContainerColor = Color(0xFFFFFFFF),
-                                                    focusedTextColor = Color(0xFF0D0D0D),
-                                                    unfocusedTextColor = Color(0xFF0D0D0D)
+                                                    focusedTextColor = AppColors.textPrimary,
+                                                    unfocusedTextColor = AppColors.textPrimary
                                                 )
                                             )
 
                                             IconButton(onClick = { additionalCharges.removeAt(index) }) {
-                                                Icon(Icons.Default.Delete, contentDescription = "Delete charge", tint = Color(0xFFC62828))
+                                                Icon(Icons.Default.Delete, contentDescription = "Delete charge", tint = AppColors.error)
                                             }
                                         }
                                     }
@@ -4625,10 +4687,10 @@ fun NewVoucherScreen(
                                                 "Transport Details",
                                                 fontSize = 13.sp,
                                                 fontWeight = FontWeight.Medium,
-                                                color = Color(0xFF0D0D0D)
+                                                color = AppColors.textPrimary
                                             )
                                             TextButton(onClick = { transportExpanded = !transportExpanded }) {
-                                                Text(if (transportExpanded) "Hide" else "Add Details", color = Color(0xFF666666))
+                                                Text(if (transportExpanded) "Hide" else "Add Details", color = AppColors.textSecondary)
                                             }
                                         }
 
@@ -4705,7 +4767,7 @@ fun NewVoucherScreen(
                         border = BorderStroke(1.dp, AppColors.border),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Review Before Saving", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = AppColors.textPrimary)
                             Text(
                                 when (selectedType) {
@@ -4765,7 +4827,7 @@ fun NewVoucherScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, Color(0xFFE8E8E8), RoundedCornerShape(0.dp)),
+                            .border(1.dp, AppColors.border, RoundedCornerShape(0.dp)),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -4967,17 +5029,17 @@ fun NewVoucherScreen(
             // Step 2: Simulating scanned status
             delay(1500)
             simulationProgress = 0.7f
-            simulationStatus = "Customer scanned! Awaiting user banking PIN authentication..."
+            simulationStatus = "Customer scanned. Awaiting PIN authentication..."
             
             // Step 3: Simulating settlement
             delay(2000)
             simulationProgress = 1.0f
-            simulationStatus = "PIN Verified! Settling Rupees ${Utils.formatIndianCurrency(netAmount.value)} to account..."
+            simulationStatus = "PIN verified. Settling ${Utils.formatIndianCurrency(netAmount.value)} to account..."
             
             // Step 4: Complete!
             delay(1000)
             showSimulatedCheckMark = true
-            simulationStatus = "PAYMENT CONFIRMED! Rs. ${Utils.formatIndianCurrency(netAmount.value)} Credited."
+            simulationStatus = "Payment confirmed. ${Utils.formatIndianCurrency(netAmount.value)} credited"
             
             // Step 5: Save and Auto-trigger print
             delay(1200)
@@ -5006,7 +5068,7 @@ fun NewVoucherScreen(
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
                         text = "Scan with GPay, PhonePe, Paytm, BHIM, or any Banking App",
@@ -5022,7 +5084,7 @@ fun NewVoucherScreen(
                             .size(220.dp)
                             .background(Color.White, RoundedCornerShape(12.dp))
                             .border(2.dp, AppColors.primary, RoundedCornerShape(12.dp))
-                            .padding(14.dp),
+                            .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         if (showSimulatedCheckMark) {
@@ -5048,22 +5110,22 @@ fun NewVoucherScreen(
                                 // Draw position detection patterns (outer corners)
                                 val strokeWidth = 14f
                                 // Top-Left
-                                drawRect(Color(0xFF0F172A), Offset(0f, 0f), Size(unitW * 3, unitH * 3))
+                                drawRect(AppColors.textPrimary, Offset(0f, 0f), Size(unitW * 3, unitH * 3))
                                 drawRect(Color.White, Offset(unitW * 0.5f, unitH * 0.5f), Size(unitW * 2, unitH * 2))
-                                drawRect(Color(0xFF0F172A), Offset(unitW * 1f, unitH * 1f), Size(unitW, unitH))
+                                drawRect(AppColors.textPrimary, Offset(unitW * 1f, unitH * 1f), Size(unitW, unitH))
 
                                 // Top-Right
-                                drawRect(Color(0xFF0F172A), Offset(w - unitW * 3, 0f), Size(unitW * 3, unitH * 3))
+                                drawRect(AppColors.textPrimary, Offset(w - unitW * 3, 0f), Size(unitW * 3, unitH * 3))
                                 drawRect(Color.White, Offset(w - unitW * 2.5f, unitH * 0.5f), Size(unitW * 2, unitH * 2))
-                                drawRect(Color(0xFF0F172A), Offset(w - unitW * 2f, unitH * 1f), Size(unitW, unitH))
+                                drawRect(AppColors.textPrimary, Offset(w - unitW * 2f, unitH * 1f), Size(unitW, unitH))
 
                                 // Bottom-Left
-                                drawRect(Color(0xFF0F172A), Offset(0f, h - unitH * 3), Size(unitW * 3, unitH * 3))
+                                drawRect(AppColors.textPrimary, Offset(0f, h - unitH * 3), Size(unitW * 3, unitH * 3))
                                 drawRect(Color.White, Offset(unitW * 0.5f, h - unitH * 2.5f), Size(unitW * 2, unitH * 2))
-                                drawRect(Color(0xFF0F172A), Offset(unitW * 1f, h - unitH * 2f), Size(unitW, unitH))
+                                drawRect(AppColors.textPrimary, Offset(unitW * 1f, h - unitH * 2f), Size(unitW, unitH))
 
                                 // Dynamic center accent logo from dynamic colors
-                                drawCircle(Color(0xFF1A73E8), radius = unitW * 1.5f, center = Offset(w/2, h/2))
+                                drawCircle(AppColors.primary, radius = unitW * 1.5f, center = Offset(w/2, h/2))
 
                                 // Draw abstract QR dots / blocks randomly
                                 val random = java.util.Random(123456)
@@ -5076,7 +5138,7 @@ fun NewVoucherScreen(
 
                                         if (random.nextBoolean()) {
                                             drawRect(
-                                                color = Color(0xFF0F172A),
+                                                color = AppColors.textPrimary,
                                                 topLeft = Offset(col * unitW + unitW * 0.1f, row * unitH + unitH * 0.1f),
                                                 size = Size(unitW * 0.8f, unitH * 0.8f)
                                             )
@@ -5112,7 +5174,7 @@ fun NewVoucherScreen(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                     ) {
-                        Column(modifier = Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = simulationStatus,
                                 fontSize = 11.sp,
@@ -5120,12 +5182,12 @@ fun NewVoucherScreen(
                                 color = if (showSimulatedCheckMark) AppColors.success else AppColors.primary,
                                 textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             LinearProgressIndicator(
                                 progress = { simulationProgress },
                                 modifier = Modifier.fillMaxWidth().height(4.dp),
                                 color = if (showSimulatedCheckMark) AppColors.success else AppColors.primary,
-                                trackColor = Color(0xFFE2E8F0)
+                                trackColor = AppColors.borderLight
                             )
                         }
                     }
@@ -5197,7 +5259,7 @@ fun NewVoucherScreen(
                         .heightIn(max = 420.dp),
                     shape = RoundedCornerShape(8.dp),
                     color = Color.White,
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    border = BorderStroke(1.dp, AppColors.inputBorder),
                     tonalElevation = 4.dp
                 ) {
                     when {
@@ -5480,13 +5542,13 @@ fun NewVoucherScreen(
                                     showPartyPickerSheet = false
                                 },
                             shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFFF8FAFC),
-                            border = BorderStroke(1.dp, Color(0xFFE0E4EA))
+                            color = AppColors.cardBg,
+                            border = BorderStroke(1.dp, AppColors.inputBorder)
                         ) {
                             Text(
                                 text = "Cash / Bank (Walk-in Customer)",
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                                color = Color(0xFF0D0D0D),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                color = AppColors.textPrimary,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -5503,28 +5565,28 @@ fun NewVoucherScreen(
                                 },
                             shape = RoundedCornerShape(12.dp),
                             color = Color(0xFFFFFFFF),
-                            border = BorderStroke(1.dp, Color(0xFFE0E4EA))
+                            border = BorderStroke(1.dp, AppColors.inputBorder)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                     Text(
                                         text = party.name,
-                                        color = Color(0xFF0D0D0D),
+                                        color = AppColors.textPrimary,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp
                                     )
                                     Text(
                                         text = party.phone.ifBlank { "No phone" },
-                                        color = Color(0xFF777777),
+                                        color = AppColors.textHint,
                                         fontSize = 12.sp
                                     )
                                 }
                                 Text(
                                     text = Utils.formatIndianCurrency(partyBalance),
-                                    color = Color(0xFF1A73E8),
+                                    color = AppColors.primary,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 12.sp
                                 )
@@ -5541,18 +5603,18 @@ fun NewVoucherScreen(
                                     showQuickAddPartyDialog = true
                                 },
                             shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFFF8FAFC),
-                            border = BorderStroke(1.dp, Color(0xFFE0E4EA))
+                            color = AppColors.cardBg,
+                            border = BorderStroke(1.dp, AppColors.inputBorder)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = null, tint = Color(0xFF1A73E8))
+                                Icon(Icons.Default.Add, contentDescription = null, tint = AppColors.primary)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = createPartyLabel,
-                                    color = Color(0xFF1A73E8),
+                                    color = AppColors.primary,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -5578,15 +5640,15 @@ fun NewVoucherScreen(
                 OutlinedTextField(
                     value = sourceInvoiceSearchQuery,
                     onValueChange = { sourceInvoiceSearchQuery = it },
-                    placeholder = { Text("Search by voucher number or party name", color = Color(0xFF777777)) },
+                    placeholder = { Text("Search by voucher number or party name", color = AppColors.textHint) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF777777)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = AppColors.textHint) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color(0xFFFFFFFF),
                         unfocusedContainerColor = Color(0xFFFFFFFF),
-                        focusedTextColor = Color(0xFF0D0D0D),
-                        unfocusedTextColor = Color(0xFF0D0D0D)
+                        focusedTextColor = AppColors.textPrimary,
+                        unfocusedTextColor = AppColors.textPrimary
                     )
                 )
                 LazyColumn(
@@ -5606,15 +5668,15 @@ fun NewVoucherScreen(
                                 },
                             shape = RoundedCornerShape(12.dp),
                             color = Color(0xFFFFFFFF),
-                            border = BorderStroke(1.dp, Color(0xFFE0E4EA))
+                            border = BorderStroke(1.dp, AppColors.inputBorder)
                         ) {
-                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(invoice.voucherNo, fontWeight = FontWeight.Bold, color = Color(0xFF0D0D0D))
-                                Text(partyName, fontSize = 12.sp, color = Color(0xFF777777))
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(invoice.voucherNo, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
+                                Text(partyName, fontSize = 12.sp, color = AppColors.textHint)
                                 Text(
                                     "${Utils.formatDate(invoice.date)}  •  ${Utils.formatIndianCurrency(invoice.netAmount)}",
                                     fontSize = 12.sp,
-                                    color = Color(0xFF777777)
+                                    color = AppColors.textHint
                                 )
                             }
                         }
@@ -5685,7 +5747,7 @@ fun NewVoucherScreen(
             title = { Text("Quick Add Product", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
             text = {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
                 ) {
                     RetailTextField(
@@ -5842,30 +5904,6 @@ fun NewVoucherScreen(
                             viewModel.saveProduct(prodObj) {
                                 pendingSelectedProduct = prodObj
                                 inlineCreatedProductId = prodObj.id
-                                // Auto-assign this product details to the selected Voucher item row!
-                                quickAddProductItemIndex?.let { index ->
-                                    if (index in lineItems.indices) {
-                                        val rateValue = if (selectedType == "PURCHASE" || selectedType == "PURCHASE_RETURN") prodObj.purchaseRate else prodObj.saleRate
-                                        val curItem = lineItems[index]
-                                        val dynamicTaxable = rateValue * curItem.qty
-                                        val prodGstRate = if (hasGst) prodObj.gstRate else 0.0
-                                        val dummyGstAngle = if (hasGst) (dynamicTaxable * prodGstRate / 100.0) else 0.0
-
-                                        lineItems[index] = curItem.copy(
-                                            productId = prodObj.id,
-                                            productName = prodObj.name,
-                                            hsnCode = prodObj.hsnCode,
-                                            unit = prodObj.unit,
-                                            rate = rateValue,
-                                            gstRate = prodGstRate,
-                                            taxableAmount = dynamicTaxable,
-                                            cgstAmount = if (isInterstate || !hasGst) 0.0 else dummyGstAngle / 2.0,
-                                            sgstAmount = if (isInterstate || !hasGst) 0.0 else dummyGstAngle / 2.0,
-                                            igstAmount = if (isInterstate && hasGst) dummyGstAngle else 0.0,
-                                            totalAmount = dynamicTaxable + dummyGstAngle
-                                        )
-                                    }
-                                }
                                 showQuickAddProductDialog = false
                                 quickAddInitialProductName = ""
                                 showItemEntrySheet = true
@@ -6239,7 +6277,7 @@ fun StickyBottomBar(
                 }
             }
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 val isSaleOrReturn = selectedType == "SALE" || selectedType == "SALE_RETURN"
@@ -6288,7 +6326,7 @@ private fun VoucherPrintPreviewSkeleton() {
         ) {
             LoadingText(
                 modifier = Modifier.weight(1f),
-                height = 14.dp
+                height = 16.dp
             )
             Spacer(modifier = Modifier.width(12.dp))
             LoadingRoundedPlaceholder(
@@ -6297,7 +6335,7 @@ private fun VoucherPrintPreviewSkeleton() {
                 cornerRadius = 8.dp
             )
         }
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         repeat(3) {
             LoadingText(
                 modifier = Modifier.fillMaxWidth(),

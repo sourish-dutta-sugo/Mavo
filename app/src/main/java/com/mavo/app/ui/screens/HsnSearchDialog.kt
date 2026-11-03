@@ -1,6 +1,7 @@
 package com.mavo.app.ui.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -18,6 +21,7 @@ import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,7 +59,7 @@ fun HsnSearchDialog(
         modifier = modifier,
         onDismissRequest = onDismiss,
         confirmButton = {},
-        containerColor = AppColors.cardBg,
+        containerColor = MaterialTheme.colorScheme.surface,
         text = {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -64,7 +68,7 @@ fun HsnSearchDialog(
                         contentDescription = null,
                         tint = AppColors.textSecondary
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Search HSN / SAC",
                         fontSize = 18.sp,
@@ -79,13 +83,13 @@ fun HsnSearchDialog(
                         size = 36
                     )
                 }
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 SearchField(
                     value = query,
                     onValueChange = { query = it },
                     placeholder = "Search by keyword or code"
                 )
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 ZbCard(contentPadding = 0) {
                     if (results.isEmpty()) {
                         Text(
@@ -105,8 +109,16 @@ fun HsnSearchDialog(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(
+                                            if (result == selectedResult) {
+                                                MaterialTheme.colorScheme.secondaryContainer
+                                            } else {
+                                                AppColors.cardBg
+                                            }
+                                        )
                                         .clickable { selected = result }
-                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                        .padding(horizontal = 16.dp, vertical = 16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
@@ -137,7 +149,7 @@ fun HsnSearchDialog(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 PrimaryButton(
                     label = selectedResult?.let { "Use ${it.hsnCode} · ${it.description}" } ?: "Select a code",
                     onClick = { selectedResult?.let(onSelect) },

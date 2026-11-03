@@ -98,6 +98,7 @@ import com.mavo.app.ui.AppNavigationDestination
 import com.mavo.app.ui.LocalAppWindowSizeClass
 import com.mavo.app.ui.components.AdaptiveNavigationBar
 import com.mavo.app.ui.components.AdaptiveNavigationRail
+import com.mavo.app.ui.components.GraphPaperBackground
 import com.mavo.app.ui.usesTwoPaneLayout
 import com.mavo.app.ui.AppViewModel
 import com.mavo.app.ui.components.ScreenBorder
@@ -189,9 +190,9 @@ class MainActivity : ComponentActivity() {
 
             @Suppress("DEPRECATION")
             SideEffect {
-                window.statusBarColor = currentTheme.statusBarColor.toArgb()
+                window.statusBarColor = Color.Transparent.toArgb()
                 windowInsetsController.isAppearanceLightStatusBars = currentTheme.statusBarDarkIcons
-                window.navigationBarColor = currentTheme.backgroundPrimary.toArgb()
+                window.navigationBarColor = Color.Transparent.toArgb()
                 windowInsetsController.isAppearanceLightNavigationBars = currentTheme.statusBarDarkIcons
             }
 
@@ -200,7 +201,10 @@ class MainActivity : ComponentActivity() {
                 LocalAppWindowSizeClass provides windowSizeClass.widthSizeClass
             ) {
                 MavoTheme(appTheme = currentTheme) {
-                    MainAppEntry(viewModel, themeViewModel, dashboardViewModel)
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        GraphPaperBackground()
+                        MainAppEntry(viewModel, themeViewModel, dashboardViewModel)
+                    }
                 }
             }
         }
@@ -277,7 +281,7 @@ fun MainAppEntry(
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary),
-                            shape = RoundedCornerShape(14.dp)
+                            shape = RoundedCornerShape(16.dp)
                         ) {
                             Text("Retry Connection", color = AppColors.textOnPrimary)
                         }
@@ -373,13 +377,13 @@ private fun AppContent(
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "INITIALIZING",
+                            text = "Loading your books...",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            letterSpacing = 3.sp,
+                            letterSpacing = 0.sp,
                             color = AppColors.textSecondary
                         )
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         // ponytail: no real init progress % (DB open + status checks) — indeterminate bar.
                         // upgrade path: surface DAO migration progress via Flow.
                         LinearProgressIndicator(
@@ -494,7 +498,7 @@ private fun AppContent(
                                             .fillMaxWidth()
                                             .heightIn(max = configuration.screenHeightDp.dp * 0.6f)
                                             .verticalScroll(rememberScrollState()),
-                                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
                                         changelogData?.changes?.forEach { change ->
                                             Text("• $change", color = AppColors.textPrimary)
@@ -756,11 +760,11 @@ fun PinLockScreen(
             fontWeight = FontWeight.Bold,
             color = Color.White
         )
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Keep your books secure",
             fontSize = 13.sp,
-            color = Color(0xFF9CA3AF),
+            color = Color.White.copy(alpha = 0.72f),
             textAlign = TextAlign.Center
         )
 
@@ -771,7 +775,7 @@ fun PinLockScreen(
                 val active = index < enteredText.length
                 Box(
                     modifier = Modifier
-                        .size(14.dp)
+                        .size(16.dp)
                         .background(
                             color = if (active) Color.White else Color(0xFF3AAA87),
                             shape = RoundedCornerShape(50)
@@ -782,7 +786,7 @@ fun PinLockScreen(
 
         if (hasError) {
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Incorrect PIN! Try again.", color = Color(0xFFE24B4A), fontSize = 12.sp)
+            Text("Incorrect PIN. Try again.", color = Color(0xFFE24B4A), fontSize = 12.sp)
         }
 
         Spacer(modifier = Modifier.height(40.dp))

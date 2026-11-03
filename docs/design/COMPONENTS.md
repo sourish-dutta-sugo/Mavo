@@ -1,8 +1,20 @@
 # COMPONENTS.md — Mavo
 
-> Last updated: 2026-10-03
+> Last updated: 2026-11-02
 
 ## Shared components
+
+### GraphPaperBackground
+
+- **File:** `ui/components/GraphPaperBackground.kt`
+- **Purpose:** Render a warm graph-paper canvas matching the supplied background
+- **Where used:** Root content in `MainActivity.kt`, behind screens and system bars
+
+### GraphPaperCanvas
+
+- **File:** `ui/screens/GraphPaperCanvas.kt`
+- **Purpose:** `Modifier.graphPaperCanvas()` — optional grid overlay for screens that draw on a plain surface
+- **Geometry:** Same as `GraphPaperBackground`: 16 dp pitch, 0.55 dp stroke, `Surface.paperGrid` at 0.6 alpha (never a second, coarser grid)
 
 ### Caller modifiers
 
@@ -41,7 +53,7 @@ Screens render explicit read states and expose retry for failures.
 ### SharedComponents
 
 - **File:** `ui/screens/SharedComponents.kt`
-- **Purpose:** Common UI pieces reused across multiple screens — `RetailTextField` (now a thin delegate over `ZbField`: label-above, uppercase gray label, optional `fieldModifier` for focus targets), `StateDropdownMenu`, PIN lookup
+- **Purpose:** Common UI pieces reused across multiple screens — `RetailTextField` (now a thin delegate over `ZbField`: label-above, sentence-case gray label, optional `fieldModifier` for focus targets), `StateDropdownMenu`, PIN lookup
 - **Where used:** Throughout the app
 
 ### Skeleton
@@ -119,6 +131,7 @@ Screens render explicit read states and expose retry for failures.
 - **File:** `ui/components/ZeroUi.kt`
 - **Purpose:** Shared Material 3 controls — `CircleIconButton`, `StepProgress`, `WizardHeader`, `WizardTitle`, `ZbField`, `PrimaryButton` / `SecondaryButton`, filter chips, segmented tabs, `ZbCard`, `SearchField`, `SectionLabel`, `EmptyState`
 - **States:** Material 3 enabled, disabled, selected, and focus feedback
+- **Conventions:** 16 dp card radius, 8 dp field radius, 1 dp hairline borders, sentence-case labels (no tracked uppercase)
 - **Accessibility:** Icon actions have at least 48 dp touch targets
 - **Where used:** Voucher wizard and every Zero-restyled screen
 
@@ -145,14 +158,20 @@ Screens render explicit read states and expose retry for failures.
 
 ## Animation components
 
-Located in `ui/transitions/`:
+Located in `ui/animation/PremiumMotion.kt`:
 
 | Component | Purpose |
 |-----------|---------|
 | `enterTransition` / `exitTransition` | Navigation slide animations |
 | `dialogEnter` / `dialogExit` | Dialog open/close animations |
-| `pressScale` / `clickableScale` | Tap feedback (scale down on press) |
+| `pressScale` / `m3SpringPress` / `clickableScale` | Tap feedback — scale only, no translation or glow |
+| `premiumClickable` / `premiumCombinedClickable` | Click wrappers that apply the shared press feedback |
+| `premiumFabEntrance` | One-shot FAB entrance |
 | `NavBarContent` | Bottom nav bar animated content switching |
+
+Animations honor Android animator duration scale; scale zero disables motion.
+Removed in the polish pass: press translation (`translationY`), `m3PulseHighlight`
+(0.6 damping pulse), and Dashboard spotlight `rotationY` / `cameraDistance`.
 
 ## Format utilities
 
@@ -161,3 +180,26 @@ Located in `ui/format/`: Number/currency formatting helpers used across screens.
 ## Selection utilities
 
 Located in `ui/selection/`: Multi-select state helpers for list screens.
+
+## Mavo · Redesign custom components (Penpot)
+
+Custom components implemented as Penpot helper functions (in `lib2.js`, executed in the plugin context). Not Kotlin code — design artifacts only.
+
+| Component | Purpose | Key props |
+|-----------|---------|-----------|
+| Floating dock | Bottom nav bar: Home, Vouchers, Parties, More + centered New Sale FAB | Active destination |
+| Expressive buttons | Primary / tonal / secondary / card / danger with icon + label variants | Kind, size, radius, shadow |
+| Filled fields | Rounded input with uppercase label, focus stroke, optional badge/icon/chevron | Label, value, focus, badge |
+| Segmented controls | Pill-segmented tab groups | Items, active index |
+| Chips | Mint / amber / coral / blue / solid / outline | Kind, size, height |
+| Ledger cards | Account cards with icon + title + value + status chip | Account, balance, status |
+| Metric tiles | Label + large value + delta chip | Label, value, delta |
+| Tables | Header + rows with right-aligned numeric columns | Columns, widths, rows |
+| Bottom sheets | Drawer from bottom with handle, title, close, safe-area footer | Title, close action |
+| Empty states | Icon + title + body centered on canvas | Icon, title, body |
+| Status chips | Paid / due / overdue / posted pills | Status text, kind |
+| Logo tile | Rounded square "MA·VO" mark with amber dot | Size, dark mode |
+| Graph-paper background | Subtle grid overlay on board background | Step, color, opacity |
+
+Motion helpers: press scale `0.97` @ `120 ms` ease-out; page/sheet transitions `220–280 ms`; transform/opacity animation only; reduced-motion respected.
+

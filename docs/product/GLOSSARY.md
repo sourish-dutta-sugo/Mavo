@@ -43,7 +43,7 @@ Project-specific accounting, taxation, and application terms used in Mavo.
 
 | Term | Meaning in Mavo |
 |------|-----------------|
-| **Room / SQLite** | Local offline-first relational database engine powering Mavo (`Mavo.db`). Current schema version: 14. |
+| **Room / SQLite** | Local offline-first relational database engine powering Mavo (`Mavo.db`). Current schema version: 16. |
 | **AppRepository** | Central data repository orchestrating DAOs, business rules, double-entry validation, and transactions. |
 | **DesignTokens** | Single source of truth for color tokens, spacing, radiuses, elevations, and semantic colors. |
 
