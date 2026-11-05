@@ -18,7 +18,6 @@ object AppPreferences {
     private val progressTrackerMetricKey = stringPreferencesKey("progress_tracker_metric")
     private val progressTrackerPeriodKey = stringPreferencesKey("progress_tracker_period")
     private val progressTrackerTargetKey = stringPreferencesKey("progress_tracker_target")
-    private val kpiAnimationModeKey = stringPreferencesKey("kpi_animation_mode")
 
     suspend fun getFyLastCheckedDate(context: Context): LocalDate? =
         context.dataStore.data.first()[fyLastCheckedDateKey]?.let(LocalDate::parse)
@@ -39,7 +38,7 @@ object AppPreferences {
     }
 
     suspend fun isProgressTrackerEnabled(context: Context): Boolean =
-        context.dataStore.data.first()[progressTrackerEnabledKey] ?: false
+        context.dataStore.data.first()[progressTrackerEnabledKey] ?: true
 
     suspend fun setProgressTrackerEnabled(context: Context, enabled: Boolean) {
         context.dataStore.edit { prefs ->
@@ -71,15 +70,6 @@ object AppPreferences {
     suspend fun setProgressTrackerTarget(context: Context, target: String) {
         context.dataStore.edit { prefs ->
             prefs[progressTrackerTargetKey] = target
-        }
-    }
-
-    suspend fun getKpiAnimationMode(context: Context): String =
-        context.dataStore.data.first()[kpiAnimationModeKey] ?: "STANDARD_HORIZONTAL"
-
-    suspend fun setKpiAnimationMode(context: Context, mode: String) {
-        context.dataStore.edit { prefs ->
-            prefs[kpiAnimationModeKey] = mode
         }
     }
 }

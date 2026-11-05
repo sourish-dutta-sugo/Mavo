@@ -32,9 +32,11 @@ import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
-import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.NorthEast
+import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.outlined.SouthWest
 import androidx.compose.material.icons.filled.Add
@@ -202,7 +204,6 @@ fun DashboardScreen(
         else -> false
     }
     val headerState by dashboardViewModel.headerState.collectAsState()
-    val kpiAnimationMode by dashboardViewModel.kpiAnimationMode.collectAsState()
 
     var searchQuery by remember { mutableStateOf("") }
     var showProgressTracker by remember { mutableStateOf(false) }
@@ -293,11 +294,7 @@ fun DashboardScreen(
         }
     }
 
-    val lowStockProducts by remember(products) {
-        derivedStateOf {
-            products.filter { it.enableStockAlert && it.currentStock <= it.lowStockThreshold }
-        }
-    }
+
 
     LaunchedEffect(Unit) {
         showProgressTracker = AppPreferences.isProgressTrackerEnabled(context)
@@ -390,126 +387,61 @@ fun DashboardScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
-                    .background(AppColors.cardBg)
                     .padding(horizontal = if (isTablet) 24.dp else 16.dp)
-                    .padding(top = 4.dp, bottom = 16.dp)
+                    .padding(top = 16.dp, bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(AppColors.textPrimary),
-                        contentAlignment = Alignment.Center
+                    Image(
+                        painter = painterResource(R.drawable.logo_icon),
+                        contentDescription = "Mavo Logo",
+                        modifier = Modifier.size(36.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        Image(
-                            painter = painterResource(R.drawable.logo_icon),
-                            contentDescription = null,
-                            // dark mark asset, tinted to match the box's established white icon convention
-                            colorFilter = ColorFilter.tint(Color.White, BlendMode.SrcIn),
-                            modifier = Modifier.size(24.dp)
+                        Text(
+                            text = "FY ${headerState.fyLabel}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.textPrimary
+                        )
+                        Text(
+                            text = profile?.gstin?.takeIf { it.isNotBlank() }?.let { "GSTIN: $it" } ?: "Non-GST",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.textSecondary
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Mavo",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = AppColors.textPrimary
-                    )
                     Spacer(modifier = Modifier.weight(1f))
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
-                            .background(AppColors.sectionHeaderBg),
+                            .background(AppColors.primary)
+                            .clickable { },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Notifications,
                             contentDescription = "Notifications",
-                            tint = AppColors.textPrimary,
+                            tint = AppColors.textOnPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
-
                 Text(
                     text = headerState.businessName.ifBlank { "Mavo" },
-                    fontSize = 32.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = AppColors.textPrimary
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = profile?.gstin
-                        ?.takeIf { it.isNotBlank() }
-                        ?.let { "GSTIN: $it" }
-                        ?: "Non-GST business",
-                    fontSize = 16.sp,
-                    color = AppColors.textSecondary
-                )
-                Text(
-                    text = "Financial Year: FY ${headerState.fyLabel}",
-                    fontSize = 16.sp,
-                    color = AppColors.textSecondary
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                val pendingDues = vouchers.count { it.outstandingAmount > 0 }
-                val alertText = when {
-                    isInitialLoading -> "Loading business activity..."
-                    hasUncachedError -> "Some records are unavailable. Retry to check alerts."
-                    lowStockProducts.isNotEmpty() ->
-                        "${lowStockProducts.size} product(s) at or below stock threshold. Tap to review."
-                    pendingDues > 0 ->
-                        "$pendingDues voucher(s) with payment pending. Tap to review."
-                    else -> "Books up to date for FY ${headerState.fyLabel}."
-                }
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(
-                            when {
-                                lowStockProducts.isNotEmpty() -> Modifier.clickable { onQuickAction("LOW_STOCK") }
-                                pendingDues > 0 -> Modifier.clickable { onQuickAction("VOUCHERS") }
-                                else -> Modifier
-                            }
-                        ),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, AppColors.border),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(AppColors.primary)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = alertText,
-                            fontSize = 15.sp,
-                            color = AppColors.textPrimary
-                        )
-                    }
-                }
             }
-
-            HorizontalDivider(color = ScreenBorder)
 
             // ========== CONTENT ==========
             Column(
@@ -523,7 +455,8 @@ fun DashboardScreen(
                 SearchField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = "Search vouchers, items, contacts"
+                    placeholder = "Search vouchers, items, contacts",
+                    shape = RoundedCornerShape(28.dp)
                 )
                 if (hasCachedError || hasUncachedError) {
                     DashboardReadStateCard(
@@ -556,29 +489,10 @@ fun DashboardScreen(
                     onRetry = viewModel::retryFailedReads
                 )
             } else {
-                when (kpiAnimationMode) {
-                    "STANDARD_HORIZONTAL" -> {
-                        KpiStandardHorizontal(
-                            cards = cardList,
-                            isTablet = isTablet,
-                            onCardClick = { selectedAnalyticsCard = it }
-                        )
-                    }
-                    "SPOTLIGHT_CAROUSEL" -> {
-                        KpiSpotlightCarousel(
-                            cards = cardList,
-                            isTablet = isTablet,
-                            onCardClick = { selectedAnalyticsCard = it }
-                        )
-                    }
-                    else -> {
-                        KpiWalletStack(
-                            cards = cardList,
-                            isTablet = isTablet,
-                            onCardClick = { selectedAnalyticsCard = it }
-                        )
-                    }
-                }
+                DashboardKpiHorizontalRow(
+                    cards = cardList,
+                    onCardClick = { selectedAnalyticsCard = it }
+                )
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -661,7 +575,7 @@ fun DashboardScreen(
                             .fillMaxWidth()
                             .premiumClickable { showProgressDetails = true },
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                        shape = RoundedCornerShape(999.dp),
+                        shape = RoundedCornerShape(4.dp),
                         elevation = CardDefaults.cardElevation(2.dp),
                         border = BorderStroke(1.dp, AppColors.border)
                     ) {
@@ -696,7 +610,7 @@ fun DashboardScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(8.dp)
-                                        .clip(RoundedCornerShape(999.dp)),
+                                        .clip(RoundedCornerShape(2.dp)),
                                     color = AppColors.primary,
                                     trackColor = AppColors.primary.copy(alpha = 0.12f)
                                 )
@@ -710,34 +624,23 @@ fun DashboardScreen(
                     }
                 }
 
-                // ========== QUICK ACTIONS ==========
+                // ========== QUICK ACCESS PANEL ==========
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.primary),
                     shape = RoundedCornerShape(24.dp),
                     border = BorderStroke(1.dp, AppColors.border)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            HomeQuickAction("Sale", Icons.AutoMirrored.Outlined.ReceiptLong) { onQuickAction("SALE") }
-                            HomeQuickAction("Purchase", Icons.Outlined.ShoppingCart) { onQuickAction("PURCHASE") }
-                            HomeQuickAction("Receipt", Icons.Outlined.SouthWest) { onQuickAction("RECEIPT") }
-                            HomeQuickAction("Expense", Icons.AutoMirrored.Filled.TrendingUp) { onQuickAction("EXPENSES") }
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            HomeQuickAction("Quick Sale", Icons.Default.Bolt) { onQuickAction("QUICK_SALE") }
-                            HomeQuickAction("Payment", Icons.Outlined.NorthEast) { onQuickAction("PAYMENT") }
-                            HomeQuickAction("Reports", Icons.AutoMirrored.Filled.Assignment) { onQuickAction("REPORTS") }
-                        }
+                        HomeQuickAction("Products", Icons.Outlined.Inventory2, contentColor = AppColors.textOnPrimary) { onQuickAction("PRODUCTS") }
+                        HomeQuickAction("Chart of Accounts", Icons.AutoMirrored.Outlined.MenuBook, contentColor = AppColors.textOnPrimary) { onQuickAction("LEDGER_BOOKS") }
+                        HomeQuickAction("Party Master", Icons.Outlined.People, contentColor = AppColors.textOnPrimary) { onQuickAction("PARTIES") }
+                        HomeQuickAction("Reports", Icons.AutoMirrored.Filled.Assignment, contentColor = AppColors.textOnPrimary) { onQuickAction("REPORTS") }
                     }
                 }
 
@@ -947,6 +850,7 @@ private fun RowScope.HomeQuickAction(
     label: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
+    contentColor: Color = AppColors.textPrimary,
     onClick: () -> Unit
 ) {
     Column(
@@ -954,47 +858,42 @@ private fun RowScope.HomeQuickAction(
         modifier = modifier
             .weight(1f)
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp)
+            .padding(vertical = 8.dp, horizontal = 2.dp)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = AppColors.textPrimary,
+            tint = contentColor,
             modifier = Modifier.size(24.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = label,
-            fontSize = 13.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
-            color = AppColors.textPrimary
+            color = contentColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
 
-// =================== KPI ANIMATION MODES ===================
-
 @Composable
-private fun KpiStandardHorizontal(
+private fun DashboardKpiHorizontalRow(
     cards: List<KpiDetails>,
-    isTablet: Boolean,
-    modifier: Modifier = Modifier,
-    onCardClick: (KpiDetails) -> Unit
+    onCardClick: (KpiDetails) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
-    val cardWidthDp = if (isTablet) 300.dp else 168.dp
-
     LazyRow(
         state = listState,
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 0.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         itemsIndexed(cards) { _, card ->
-            KpiPremiumCard(
+            CompactKpiCard(
                 details = card,
-                modifier = Modifier.width(cardWidthDp),
-                isTablet = isTablet,
                 onClick = { onCardClick(card) }
             )
         }
@@ -1002,217 +901,56 @@ private fun KpiStandardHorizontal(
 }
 
 @Composable
-private fun KpiWalletStack(
-    cards: List<KpiDetails>,
-    isTablet: Boolean,
-    modifier: Modifier = Modifier,
-    onCardClick: (KpiDetails) -> Unit
-) {
-    val listState = rememberLazyListState()
-    val dotAlpha = remember { Animatable(1f) }
-
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress) {
-            delay(1500)
-            dotAlpha.animateTo(0f, tween(400))
-        } else {
-            dotAlpha.snapTo(1f)
-        }
-    }
-
-    val currentIndex by remember {
-        derivedStateOf {
-            val info = listState.layoutInfo
-            val visible = info.visibleItemsInfo
-            if (visible.isEmpty()) 0
-            else {
-                val center = (info.viewportStartOffset + info.viewportEndOffset) / 2
-                visible.minByOrNull { kotlin.math.abs(it.offset + it.size / 2 - center) }?.index ?: 0
-            }
-        }
-    }
-
-    val cardWidthDp = if (isTablet) 320.dp else 260.dp
-    val overlapDp = (-8).dp
-
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        LazyRow(
-            state = listState,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = if (isTablet) 48.dp else 32.dp),
-            horizontalArrangement = Arrangement.spacedBy(overlapDp)
-        ) {
-            itemsIndexed(cards) { index, card ->
-                val absOffset = kotlin.math.abs(
-                    (listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }?.offset ?: 0) -
-                        (listState.layoutInfo.viewportStartOffset + listState.layoutInfo.viewportEndOffset) / 2
-                ).toFloat()
-                val normalizedOffset = (absOffset / (cardWidthDp.value * LocalDensity.current.density)).coerceIn(0f, 2f)
-                val scale = 1f - (normalizedOffset * 0.06f).coerceAtMost(0.1f)
-                val alpha = 1f - (normalizedOffset * 0.4f).coerceAtMost(0.5f)
-
-                KpiPremiumCard(
-                    details = card,
-                    modifier = Modifier
-                        .width(cardWidthDp)
-                        .graphicsLayer {
-                            this.scaleX = scale
-                            this.scaleY = scale
-                            this.alpha = alpha
-                        }
-                        .zIndex(10f - normalizedOffset),
-                    isTablet = isTablet,
-                    onClick = { onCardClick(card) }
-                )
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .graphicsLayer { alpha = dotAlpha.value },
-            horizontalArrangement = Arrangement.Center
-        ) {
-            repeat(cards.size) { index ->
-                val isActive = index == currentIndex
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .height(if (isActive) 8.dp else 4.dp)
-                        .width(if (isActive) 20.dp else 4.dp)
-                        .background(
-                            if (isActive) AppColors.primary else AppColors.border,
-                            RoundedCornerShape(999.dp)
-                        )
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun KpiSpotlightCarousel(
-    cards: List<KpiDetails>,
-    isTablet: Boolean,
-    modifier: Modifier = Modifier,
-    onCardClick: (KpiDetails) -> Unit
-) {
-    val listState = rememberLazyListState()
-    val dotAlpha = remember { Animatable(1f) }
-    val density = LocalDensity.current.density
-
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress) {
-            delay(1500)
-            dotAlpha.animateTo(0f, tween(400))
-        } else {
-            dotAlpha.snapTo(1f)
-        }
-    }
-
-    val currentIndex by remember {
-        derivedStateOf {
-            val info = listState.layoutInfo
-            val visible = info.visibleItemsInfo
-            if (visible.isEmpty()) 0
-            else {
-                val center = (info.viewportStartOffset + info.viewportEndOffset) / 2
-                visible.minByOrNull { kotlin.math.abs(it.offset + it.size / 2 - center) }?.index ?: 0
-            }
-        }
-    }
-
-    val cardWidthDp = if (isTablet) 320.dp else 260.dp
-
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        LazyRow(
-            state = listState,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = if (isTablet) 56.dp else 40.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            itemsIndexed(cards) { index, card ->
-                val absOffset = kotlin.math.abs(
-                    (listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }?.offset ?: 0) -
-                        (listState.layoutInfo.viewportStartOffset + listState.layoutInfo.viewportEndOffset) / 2
-                ).toFloat()
-                val normalizedOffset = (absOffset / (cardWidthDp.value * density)).coerceIn(0f, 2f)
-                val scale = 1f - (normalizedOffset * 0.15f).coerceAtMost(0.2f)
-                val alphaVal = 1f - (normalizedOffset * 0.5f).coerceAtMost(0.6f)
-
-                KpiPremiumCard(
-                    details = card,
-                    modifier = Modifier
-                        .width(cardWidthDp)
-                        .graphicsLayer {
-                            this.scaleX = scale
-                            this.scaleY = scale
-                            this.alpha = alphaVal
-                        },
-                    isTablet = isTablet,
-                    onClick = { onCardClick(card) }
-                )
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .graphicsLayer { alpha = dotAlpha.value },
-            horizontalArrangement = Arrangement.Center
-        ) {
-            repeat(cards.size) { index ->
-                val isActive = index == currentIndex
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .size(if (isActive) 8.dp else 4.dp)
-                        .background(
-                            if (isActive) AppColors.primary else AppColors.border,
-                            CircleShape
-                        )
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun KpiPremiumCard(
+private fun CompactKpiCard(
     details: KpiDetails,
-    modifier: Modifier = Modifier,
-    isTablet: Boolean = false,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(if (isTablet) 120.dp else 100.dp)
+        modifier = Modifier
+            .width(156.dp)
+            .height(86.dp)
             .premiumClickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-        border = BorderStroke(1.dp, ScreenBorder),
+        border = BorderStroke(1.dp, AppColors.border),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(if (isTablet) 20.dp else 16.dp),
+                .padding(12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = details.title,
-                fontSize = if (isTablet) 15.sp else 14.sp,
-                fontWeight = FontWeight.Normal,
-                color = AppColors.textSecondary
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = details.title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = AppColors.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(2.dp)
+                ) {
+                    val strokeWidth = 1.dp.toPx()
+                    val dashLength = 4.dp.toPx()
+                    val gapLength = 3.dp.toPx()
+                    val pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(dashLength, gapLength), 0f)
+                    drawLine(
+                        color = AppColors.border,
+                        start = Offset(0f, size.height / 2),
+                        end = Offset(size.width, size.height / 2),
+                        strokeWidth = strokeWidth,
+                        pathEffect = pathEffect
+                    )
+                }
+            }
             Text(
                 text = details.amount,
-                fontSize = if (isTablet) 26.sp else 24.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.textPrimary,
                 maxLines = 1,

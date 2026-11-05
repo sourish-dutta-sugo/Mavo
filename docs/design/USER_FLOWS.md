@@ -21,6 +21,10 @@ to PIN (if enabled) → Dashboard. System Back returns one step at a time.
 The shell appears only on top-level destinations. Onboarding, PIN, and
 full-screen entry routes keep their existing focused layouts.
 
+The Dashboard opens with a responsive bento metric grid: two columns on phones
+and three columns on wider windows. Tapping any metric keeps the existing
+analytics sheet flow.
+
 Wider register and catalog screens cap content width instead of stretching
 financial rows across the full tablet canvas. Loading, confirmed-empty, cached
 content, and retryable read failures remain distinct states.

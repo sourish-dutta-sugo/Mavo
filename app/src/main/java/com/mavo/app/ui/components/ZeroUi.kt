@@ -172,10 +172,8 @@ fun WizardTitle(
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = text,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.displaySmall,
             color = AppColors.textPrimary,
-            lineHeight = 36.sp
         )
         if (subtitle != null) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -198,7 +196,7 @@ fun PrimaryButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().height(56.dp),
+        modifier = modifier.fillMaxWidth().height(52.dp),
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
@@ -218,7 +216,7 @@ fun SecondaryButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().height(56.dp),
+        modifier = modifier.fillMaxWidth().height(52.dp),
         enabled = enabled,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
@@ -264,7 +262,7 @@ fun ZbField(
             trailingIcon = trailingIcon,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(12.dp),
             isError = isError,
             supportingText = supportingText,
             colors = mavoInputColors()
@@ -279,6 +277,7 @@ fun SearchField(
     modifier: Modifier = Modifier,
     placeholder: String = "Search",
     readOnly: Boolean = false,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(12.dp),
     onClick: (() -> Unit)? = null
 ) {
     val field: @Composable () -> Unit = {
@@ -292,7 +291,7 @@ fun SearchField(
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = null,
+                    contentDescription = "Search",
                     tint = AppColors.textTertiary
                 )
             },
@@ -300,7 +299,7 @@ fun SearchField(
             singleLine = true,
             enabled = onClick == null,
             textStyle = TextStyle(color = AppColors.inputText, fontSize = 15.sp),
-            shape = RoundedCornerShape(16.dp),
+            shape = shape,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = FieldBorder,
                 unfocusedBorderColor = FieldBorder,
@@ -333,7 +332,7 @@ fun ZbCard(
         modifier = modifier
             .fillMaxWidth()
             .then(onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {

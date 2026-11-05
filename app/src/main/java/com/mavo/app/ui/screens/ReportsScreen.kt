@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
@@ -25,6 +26,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -49,6 +51,20 @@ import kotlinx.coroutines.launch
 import com.mavo.app.ui.animation.pressScale
 import com.mavo.app.ui.animation.premiumClickable
 import java.util.Calendar
+
+private data class DesktopReportMenuItem(
+    val type: String,
+    val title: String,
+    val description: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
+private data class ReportMenuCardItem(
+    val title: String,
+    val description: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val onClick: () -> Unit
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -225,50 +241,39 @@ fun ReportsScreen(
                                 .padding(horizontal = 16.dp, vertical = 12.dp)
                         )
 
-                        val reportsList = listOf(
-                            Triple("TRIAL", "Trial Balance", "Interactive Net Debits & Credits verification"),
-                            Triple("PL", "Profit & Loss Account", "Gross Margin & Net P&L side-by-side"),
-                            Triple("BALANCE", "Balance Sheet", "Real assets, liabilities & equity distribution"),
-                            Triple("GST", "GST Summary Status", "Tax output liability offset against Input credits"),
-                            Triple("RECEIVABLES", "Outstanding Receivables", "Automated customer aging list & alerts"),
-                            Triple("PAYABLES", "Outstanding Payables", "Supplier credit balances status"),
-                            Triple("STOCK", "Stock Report", "Current stock, low stock, and out-of-stock items")
+                        val desktopReportsList = listOf(
+                            DesktopReportMenuItem("TRIAL", "Trial Balance", "Interactive Net Debits & Credits verification", Icons.Default.AccountBalance),
+                            DesktopReportMenuItem("PL", "Profit & Loss Account", "Gross Margin & Net P&L side-by-side", Icons.AutoMirrored.Filled.Assignment),
+                            DesktopReportMenuItem("BALANCE", "Balance Sheet", "Real assets, liabilities & equity distribution", Icons.Default.Receipt),
+                            DesktopReportMenuItem("GST", "GST Summary Status", "Tax output liability offset against Input credits", Icons.Default.Percent),
+                            DesktopReportMenuItem("RECEIVABLES", "Outstanding Receivables", "Automated customer aging list & alerts", Icons.AutoMirrored.Filled.TrendingUp),
+                            DesktopReportMenuItem("PAYABLES", "Outstanding Payables", "Supplier credit balances status", Icons.AutoMirrored.Filled.TrendingDown),
+                            DesktopReportMenuItem("STOCK", "Stock Report", "Current stock, low stock, and out-of-stock items", Icons.Default.Inventory2)
                         )
 
-                        reportsList.forEach { (type, name, desc) ->
-                            val isSelected = activeReport == type
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .border(
-                                        1.dp,
-                                        if (isSelected) AppColors.primary else AppColors.border,
-                                        RoundedCornerShape(12.dp)
-                                    )
-                                    .premiumClickable { activeReport = type },
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg
-                                )
+                        desktopReportsList.chunked(2).forEach { rowItems ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(
-                                        text = name,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp,
-                                        color = if (isSelected) AppColors.primary else AppColors.textPrimary
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = desc,
-                                        fontSize = 10.sp,
-                                        color = AppColors.textSecondary
+                                rowItems.forEach { (type, name, desc, icon) ->
+                                    ReportMenuCard(
+                                        title = name,
+                                        description = desc,
+                                        icon = icon,
+                                        isSelected = activeReport == type,
+                                        modifier = Modifier.weight(1f),
+                                        onClick = { activeReport = type }
                                     )
                                 }
+                                if (rowItems.size < 2) {
+                                    Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
                         }
-                        }
                     }
+                }
+            }
 
                     // Right Detail view pane
             Box(
@@ -474,68 +479,37 @@ fun ReportsScreen(
                             .padding(horizontal = 16.dp, vertical = 16.dp)
                     )
 
-                    ReportMenuCard(
-                        title = "Trial Balance",
-                        description = "Interactive Group-wise trial verification statement of net Debits and Credits",
-                        icon = Icons.Default.AccountBalance,
-                        onClick = { activeReport = "TRIAL" }
+                    val mobileReportsList = listOf(
+                        ReportMenuCardItem("Trial Balance", "Interactive Group-wise trial verification statement of net Debits and Credits", Icons.Default.AccountBalance) { activeReport = "TRIAL" },
+                        ReportMenuCardItem("Profit & Loss Account", "View real double-entry Trading (Gross GP) and P&L statements side-by-side", Icons.AutoMirrored.Filled.Assignment) { activeReport = "PL" },
+                        ReportMenuCardItem("Balance Sheet", "Double entry balanced visual assets, liabilities, and proprietor equity", Icons.Default.Receipt) { activeReport = "BALANCE" },
+                        ReportMenuCardItem("GST Summary Status", "Estimated output liabilities offset against input credits", Icons.Default.Percent) { activeReport = "GST" },
+                        ReportMenuCardItem("Outstanding Receivables", "Client outstanding report with automated invoice reminders", Icons.AutoMirrored.Filled.TrendingUp) { activeReport = "RECEIVABLES" },
+                        ReportMenuCardItem("Outstanding Payables", "Supplier credits outstanding ledger status", Icons.AutoMirrored.Filled.TrendingDown) { activeReport = "PAYABLES" },
+                        ReportMenuCardItem("Stock Report", "Current stock, thresholds, and low stock export", Icons.Default.Inventory2) { activeReport = "STOCK" },
+                        ReportMenuCardItem("Ledger Books", "Browse chart of accounts and ledger balances", Icons.Default.AccountBalance) { navigateToLedgerBooks() },
+                        ReportMenuCardItem("Expenses", "Track operating expenses and export the register", Icons.Default.Payments) { navigateToExpenses() }
                     )
 
-                    ReportMenuCard(
-                        title = "Profit & Loss Account",
-                        description = "View real double-entry Trading (Gross GP) and P&L statements side-by-side",
-                        icon = Icons.AutoMirrored.Filled.Assignment,
-                        onClick = { activeReport = "PL" }
-                    )
-
-                    ReportMenuCard(
-                        title = "Balance Sheet",
-                        description = "Double entry balanced visual assets, liabilities, and proprietor equity",
-                        icon = Icons.Default.Receipt,
-                        onClick = { activeReport = "BALANCE" }
-                    )
-
-                    ReportMenuCard(
-                        title = "GST Summary Status",
-                        description = "Estimated output liabilities offset against input credits",
-                        icon = Icons.Default.Percent,
-                        onClick = { activeReport = "GST" }
-                    )
-
-                    ReportMenuCard(
-                        title = "Outstanding Receivables (Email automation)",
-                        description = "Client outstanding report with automated invoice reminders",
-                        icon = Icons.AutoMirrored.Filled.TrendingUp,
-                        onClick = { activeReport = "RECEIVABLES" }
-                    )
-
-                    ReportMenuCard(
-                        title = "Outstanding Payables",
-                        description = "Supplier credits outstanding ledger status",
-                        icon = Icons.AutoMirrored.Filled.TrendingDown,
-                        onClick = { activeReport = "PAYABLES" }
-                    )
-
-                    ReportMenuCard(
-                        title = "Stock Report",
-                        description = "Current stock, thresholds, and low stock export",
-                        icon = Icons.Default.Inventory2,
-                        onClick = { activeReport = "STOCK" }
-                    )
-
-                    ReportMenuCard(
-                        title = "Ledger Books",
-                        description = "Browse chart of accounts and ledger balances",
-                        icon = Icons.Default.AccountBalance,
-                        onClick = navigateToLedgerBooks
-                    )
-
-                    ReportMenuCard(
-                        title = "Expenses",
-                        description = "Track operating expenses and export the register",
-                        icon = Icons.Default.Payments,
-                        onClick = navigateToExpenses
-                    )
+                    mobileReportsList.chunked(2).forEach { rowItems ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            rowItems.forEach { item ->
+                                ReportMenuCard(
+                                    title = item.title,
+                                    description = item.description,
+                                    icon = item.icon,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = item.onClick
+                                )
+                            }
+                            if (rowItems.size < 2) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
                 }
             }
         } else {
@@ -703,9 +677,9 @@ fun ReportsScreen(
                         }
                     }
                 }
+            }
         }
     }
-}
 }
 }
 
@@ -1794,45 +1768,76 @@ fun ReportMenuCard(
     description: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
     onClick: () -> Unit
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .heightIn(min = 110.dp)
+            .border(
+                1.dp,
+                if (isSelected) AppColors.primary else AppColors.border,
+                RoundedCornerShape(12.dp)
+            )
             .premiumClickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = AppColors.primary,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = AppColors.textPrimary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = description,
-                    fontSize = 11.sp,
-                    color = AppColors.textTertiary
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isSelected) AppColors.primary else AppColors.textPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = if (isSelected) AppColors.primary else AppColors.textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(2.dp)
+                ) {
+                    val strokeWidth = 1.dp.toPx()
+                    val dashLength = 4.dp.toPx()
+                    val gapLength = 3.dp.toPx()
+                    val pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(dashLength, gapLength), 0f)
+                    drawLine(
+                        color = if (isSelected) AppColors.primary else AppColors.border,
+                        start = Offset(0f, size.height / 2),
+                        end = Offset(size.width, size.height / 2),
+                        strokeWidth = strokeWidth,
+                        pathEffect = pathEffect
+                    )
+                }
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = AppColors.textTertiary,
-                modifier = Modifier.size(20.dp)
+            Text(
+                text = description,
+                fontSize = 11.sp,
+                color = AppColors.textTertiary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

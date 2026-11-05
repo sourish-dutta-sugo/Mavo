@@ -62,3 +62,4 @@
 | [../CHANGELOG.md](../CHANGELOG.md) | User-facing release log organized by version and release date |
 | [../VERSION](../VERSION) | Current semantic version string |
 | [../AGENTS.md](../AGENTS.md) | Master agent guidelines and definition of done |
+Design interaction and accessibility rules: [UX Laws](design/UX_LAWS.md).

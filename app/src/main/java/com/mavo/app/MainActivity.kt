@@ -550,6 +550,9 @@ private fun MavoNavHost(
                         "EXPENSES" -> navController.navigate(Routes.Expenses)
                         "PARTY" -> navController.navigateToTopLevel(Routes.Parties)
                         "VOUCHERS" -> navController.navigateToTopLevel(Routes.Vouchers)
+                        "PRODUCTS" -> navController.navigate(Routes.Products)
+                        "LEDGER_BOOKS" -> navController.navigate(Routes.LedgerBooks)
+                        "PARTIES" -> navController.navigateToTopLevel(Routes.Parties)
                     }
                 }
             )
@@ -577,9 +580,6 @@ private fun MavoNavHost(
                 viewModel = viewModel,
                 themeViewModel = themeViewModel,
                 isDesktop = useTwoPaneContent,
-                navigateToProducts = { navController.navigate(Routes.Products) },
-                navigateToLedgerBooks = { navController.navigate(Routes.LedgerBooks) },
-                navigateToParties = { navController.navigate(Routes.Parties) },
                 onNavigateBack = { navController.popBackStack() }
             )
         }

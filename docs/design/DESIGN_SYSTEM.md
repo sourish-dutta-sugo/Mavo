@@ -1,19 +1,23 @@
 # DESIGN_SYSTEM.md — Mavo
 
-> Last updated: 2026-11-02  
+> Last updated: 2026-11-04  
 > Source of truth: `ui/theme/` package — `DesignTokens.kt`, `AppTheme.kt`, `AppColors.kt`, `Type.kt`
 
-## Themes
+## Themes (Cafe 60:30:10 System)
 
-4 named light themes, selectable at runtime. Persisted in SharedPreferences
+4 named soothing cafe light themes, selectable at runtime. Persisted in SharedPreferences
 (`mavo_pref` → `selected_theme`).
 
-| Name | Key | Accent | Accent light | Background | Dark? |
-|------|-----|--------|--------------|------------|-------|
-| Zero | `ZERO` | `#006B5F` (deep teal) | `#DCEFEA` | `#F7F5EF` (warm off-white) | No |
-| Saffron | `SAFFRON` | `#A85F00` (burnt saffron) | `#FFF0DA` | `#F7F5EF` | No |
-| Slate | `SLATE` | `#4D4A43` (warm graphite) | `#EDEAE2` | `#F7F5EF` | No |
-| Ledger | `LEDGER` | `#176B4A` (deep green) | `#DCEFEA` | `#F7F5EF` | No |
+- **60% Dominant Base**: Warm Latte Cream Paper (`#FBF8F4`)
+- **30% Structural Medium**: Deep Roasted Espresso & Cocoa Brown (`#2E1F16` / `#5D4432`)
+- **10% Accent Punch**: Warm Caramel Terracotta (`#C86D44`)
+
+| Name | Key | Accent (10%) | Accent light | Background (60%) | Dark? |
+|------|-----|--------------|--------------|-------------------|-------|
+| Zero (Cafe Default) | `ZERO` | `#C86D44` (warm caramel terracotta) | `#F6E7DD` | `#FBF8F4` (warm latte cream) | No |
+| Saffron | `SAFFRON` | `#D6783C` (warm honey caramel) | `#FBEADB` | `#FBF8F4` | No |
+| Slate | `SLATE` | `#5D4432` (mocha roast) | `#E8E0D7` | `#FBF8F4` | No |
+| Ledger | `LEDGER` | `#4E7756` (sage herbal) | `#DDEADE` | `#FBF8F4` | No |
 
 The **Ink** theme (purple, `#7C3AED`) is retired — every accent now sits on the
 paper palette. Each theme defines Material 3 primary, secondary, tertiary,
@@ -218,6 +222,20 @@ The redesign is specified in Penpot only (pages **Mavo · Redesign** and **Mavo 
 - Press scale `0.97` at `120 ms` ease-out
 - Page / sheet transitions `220–280 ms`
 - Animate `transform` / `opacity` only
+
+## Dashboard bento metrics
+
+The Dashboard KPI area uses a responsive bento grid by default. Metrics stay
+visible together instead of requiring a horizontal carousel: two columns on
+compact windows and three columns when navigation rail layouts are active.
+
+- Cards use `cardBg`, `border`, and the metric's semantic highlight color.
+- Card minimum height is 124 dp with 16 dp internal padding and 12 dp grid gap.
+- Metric titles use `labelMedium`; amounts use `titleLarge` with
+  `NumericFontFamily` for stable financial alignment.
+- Every card is tappable and opens the existing metric analytics sheet.
+- Long metric titles may wrap to two lines. Amounts remain on one line and
+  never use ellipsis.
 - Respect reduced motion
 
 ### Layout rules
@@ -226,3 +244,8 @@ The redesign is specified in Penpot only (pages **Mavo · Redesign** and **Mavo 
 - `20 px` page padding, `26 px` dock radius
 - All screens share status bar, header, content area, floating dock, home indicator
 
+## UX laws
+
+Interaction, accessibility, financial-action review, and required screen states
+are defined in [UX_LAWS.md](UX_LAWS.md). New screens and shared components must
+follow that checklist.

@@ -42,7 +42,7 @@ The shell is hidden during onboarding, PIN entry, and full-screen entry flows.
 | `MainActivity.kt` (`MainAppEntry` / `AppContent`) | (initial) | Database loading progress, retryable DB error, setup and PIN gates | App launch | Wizard, PIN or Dashboard |
 | `FirstRunFlow.kt` | (initial, no profile) | First-run wizard: step order, Back handling, shared `SetupDraft`; two onboarding pages, Terms & Privacy page, permission step (all Zero restyle) | Splash (no profile) | Dashboard (after profile save) |
 | `SetupScreen.kt` | (wizard steps 1–3) | Setup 1 "Basic details", Setup 2 "Where you are", Setup 3 "Tax & bank"; Zero header (circle back + "Step N of 3"), 3-segment progress, pill CTA | FirstRunFlow | FirstRunFlow → Dashboard |
-| `DashboardScreen.kt` | `dashboard` | Action-first daily workspace with cached totals, loading/retry states, stock alerts, recent activity, and width-constrained content | Adaptive Home destination | Any feature screen |
+| `DashboardScreen.kt` | `dashboard` | Action-first daily workspace with cached totals, responsive bento metrics, loading/retry states, stock alerts, recent activity, and width-constrained content | Adaptive Home destination | Any feature screen |
 | `VouchersScreen.kt` | `vouchers` | Cached voucher list with loading/error/retry states, status/type filters, search, multi-select, export/delete; expanded list/detail panes | Adaptive Vouchers destination | VoucherDetail, NewVoucher |
 | `PartiesScreen.kt` | `parties` | Cached customer/supplier list with loading/error/retry states, CRUD; expanded list/detail panes | Adaptive Parties destination | PartyDetail |
 | `PartySheets.kt` | (bottom sheet in Parties) | Add/edit party form | PartiesScreen | PartiesScreen |
@@ -127,5 +127,4 @@ A premium Material 3 Expressive redesign of all 36 retail POS/accounting screens
 **Shared chrome on every screen:** status bar, header (eyebrow + title + optional back/action icons), content area, floating dock (Home / Vouchers / Parties / More + New Sale FAB), thin home indicator. Helpers live in `lib2.js` (Penpot plugin context): `status`, `header`, `section`, `card`, `btn`, `chip`, `field`, `avatar`, `divider`, `metric`, `listRow`, `dock`, `segmented`, `searchbar`, `tabs`, `sheet`, `logo`, `grid`, `bars`, `empty`.
 
 **Home board id:** `6e51fff9-1717-80b9-8008-df7cd5b2b9d8` (01 · Home / Dashboard).
-
 

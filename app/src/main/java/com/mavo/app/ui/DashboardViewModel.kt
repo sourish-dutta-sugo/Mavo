@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.mavo.app.data.AppDatabase
-import com.mavo.app.data.AppPreferences
 import com.mavo.app.data.AppRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,19 +37,4 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             initialValue = DashboardHeaderState()
         )
 
-    private val _kpiAnimationMode = MutableStateFlow("STANDARD_HORIZONTAL")
-    val kpiAnimationMode: StateFlow<String> = _kpiAnimationMode.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            _kpiAnimationMode.value = AppPreferences.getKpiAnimationMode(application)
-        }
-    }
-
-    fun setKpiAnimationMode(mode: String) {
-        _kpiAnimationMode.value = mode
-        viewModelScope.launch {
-            AppPreferences.setKpiAnimationMode(getApplication(), mode)
-        }
-    }
 }

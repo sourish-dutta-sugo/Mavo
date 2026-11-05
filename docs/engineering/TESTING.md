@@ -86,3 +86,15 @@ app/src/androidTest/java/   # Instrumentation tests (Espresso)
 6. DB migration → verify no data loss
 7. App first launch → wizard (onboarding → Terms → permission → 3 setup steps) → Dashboard
 8. Returning install → PIN (if enabled) → Dashboard, no wizard replay
+## UX and accessibility checks
+
+For each changed Compose screen:
+
+1. Verify loading, empty, error, success, and disabled states.
+2. Run Compose semantics assertions for meaningful labels, roles, states, and
+   primary actions.
+3. Check TalkBack traversal and content descriptions.
+4. Check dark and light themes, 200% font scale, and touch targets.
+5. Review financial actions before posting, deleting, restoring, or exporting.
+
+Use [UX_LAWS.md](../design/UX_LAWS.md) as the acceptance checklist.

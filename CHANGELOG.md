@@ -9,9 +9,26 @@
 ## [Unreleased]
 
 ### Added
+- Folder/Dossier filing visual components (`FolderTab`, `FolderDossier`, `SubFileRow`) in `FolderComponents.kt` giving accounting screens a physical filing binder look.
+
+### Changed
+- Removed checkered graph paper grid lines across all screens (`GraphPaperCanvas.kt` & `GraphPaperBackground.kt`); background now renders as seamless solid warm cafe paper without overlaying cards or controls.
+- Tuned Material 3 motion: 100–120 ms screen fades, 0.97 press scale, subtle spring damping without UI lag.
+- Verified mobile touch targets and font-scaling protection on tabular data.
+- Complete visual UI redesign following the Golden Ratio (60:30:10) and cozy Cafe aesthetic:
+  - 60% Base: Warm latte cream paper (`#FBF8F4`).
+  - 30% Structure: Espresso and mocha typography & borders (`#2E1F16` / `#5D4432`).
+  - 10% Accent: Caramel terracotta punch (`#C86D44`) for primary actions, folder tabs, and status badges.
+- Upgraded `AdaptiveNavigationBar` and `AdaptiveNavigationRail` to clean pill-shaped folder selectors with floating action button.
+- Replaced cold graph-paper grid with eye-friendly warm cafe paper canvas.
+- Updated `AppTheme` runtime definitions and text field styling.
+DB migration: no
 - Mavo redesign specified in Penpot only (pages **Mavo · Redesign** and **Mavo · System**): all 36 retail POS/accounting screens in a shared Material 3 Expressive design system — custom palette (ink #171A16, paper #F4EFE3, card #FFFDF8, forest #0B5D4B, mint #C8F2E3, amber #E7A63A, coral #D95C4A, blue #4E7BE8, line #E1D8C4), DynaPuff / Tomorrow / Playwrite PL typography, 77 custom SVG icons, and custom components (floating dock, expressive buttons, filled fields, segmented controls, chips, ledger cards, metric tiles, tables, bottom sheets, empty states, status chips, logo tile, graph-paper background). Motion rules: press scale 0.97 @ 120 ms ease-out, page/sheet transitions 220–280 ms, transform/opacity only, reduced-motion respected. Original **Mavo UI mockups** boards preserved intact; no Android code or DB schema changed.
 
 ### Changed
+- Reworked the shared Android visual system into a warm cafe palette: parchment background, cream surfaces, cocoa primary actions, muted status colors, cleaner cards, and a plain background canvas
+- Updated adaptive navigation, search, fields, buttons, and cards to use the cafe hierarchy while preserving existing routes and local data behavior
+- Dashboard KPI cards now use a responsive two/three-column bento grid by default; each metric remains tappable and opens its existing analytics sheet
 - Full-app UI polish pass (nine passes): all spacing snapped to a 4 dp grid, one corner-radius scale (4/8/12/16 cards and inputs, 24/28/32 hero, 999 pill), off-scale text sizes and Black/ExtraBold weights normalized, tracked-uppercase labels removed, toasts and helper copy de-shouted (no exclamation marks, no hype), status badges and voucher chips read from one token set, colored glows/pulses and Dashboard spotlight rotation removed, and the graph-paper overlay redrawn to the shared 16 dp grid
 - Theme picker now offers four light accents — **Ink (purple) retired**; Saffron recolored to `#A85F00` and Slate to `#4D4A43` so the choices are distinct instead of four near-identical teals; saved Night/Ink/Purple selections resolve to Zero
 - Shared graph-paper canvas and refreshed Material 3 layouts across existing screens; saved Night selections resolve to Zero

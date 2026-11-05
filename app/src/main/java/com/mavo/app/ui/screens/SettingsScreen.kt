@@ -115,9 +115,6 @@ fun SettingsScreen(
     viewModel: AppViewModel,
     themeViewModel: ThemeViewModel,
     isDesktop: Boolean = false,
-    navigateToProducts: () -> Unit,
-    navigateToLedgerBooks: () -> Unit,
-    navigateToParties: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -658,10 +655,7 @@ fun SettingsScreen(
                             currentThemeLabel = currentTheme.name.lowercase()
                                 .replaceFirstChar { it.uppercase(Locale.getDefault()) },
                             onSelect = { activeSubMode = it },
-                            openChangeLog = { showChangelogDialog = true },
-                            navigateToProducts = navigateToProducts,
-                            navigateToLedgerBooks = navigateToLedgerBooks,
-                            navigateToParties = navigateToParties
+                            openChangeLog = { showChangelogDialog = true }
                         )
                     }
                 }
@@ -680,10 +674,7 @@ fun SettingsScreen(
                 currentThemeLabel = currentTheme.name.lowercase()
                     .replaceFirstChar { it.uppercase(Locale.getDefault()) },
                 onSelect = { activeSubMode = it },
-                openChangeLog = { showChangelogDialog = true },
-                navigateToProducts = navigateToProducts,
-                navigateToLedgerBooks = navigateToLedgerBooks,
-                navigateToParties = navigateToParties
+                openChangeLog = { showChangelogDialog = true }
             )
         } else {
             DetailContent()
@@ -736,10 +727,7 @@ fun SettingsMenuSection(
     viewModel: AppViewModel,
     currentThemeLabel: String,
     onSelect: (String) -> Unit,
-    openChangeLog: () -> Unit,
-    navigateToProducts: () -> Unit,
-    navigateToLedgerBooks: () -> Unit,
-    navigateToParties: () -> Unit
+    openChangeLog: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val profile by viewModel.profile.collectAsState()
@@ -833,24 +821,6 @@ fun SettingsMenuSection(
                     title = "Business Profile",
                     subtitle = profile?.businessName?.ifBlank { null },
                     onClick = { onSelect("BUSINESS") }
-                )
-                HorizontalDivider(color = ScreenBorder)
-                SettingsRow(
-                    icon = Icons.Outlined.Inventory2,
-                    title = "Products",
-                    onClick = navigateToProducts
-                )
-                HorizontalDivider(color = ScreenBorder)
-                SettingsRow(
-                    icon = Icons.AutoMirrored.Outlined.MenuBook,
-                    title = "Chart of Accounts",
-                    onClick = navigateToLedgerBooks
-                )
-                HorizontalDivider(color = ScreenBorder)
-                SettingsRow(
-                    icon = Icons.Outlined.People,
-                    title = "Party Master",
-                    onClick = navigateToParties
                 )
             }
 
@@ -1252,18 +1222,16 @@ private fun AuditLogContent(
 fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var enabled by remember { mutableStateOf(false) }
+    var enabled by remember { mutableStateOf(true) }
     var metric by remember { mutableStateOf("Sales") }
     var period by remember { mutableStateOf("Monthly") }
     var target by remember { mutableStateOf("200000") }
-    var kpiAnimationMode by remember { mutableStateOf("WALLET_STACK") }
 
     LaunchedEffect(Unit) {
         enabled = AppPreferences.isProgressTrackerEnabled(context)
         metric = AppPreferences.getProgressTrackerMetric(context)
         period = AppPreferences.getProgressTrackerPeriod(context)
         target = AppPreferences.getProgressTrackerTarget(context)
-        kpiAnimationMode = AppPreferences.getKpiAnimationMode(context)
     }
 
     Scaffold(
@@ -1295,39 +1263,7 @@ fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Dashboard", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppColors.textPrimary)
-                    Text("Configure dashboard appearance and KPI card animation style.", fontSize = 12.sp, color = AppColors.textSecondary)
-
-                    Text("KPI Animation Mode", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = AppColors.textSecondary)
-                    val animationModes = listOf(
-                        "STANDARD_HORIZONTAL" to "Standard Horizontal",
-                        "WALLET_STACK" to "Wallet Stack (Default)",
-                        "SPOTLIGHT_CAROUSEL" to "Spotlight Carousel"
-                    )
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        animationModes.forEach { (mode, label) ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .border(
-                                        1.dp,
-                                        if (kpiAnimationMode == mode) AppColors.primary else AppColors.border,
-                                        RoundedCornerShape(12.dp)
-                                    )
-                                    .clickable {
-                                        kpiAnimationMode = mode
-                                        scope.launch { AppPreferences.setKpiAnimationMode(context, mode) }
-                                    }
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(label, fontSize = 13.sp, color = AppColors.textPrimary, fontWeight = if (kpiAnimationMode == mode) FontWeight.Bold else FontWeight.Normal)
-                                if (kpiAnimationMode == mode) {
-                                    Icon(Icons.Default.Check, contentDescription = "Selected", tint = AppColors.primary, modifier = Modifier.size(20.dp))
-                                }
-                            }
-                        }
-                    }
+                    Text("Configure dashboard appearance and progress tracker settings.", fontSize = 12.sp, color = AppColors.textSecondary)
 
                     HorizontalDivider()
 
@@ -1376,7 +1312,6 @@ fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
                                 AppPreferences.setProgressTrackerMetric(context, metric.ifBlank { "Sales" })
                                 AppPreferences.setProgressTrackerPeriod(context, period.ifBlank { "Monthly" })
                                 AppPreferences.setProgressTrackerTarget(context, target.ifBlank { "200000" })
-                                AppPreferences.setKpiAnimationMode(context, kpiAnimationMode)
                                 Toast.makeText(context, "Dashboard settings saved", Toast.LENGTH_SHORT).show()
                             }
                         },

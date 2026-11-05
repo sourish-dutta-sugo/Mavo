@@ -35,10 +35,10 @@ object AppColors {
     val borderFocus get() = theme.accentPrimary
     val borderLight get() = theme.backgroundTertiary
 
-    val debit = Color(0xFFE24B4A)
-    val debitBg get() = if (theme.isDark) Color(0xFF452522) else Color(0xFFFEF0F0)
-    val credit = Color(0xFF22A06B)
-    val creditBg get() = if (theme.isDark) Color(0xFF1D4034) else Color(0xFFE8F8F0)
+    val debit = Color(0xFFA85F55)
+    val debitBg get() = if (theme.isDark) Color(0xFF452522) else Color(0xFFF4E4E0)
+    val credit = Color(0xFF58745B)
+    val creditBg get() = if (theme.isDark) Color(0xFF344735) else Color(0xFFE3EDE1)
 
     val gold = Color(0xFFC8943A)
     val goldLight = Color(0xFFF0C060)
@@ -66,12 +66,12 @@ object AppColors {
     val inputBorderFocus get() = theme.accentPrimary
     val labelText get() = theme.textSecondary
 
-    val success = Color(0xFF22A06B)
-    val successBg get() = if (theme.isDark) Color(0xFF1D4034) else Color(0xFFE8F8F0)
-    val error = Color(0xFFE24B4A)
-    val errorBg get() = if (theme.isDark) Color(0xFF452522) else Color(0xFFFEF0F0)
-    val warning = Color(0xFFD97706)
-    val warningBg get() = if (theme.isDark) Color(0xFF49371D) else Color(0xFFFFF7E6)
-    val info = Color(0xFF0F766E)
-    val infoBg get() = if (theme.isDark) Color(0xFF15423C) else Color(0xFFDCEFEA)
+    val success = Color(0xFF58745B)
+    val successBg get() = if (theme.isDark) Color(0xFF344735) else Color(0xFFE3EDE1)
+    val error = Color(0xFFA85F55)
+    val errorBg get() = if (theme.isDark) Color(0xFF452522) else Color(0xFFF4E4E0)
+    val warning = Color(0xFFA66F3F)
+    val warningBg get() = if (theme.isDark) Color(0xFF49371D) else Color(0xFFF4E9D8)
+    val info = Color(0xFF6D7165)
+    val infoBg get() = if (theme.isDark) Color(0xFF3D4137) else Color(0xFFE7E8DE)
 }
