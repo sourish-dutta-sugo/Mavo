@@ -1,0 +1,890 @@
+package com.mavo.app.ui.screens.tablet
+
+import com.mavo.app.ui.screens.BarcodeScannerDialog
+import com.mavo.app.ui.screens.HsnSearchDialog
+import com.mavo.app.ui.screens.ProductOptionalFields
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.mavo.app.data.Product
+import com.mavo.app.data.Utils
+import com.mavo.app.data.filterDecimalInput
+import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.LocalAppWindowSizeClass
+import com.mavo.app.ui.UiLoadState
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
+import com.mavo.app.ui.dashboardMaxWidthDp
+import com.mavo.app.ui.animation.premiumCombinedClickable
+import com.mavo.app.ui.animation.premiumFabEntrance
+import com.mavo.app.ui.animation.pressScale
+import com.mavo.app.ui.components.PrimaryButton
+import com.mavo.app.ui.components.ScreenBorder
+import com.mavo.app.ui.components.SecondaryButton
+import com.mavo.app.ui.components.WizardHeader
+import com.mavo.app.ui.components.WizardTitle
+import com.mavo.app.ui.components.ZbField
+import com.mavo.app.ui.selection.UniversalSelectionController
+import com.mavo.app.ui.selection.UniversalSelectionTopAppBar
+import com.mavo.app.ui.selection.UniversalSelectionIndicator
+import com.mavo.app.ui.theme.AppColors
+import com.mavo.app.ui.theme.mavoInputColors
+import java.util.Locale
+import java.util.UUID
+import kotlinx.coroutines.launch
+
+import com.mavo.app.ui.screens.common.ProductSheetMode
+
+private data class ProductEditorState(
+    val id: String? = null,
+    val name: String = "",
+    val hsnCode: String = "",
+    val unit: String = "PCS",
+    val saleRate: String = "",
+    val purchaseRate: String = "",
+    val gstRate: Double = 18.0,
+    val openingStock: String = "0",
+    val currentStock: String = "0",
+    val lowStockThreshold: String = "5",
+    val enableStockAlert: Boolean = false,
+    val barcodeValue: String = "",
+    val secondaryUnit: String = "",
+    val conversionFactor: String = "1",
+    val batchEnabled: Boolean = false,
+    val batchNumber: String = "",
+    val expiryEnabled: Boolean = false,
+    val expiryDate: String = "",
+    val serialEnabled: Boolean = false
+)
+
+private fun Product.toEditorState() = ProductEditorState(
+    id = id,
+    name = name,
+    hsnCode = hsnCode,
+    unit = unit,
+    saleRate = saleRate.toString(),
+    purchaseRate = purchaseRate.toString(),
+    gstRate = gstRate,
+    openingStock = openingStock.toString(),
+    currentStock = currentStock.toString(),
+    lowStockThreshold = lowStockThreshold.toString(),
+    enableStockAlert = enableStockAlert,
+    barcodeValue = barcodeValue,
+    secondaryUnit = secondaryUnit,
+    conversionFactor = conversionFactor.toString(),
+    batchEnabled = batchEnabled,
+    batchNumber = batchNumber,
+    expiryEnabled = expiryEnabled,
+    expiryDate = expiryDate,
+    serialEnabled = serialEnabled
+)
+
+fun Product.isLowStockAlertTriggered(): Boolean =
+    enableStockAlert && currentStock <= lowStockThreshold
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TabletProductsScreen(
+    viewModel: AppViewModel,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    onNavigateToLowStock: () -> Unit
+) {
+    val windowSizeClass = LocalAppWindowSizeClass.current
+    val productsReadState by viewModel.productsUiState.collectAsState()
+    val products = productsReadState.valueOrEmpty()
+    var searchQuery by remember { mutableStateOf("") }
+    var sheetMode by remember { mutableStateOf<ProductSheetMode?>(null) }
+    var editingProductId by remember { mutableStateOf<String?>(null) }
+    var selectedProduct by remember { mutableStateOf<Product?>(null) }
+    var actionProduct by remember { mutableStateOf<Product?>(null) }
+    val selectionController = remember { UniversalSelectionController() }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    var deleteConfirmProductIds by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    val normalizedQuery = remember(searchQuery) { searchQuery.trim().lowercase(Locale.US) }
+    val filteredProducts = remember(products, normalizedQuery) {
+        products.filter { product ->
+            val haystack = "${product.name} ${product.hsnCode} ${product.barcodeValue}".lowercase(Locale.US)
+            normalizedQuery.isEmpty() || haystack.contains(normalizedQuery)
+        }
+    }
+
+    val lowStockCount = remember(filteredProducts) {
+        filteredProducts.count { it.currentStock <= 0.0 || it.isLowStockAlertTriggered() }
+    }
+
+    if (sheetMode != null) {
+        ProductEditorScreen(
+            viewModel = viewModel,
+            mode = sheetMode ?: ProductSheetMode.ADD,
+            existingProduct = products.find { it.id == editingProductId },
+            onDismiss = {
+                sheetMode = null
+                editingProductId = null
+            }
+        )
+        return
+    }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = AppColors.screenBg,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        topBar = {
+            if (selectionController.isSelectionActive) {
+                UniversalSelectionTopAppBar(
+                    controller = selectionController,
+                    visibleItemCount = filteredProducts.size,
+                    onClose = { selectionController.exitSelection() },
+                    onSelectAll = { selectionController.toggleSelectAll(filteredProducts.map { it.id }) },
+                    onDelete = {
+                        deleteConfirmProductIds = selectionController.selectedIdsSnapshot().toList()
+                    }
+                )
+            } else {
+                TopAppBar(
+                    title = { Text("Manage Products", fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+                )
+            }
+        },
+        floatingActionButton = {
+            androidx.compose.material3.FloatingActionButton(
+                onClick = {
+                    editingProductId = null
+                    sheetMode = ProductSheetMode.ADD
+                },
+                containerColor = AppColors.primary,
+                contentColor = AppColors.textOnPrimary,
+                modifier = Modifier
+                    .premiumFabEntrance()
+                    .pressScale()
+                    .testTag("add_product_fab")
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Product")
+            }
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = windowSizeClass.dashboardMaxWidthDp()?.dp ?: Dp.Unspecified)
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .align(Alignment.TopCenter)
+                    .background(AppColors.screenBg)
+                    .imePadding()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search by product, HSN, or barcode") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = AppColors.inputBg,
+                    unfocusedContainerColor = AppColors.inputBg,
+                    focusedBorderColor = AppColors.primary,
+                    unfocusedBorderColor = AppColors.border
+                )
+            )
+            UiLoadStateNotice(
+                state = productsReadState,
+                onRetry = viewModel::retryFailedReads
+            )
+
+            if (lowStockCount > 0) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, AppColors.warning.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+                        .clickable { onNavigateToLowStock() },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.warningBg)
+                ) {
+                    Text(
+                        text = "$lowStockCount product(s) need stock attention. Tap to review.",
+                        modifier = Modifier.padding(16.dp),
+                        color = AppColors.warning,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+            if (productsReadState.blocksContent()) {
+                Spacer(modifier = Modifier.weight(1f))
+            } else if (filteredProducts.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No products configured yet.", color = AppColors.textSecondary, fontSize = 14.sp)
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 120.dp)
+                ) {
+                    items(items = filteredProducts, key = { it.id }) { product ->
+                        ProductRow(
+                            product = product,
+                            isSelected = selectionController.isSelected(product.id),
+                            selectionActive = selectionController.isSelectionActive,
+                            onOpenDetail = { if (selectionController.isSelectionActive) selectionController.toggleSelection(product.id) else selectedProduct = product },
+                            onEdit = {
+                                editingProductId = product.id
+                                sheetMode = ProductSheetMode.EDIT
+                            },
+                            onDelete = { actionProduct = product },
+                            onMore = { actionProduct = product },
+                            onLongPress = { selectionController.enterSelection(product.id) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    selectedProduct?.let { product ->
+        AlertDialog(
+            onDismissRequest = { selectedProduct = null },
+            title = { Text(product.name, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("HSN: ${product.hsnCode.ifBlank { "N/A" }}")
+                    Text("Unit: ${product.unit}")
+                    Text("Sale Rate: ${Utils.formatIndianCurrency(product.saleRate)}")
+                    Text("Purchase Rate: ${Utils.formatIndianCurrency(product.purchaseRate)}")
+                    Text("GST: ${product.gstRate}%")
+                    Text("Opening Stock: ${product.openingStock}")
+                    Text("Current Stock: ${product.currentStock}")
+                    if (product.enableStockAlert) {
+                        Text("Low stock alert below ${product.lowStockThreshold}")
+                    } else {
+                        Text("Low stock alert disabled")
+                    }
+                    if (product.barcodeValue.isNotBlank()) {
+                        Text("Barcode: ${product.barcodeValue}")
+                    }
+                    if (product.secondaryUnit.isNotBlank()) {
+                        Text("Secondary Unit: ${product.secondaryUnit} (${product.conversionFactor} ${product.unit})")
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        selectedProduct = null
+                        editingProductId = product.id
+                        sheetMode = ProductSheetMode.EDIT
+                    },
+                    modifier = Modifier.pressScale()
+                ) {
+                    Text("Edit")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedProduct = null }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    if (deleteConfirmProductIds.isNotEmpty()) {
+        val deleteCount = deleteConfirmProductIds.size
+        val deleteLabel = if (deleteCount == 1) "this product" else "$deleteCount selected products"
+        AlertDialog(
+            onDismissRequest = { deleteConfirmProductIds = emptyList() },
+            title = { Text(if (deleteCount == 1) "Delete this product?" else "Delete $deleteCount selected products?") },
+            text = { Text("This action cannot be undone.") },
+            confirmButton = {
+                Button(onClick = {
+                    deleteConfirmProductIds.forEach { id -> viewModel.deleteProduct(id) }
+                    selectionController.exitSelection()
+                    deleteConfirmProductIds = emptyList()
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(if (deleteCount == 1) "Product deleted." else "$deleteCount products deleted.")
+                    }
+                }) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteConfirmProductIds = emptyList() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    actionProduct?.let { product ->
+        AlertDialog(
+            onDismissRequest = { actionProduct = null },
+            title = { Text(product.name) },
+            text = { Text("Choose an action for this product.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        actionProduct = null
+                        editingProductId = product.id
+                        sheetMode = ProductSheetMode.EDIT
+                    },
+                    modifier = Modifier.pressScale()
+                ) {
+                    Text("Edit")
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteProduct(product.id)
+                            actionProduct = null
+                        }
+                    ) {
+                        Text("Delete", color = AppColors.error)
+                    }
+                    TextButton(onClick = { actionProduct = null }) {
+                        Text("Cancel")
+                    }
+                }
+            }
+        )
+    }
+}
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun ProductRow(
+    product: Product,
+    isSelected: Boolean,
+    selectionActive: Boolean,
+    modifier: Modifier = Modifier,
+    onOpenDetail: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onMore: () -> Unit,
+    onLongPress: () -> Unit
+) {
+    val statusColor = when {
+        product.currentStock <= 0.0 -> AppColors.error
+        product.isLowStockAlertTriggered() -> AppColors.warning
+        else -> AppColors.success
+    }
+    val statusLabel = when {
+        product.currentStock <= 0.0 -> "Out of Stock"
+        product.isLowStockAlertTriggered() -> "Low Stock"
+        else -> "In Stock"
+    }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                1.dp,
+                if (isSelected) AppColors.primary.copy(alpha = 0.45f) else AppColors.border,
+                RoundedCornerShape(16.dp)
+            )
+            .premiumCombinedClickable(
+                onClick = onOpenDetail,
+                onLongClick = onLongPress
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) AppColors.primary.copy(alpha = 0.06f) else AppColors.cardBg)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(product.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppColors.textPrimary)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("HSN: ${product.hsnCode.ifBlank { "N/A" }}", fontSize = 11.sp, color = AppColors.textSecondary)
+                Text(
+                    "Stock: ${product.currentStock} ${product.stockUnit.ifBlank { product.unit }}",
+                    fontSize = 11.sp,
+                    color = AppColors.textSecondary
+                )
+                if (product.enableStockAlert) {
+                    Text("Alert below ${product.lowStockThreshold}", fontSize = 11.sp, color = AppColors.textSecondary)
+                }
+                if (product.barcodeValue.isNotBlank()) {
+                    Text("Barcode: ${product.barcodeValue}", fontSize = 11.sp, color = AppColors.textSecondary)
+                }
+            }
+
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onEdit) {
+                        Icon(Icons.Outlined.Edit, contentDescription = "Edit Product", tint = AppColors.primary)
+                    }
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Product", tint = AppColors.error)
+                    }
+                }
+                AssistChip(
+                    onClick = {},
+                    enabled = false,
+                    label = { Text(statusLabel, color = statusColor, fontSize = 10.sp) },
+                    colors = AssistChipDefaults.assistChipColors(
+                        disabledContainerColor = statusColor.copy(alpha = 0.12f),
+                        disabledLabelColor = statusColor
+                    )
+                )
+                Text(Utils.formatIndianCurrency(product.saleRate), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppColors.primary)
+                Text("Sale Rate", fontSize = 10.sp, color = AppColors.textSecondary)
+            }
+        }
+    }
+}
+
+@Suppress("DEPRECATION")
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+fun ProductEditorScreen(
+    viewModel: AppViewModel,
+    mode: ProductSheetMode,
+    existingProduct: Product?,
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit
+) {
+    var editorState by remember(existingProduct, mode) {
+        mutableStateOf(existingProduct?.toEditorState() ?: ProductEditorState())
+    }
+    var showError by remember { mutableStateOf(false) }
+    var unitDropdownExpanded by remember { mutableStateOf(false) }
+    var gstExpanded by remember { mutableStateOf(false) }
+    var showBarcodeScanner by remember { mutableStateOf(false) }
+    var showHsnDialog by remember { mutableStateOf(false) }
+
+    val units = listOf("PCS", "KG", "GM", "MG", "LTR", "ML", "BOX", "BAG", "NOS", "MTR")
+    val gstRates = listOf(0.0, 5.0, 12.0, 18.0, 28.0)
+    val scrollState = rememberScrollState()
+
+    if (showBarcodeScanner) {
+        BarcodeScannerDialog(
+            onDismiss = { showBarcodeScanner = false },
+            onScanned = {
+                editorState = editorState.copy(barcodeValue = it)
+                showBarcodeScanner = false
+            }
+        )
+    }
+
+    if (showHsnDialog) {
+        HsnSearchDialog(
+            onDismiss = { showHsnDialog = false },
+            onSelect = { result ->
+                editorState = editorState.copy(hsnCode = result.hsnCode)
+                showHsnDialog = false
+            },
+            initialQuery = editorState.name
+        )
+    }
+
+    // ponytail: no product image row (Product has no image column; needs a migration) — upgrade path: add imagePath + storage.
+    val onSave: () -> Unit = {
+        val saleRate = editorState.saleRate.toDoubleOrNull()
+        val purchaseRate = editorState.purchaseRate.toDoubleOrNull()
+        val openingStock = editorState.openingStock.toDoubleOrNull() ?: 0.0
+        val currentStock = editorState.currentStock.toDoubleOrNull() ?: openingStock
+        val lowStockThreshold = editorState.lowStockThreshold.toDoubleOrNull() ?: 5.0
+        val conversionFactor = editorState.conversionFactor.toDoubleOrNull() ?: 1.0
+        if (editorState.name.isBlank() || saleRate == null || purchaseRate == null) {
+            showError = true
+        } else {
+            viewModel.saveProduct(
+                Product(
+                    id = editorState.id ?: UUID.randomUUID().toString(),
+                    name = editorState.name.trim(),
+                    hsnCode = editorState.hsnCode,
+                    unit = editorState.unit,
+                    saleRate = saleRate,
+                    purchaseRate = purchaseRate,
+                    gstRate = editorState.gstRate,
+                    openingStock = openingStock,
+                    currentStock = currentStock,
+                    enableStockAlert = editorState.enableStockAlert,
+                    lowStockThreshold = lowStockThreshold,
+                    stockUnit = editorState.unit,
+                    barcodeValue = editorState.barcodeValue,
+                    secondaryUnit = editorState.secondaryUnit,
+                    conversionFactor = conversionFactor,
+                    batchEnabled = editorState.batchEnabled,
+                    batchNumber = if (editorState.batchEnabled) editorState.batchNumber.trim() else "",
+                    expiryEnabled = editorState.expiryEnabled,
+                    expiryDate = if (editorState.expiryEnabled) editorState.expiryDate.trim() else "",
+                    serialEnabled = editorState.serialEnabled
+                )
+            ) {
+                onDismiss()
+            }
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(AppColors.screenBg)
+    ) {
+        WizardHeader(
+            stepLabel = "",
+            onBack = onDismiss,
+            onClose = onDismiss
+        )
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState)
+                .imePadding()
+        ) {
+            Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp)) {
+                WizardTitle(
+                    text = if (mode == ProductSheetMode.EDIT) "Edit Product" else "New Product",
+                    subtitle = "Master data · Inventory"
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = ScreenBorder)
+            Column(
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ZbField(
+                    value = editorState.name,
+                    onValueChange = { editorState = editorState.copy(name = it) },
+                    label = "Product name",
+                    placeholder = "e.g. Basmati Rice 5kg"
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    ZbField(
+                        value = editorState.barcodeValue,
+                        onValueChange = { editorState = editorState.copy(barcodeValue = it.trim()) },
+                        label = "SKU / Barcode",
+                        modifier = Modifier.weight(1f),
+                        trailingIcon = {
+                            IconButton(onClick = { showBarcodeScanner = true }) {
+                                Icon(Icons.Default.Search, contentDescription = "Scan barcode")
+                            }
+                        }
+                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        ZbField(
+                            value = editorState.unit,
+                            onValueChange = {},
+                            label = "Unit",
+                            readOnly = true,
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    modifier = Modifier.clickable { unitDropdownExpanded = true }
+                                )
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = unitDropdownExpanded,
+                            onDismissRequest = { unitDropdownExpanded = false }
+                        ) {
+                            units.forEach { unit ->
+                                DropdownMenuItem(
+                                    text = { Text(unit) },
+                                    onClick = {
+                                        editorState = editorState.copy(unit = unit)
+                                        unitDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    ZbField(
+                        value = editorState.hsnCode,
+                        onValueChange = { editorState = editorState.copy(hsnCode = it.filter { c -> c.isDigit() }.take(8)) },
+                        label = "HSN code",
+                        modifier = Modifier.weight(1f),
+                        trailingIcon = {
+                            IconButton(onClick = { showHsnDialog = true }) {
+                                Icon(Icons.Default.Search, contentDescription = "Search HSN")
+                            }
+                        }
+                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        ZbField(
+                            value = "${editorState.gstRate.toInt()}% GST",
+                            onValueChange = {},
+                            label = "Tax rate",
+                            readOnly = true,
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    modifier = Modifier.clickable { gstExpanded = true }
+                                )
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = gstExpanded,
+                            onDismissRequest = { gstExpanded = false }
+                        ) {
+                            gstRates.forEach { rate ->
+                                DropdownMenuItem(
+                                    text = { Text("${rate.toInt()}%") },
+                                    onClick = {
+                                        editorState = editorState.copy(gstRate = rate)
+                                        gstExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    DecimalField(
+                        value = editorState.saleRate,
+                        onValueChange = { editorState = editorState.copy(saleRate = it) },
+                        label = "Sale price",
+                        modifier = Modifier.weight(1f)
+                    )
+                    DecimalField(
+                        value = editorState.purchaseRate,
+                        onValueChange = { editorState = editorState.copy(purchaseRate = it) },
+                        label = "Purchase price",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    DecimalField(
+                        value = editorState.openingStock,
+                        onValueChange = { editorState = editorState.copy(openingStock = it) },
+                        label = "Opening stock",
+                        modifier = Modifier.weight(1f)
+                    )
+                    DecimalField(
+                        value = editorState.lowStockThreshold,
+                        onValueChange = { editorState = editorState.copy(lowStockThreshold = it) },
+                        label = "Low stock alert",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                DecimalField(
+                    value = editorState.currentStock,
+                    onValueChange = { editorState = editorState.copy(currentStock = it) },
+                    label = "Current stock",
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Enable stock alerts", fontWeight = FontWeight.Medium)
+                        Text(
+                            if (editorState.enableStockAlert) "Alert will show when stock reaches threshold"
+                            else "This product will never raise low stock warnings",
+                            fontSize = 12.sp,
+                            color = AppColors.textSecondary
+                        )
+                    }
+                    Switch(
+                        checked = editorState.enableStockAlert,
+                        onCheckedChange = {
+                            editorState = editorState.copy(enableStockAlert = it)
+                        }
+                    )
+                }
+
+                // ponytail: threshold field stays visible even when alerts are off — upgrade: gate it behind the switch.
+                ProductOptionalFields(
+                    showHsn = false,
+                    hsnCode = editorState.hsnCode,
+                    onHsnChange = { editorState = editorState.copy(hsnCode = it) },
+                    onFindHsn = { showHsnDialog = true },
+                    batchEnabled = editorState.batchEnabled,
+                    onBatchEnabledChange = { editorState = editorState.copy(batchEnabled = it) },
+                    batchNumber = editorState.batchNumber,
+                    onBatchNumberChange = { editorState = editorState.copy(batchNumber = it) },
+                    expiryEnabled = editorState.expiryEnabled,
+                    onExpiryEnabledChange = { editorState = editorState.copy(expiryEnabled = it) },
+                    expiryDate = editorState.expiryDate,
+                    onExpiryDateChange = { editorState = editorState.copy(expiryDate = it) },
+                    serialEnabled = editorState.serialEnabled,
+                    onSerialEnabledChange = { editorState = editorState.copy(serialEnabled = it) }
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = editorState.secondaryUnit,
+                        onValueChange = { editorState = editorState.copy(secondaryUnit = it.uppercase()) },
+                        label = { Text("Secondary Unit") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    DecimalField(
+                        value = editorState.conversionFactor,
+                        onValueChange = { editorState = editorState.copy(conversionFactor = it) },
+                        label = "Conversion factor",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                if (showError) {
+                    Text(
+                        "Please fill the required product details before saving.",
+                        color = AppColors.error,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
+        Column(modifier = Modifier.fillMaxWidth().background(AppColors.cardBg)) {
+            HorizontalDivider(color = ScreenBorder)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                SecondaryButton(
+                    label = "Cancel",
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(modifier = Modifier.weight(1f).testTag("save_product_button")) {
+                    PrimaryButton(
+                        label = if (mode == ProductSheetMode.EDIT) "Update Product" else "Save Product",
+                        onClick = onSave
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DecimalField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.sp,
+            color = AppColors.textSecondary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = { onValueChange(filterDecimalInput(it)) },
+            modifier = Modifier.fillMaxWidth().onFocusChanged { state ->
+                if (state.isFocused && (value == "0" || value == "0.0")) {
+                    onValueChange("")
+                } else if (!state.isFocused && value.isBlank()) {
+                    onValueChange("0")
+                }
+            },
+            singleLine = true,
+            textStyle = TextStyle(color = AppColors.inputText, fontSize = 15.sp),
+            shape = RoundedCornerShape(16.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            colors = mavoInputColors()
+        )
+    }
+}

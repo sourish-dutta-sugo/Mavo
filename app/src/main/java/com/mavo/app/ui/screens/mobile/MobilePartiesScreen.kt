@@ -1,0 +1,1512 @@
+package com.mavo.app.ui.screens.mobile
+
+import com.mavo.app.ui.screens.RetailTextField
+import com.mavo.app.ui.screens.PinAutoFillEffect
+import com.mavo.app.ui.screens.StateDropdownMenu
+
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.mavo.app.data.*
+import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
+import com.mavo.app.ui.animation.m3SpringPress
+import com.mavo.app.ui.animation.premiumCombinedClickable
+import com.mavo.app.ui.animation.premiumFabEntrance
+import com.mavo.app.ui.animation.pressScale
+import com.mavo.app.ui.selection.UniversalSelectionController
+import com.mavo.app.ui.selection.UniversalSelectionIndicator
+import com.mavo.app.ui.selection.UniversalSelectionTopAppBar
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import com.mavo.app.ui.components.LoadingCard
+import com.mavo.app.ui.components.LoadingListItem
+import com.mavo.app.ui.components.LoadingText
+import com.mavo.app.ui.components.ScreenBorder
+import com.mavo.app.ui.components.SearchField
+import com.mavo.app.ui.components.ZbCard
+import com.mavo.app.ui.theme.*
+import kotlinx.coroutines.delay
+import java.util.UUID
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MobilePartiesScreen(
+    viewModel: AppViewModel,
+    isDesktop: Boolean = false,
+    modifier: Modifier = Modifier,
+    onPartySelected: (String) -> Unit
+) {
+    val partiesReadState by viewModel.partiesUiState.collectAsState()
+    val ledgerEntriesReadState by viewModel.ledgerEntriesUiState.collectAsState()
+    val parties = partiesReadState.valueOrEmpty()
+    val ledgerEntries = ledgerEntriesReadState.valueOrEmpty()
+    val partyContentBlocked = partiesReadState.blocksContent() || ledgerEntriesReadState.blocksContent()
+    val partiesById by remember(parties) {
+        derivedStateOf { parties.associateBy { it.id } }
+    }
+
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedTypeFilter by remember { mutableStateOf("ALL") } // "ALL", "CUSTOMER", "SUPPLIER"
+    var showAddPartyForm by remember { mutableStateOf(false) }
+    var editingPartyId by remember { mutableStateOf<String?>(null) }
+    val selectionController = remember { UniversalSelectionController() }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    var deleteConfirmPartyIds by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    // Computes dynamic balances per party
+    val ledgerBalancesByAccountHead by remember(ledgerEntries) {
+        derivedStateOf {
+            ledgerEntries
+                .groupBy { it.accountHead }
+                .mapValues { (_, entries) -> entries.sumOf { it.debit - it.credit } }
+        }
+    }
+
+    val partyBalances by remember(parties, ledgerBalancesByAccountHead) {
+        derivedStateOf {
+            parties.associate { party ->
+                val openingBalance = if (party.balanceType == "DR") party.openingBalance else -party.openingBalance
+                val ledgerBalance = ledgerBalancesByAccountHead["Party: ${party.name}"] ?: 0.0
+                party.id to (openingBalance + ledgerBalance)
+            }
+        }
+    }
+
+    val filteredParties by remember(parties, searchQuery, selectedTypeFilter) {
+        derivedStateOf {
+            parties.filter { p ->
+            val matchesSearch = p.name.contains(searchQuery, ignoreCase = true) ||
+                    (p.phone.contains(searchQuery)) ||
+                    (p.gstin?.contains(searchQuery, ignoreCase = true) ?: false)
+            val matchesType = selectedTypeFilter == "ALL" || p.type == selectedTypeFilter || p.type == "BOTH" ||
+                    (selectedTypeFilter == "OVERDUE" && (partyBalances[p.id] ?: 0.0) > 0.005)
+                matchesSearch && matchesType
+            }
+        }
+    }
+
+    var selectedPartyId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(filteredParties, isDesktop) {
+        if (isDesktop && selectedPartyId == null && filteredParties.isNotEmpty()) {
+            selectedPartyId = filteredParties.first().id
+        }
+    }
+
+    if (isDesktop) {
+        Row(modifier = modifier.fillMaxSize()) {
+            // Master Pane (Parties List)
+            Box(modifier = Modifier.width(360.dp).fillMaxHeight()) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = Color.Transparent,
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+                    topBar = {
+                        if (selectionController.isSelectionActive) {
+                            UniversalSelectionTopAppBar(
+                                controller = selectionController,
+                                visibleItemCount = filteredParties.size,
+                                onClose = { selectionController.exitSelection() },
+                                onSelectAll = { selectionController.toggleSelectAll(filteredParties.map { it.id }) },
+                                onDelete = { deleteConfirmPartyIds = selectionController.selectedIdsSnapshot().toList() }
+                            )
+                        }
+                    },
+                    floatingActionButton = {
+                        FloatingActionButton(
+                            onClick = { showAddPartyForm = true },
+                            containerColor = AppColors.primary,
+                            contentColor = AppColors.textOnPrimary,
+                            modifier = Modifier
+                                .premiumFabEntrance()
+                                .pressScale()
+                                .testTag("add_party_fab")
+                        ) {
+                            Icon(imageVector = Icons.Default.Add, contentDescription = "Add Party")
+                        }
+                    }
+                ) { innerPadding ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Transparent)
+                            .padding(innerPadding)
+                            .imePadding()
+                    ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 100.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Parties",
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AppColors.textPrimary
+                                    )
+                                    Text(
+                                        text = if (parties.size == 1) "1 ledger" else "${parties.size} ledgers",
+                                        fontSize = 15.sp,
+                                        color = AppColors.textSecondary
+                                    )
+                                }
+
+                        // Search Box using RetailTextField
+                        RetailTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            label = "Search Parties",
+                            placeholder = "Search by name...",
+                            trailingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = AppColors.textSecondary) },
+                            modifier = Modifier.fillMaxWidth().testTag("party_search_bar")
+                        )
+
+                        // Filter Buttons Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val filters = listOf("ALL", "CUSTOMER", "SUPPLIER")
+                            filters.forEach { filter ->
+                                FilterChip(
+                                    selected = selectedTypeFilter == filter,
+                                    onClick = { selectedTypeFilter = filter },
+                                    label = { Text(filter, fontSize = 11.sp) },
+                                    shape = RoundedCornerShape(999.dp),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = AppColors.primary,
+                                        selectedLabelColor = AppColors.textOnPrimary
+                                    ),
+                                    modifier = Modifier.m3SpringPress()
+                                )
+                            }
+                        }
+                            }
+                        }
+
+                        UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
+                        UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
+                        if (partyContentBlocked) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        } else if (filteredParties.isEmpty()) {
+                            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                                ) {
+                                    Text(
+                                        "No matching parties found.",
+                                        color = AppColors.textSecondary,
+                                        fontSize = 14.sp,
+                                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                                    )
+                                }
+                            }
+                        } else {
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .imePadding(),
+                                contentPadding = PaddingValues(start = 0.dp, end = 0.dp, bottom = 120.dp)
+                            ) {
+                                items(filteredParties, key = { it.id }) { party ->
+                                    val currentBal = partyBalances[party.id] ?: 0.0
+                                    val isSelected = selectedPartyId == party.id
+
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .border(
+                                                1.dp,
+                                                if (isSelected || selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.35f) else AppColors.border,
+                                                RoundedCornerShape(16.dp)
+                                            )
+                                            .premiumCombinedClickable(
+                                                onClick = {
+                                                    if (selectionController.isSelectionActive) {
+                                                        selectionController.toggleSelection(party.id)
+                                                    } else {
+                                                        selectedPartyId = party.id
+                                                        showAddPartyForm = false
+                                                    }
+                                                },
+                                                onLongClick = { selectionController.enterSelection(party.id) }
+                                            ),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = if (isSelected || selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg
+                                        )
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (selectionController.isSelectionActive) {
+                                                Box(modifier = Modifier.padding(end = 8.dp)) {
+                                                    UniversalSelectionIndicator(isSelected = selectionController.isSelected(party.id))
+                                                }
+                                            }
+                                            Column(modifier = Modifier.weight(1.2f)) {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(
+                                                        text = party.name,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 12.sp,
+                                                        color = AppColors.textPrimary,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        modifier = Modifier.weight(1f, fill = false)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Card(
+                                                        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                                                        shape = RoundedCornerShape(2.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = party.type,
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = AppColors.primary,
+                                                            modifier = Modifier.padding(horizontal = 2.dp, vertical = 1.dp)
+                                                        )
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Text(text = "Phone: ${party.phone}", fontSize = 10.sp, color = AppColors.textSecondary)
+                                            }
+
+                                            Column(
+                                                horizontalAlignment = Alignment.End,
+                                                modifier = Modifier.weight(0.8f)
+                                            ) {
+                                                IconButton(
+                                                    onClick = {
+                                                        selectedPartyId = party.id
+                                                        editingPartyId = party.id
+                                                        showAddPartyForm = false
+                                                    }
+                                                ) {
+                                                    Icon(Icons.Default.Edit, contentDescription = "Edit Party", tint = AppColors.primary)
+                                                }
+                                                val displayBal = Utils.formatIndianCurrency(Math.abs(currentBal))
+                                                val balLabel = if (currentBal >= 0) "DR" else "CR"
+                                                val balColor = if (currentBal >= 0) AppColors.debit else AppColors.credit
+
+                                                Text(
+                                                    text = displayBal,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 12.sp,
+                                                    color = balColor
+                                                )
+                                                Text(
+                                                    text = balLabel,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = AppColors.textSecondary
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    }
+                }
+            }
+
+            // Detail Pane
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(8.dp)
+            ) {
+                if (showAddPartyForm) {
+                    AddPartyForm(
+                        viewModel = viewModel,
+                        onDismiss = { showAddPartyForm = false }
+                    )
+                } else if (editingPartyId != null) {
+                    EditPartyForm(
+                        viewModel = viewModel,
+                        party = editingPartyId?.let { partiesById[it] },
+                        onDismiss = { editingPartyId = null }
+                    )
+                } else {
+                    selectedPartyId?.let { pId ->
+                        PartyDetailScreen(
+                            viewModel = viewModel,
+                            partyId = pId,
+                            onNavigateBack = { selectedPartyId = null }
+                        )
+                    } ?: Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Select a party to see detailed layout.", color = AppColors.textSecondary)
+                    }
+                }
+            }
+        }
+    } else {
+        if (showAddPartyForm) {
+            AddPartyForm(
+                viewModel = viewModel,
+                onDismiss = { showAddPartyForm = false }
+            )
+        } else if (editingPartyId != null) {
+            EditPartyForm(
+                viewModel = viewModel,
+                party = editingPartyId?.let { partiesById[it] },
+                onDismiss = { editingPartyId = null }
+            )
+        } else {
+            Scaffold(
+                modifier = modifier.fillMaxSize(),
+                containerColor = Color.Transparent,
+                snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+                topBar = {
+                    if (selectionController.isSelectionActive) {
+                        UniversalSelectionTopAppBar(
+                            controller = selectionController,
+                            visibleItemCount = filteredParties.size,
+                            onClose = { selectionController.exitSelection() },
+                            onSelectAll = { selectionController.toggleSelectAll(filteredParties.map { it.id }) },
+                            onDelete = { deleteConfirmPartyIds = selectionController.selectedIdsSnapshot().toList() }
+                        )
+                    }
+                },
+                floatingActionButton = {
+                    FloatingActionButton(
+                        onClick = { showAddPartyForm = true },
+                        containerColor = AppColors.primary,
+                        contentColor = AppColors.textOnPrimary,
+                        modifier = Modifier
+                            .premiumFabEntrance()
+                            .pressScale()
+                            .testTag("add_party_fab")
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add Party")
+                    }
+                }
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Transparent)
+                        .padding(innerPadding)
+                        .imePadding()
+                ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Parties",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.textPrimary
+                        )
+                        Text(
+                            text = if (parties.size == 1) "1 ledger" else "${parties.size} ledgers",
+                            fontSize = 15.sp,
+                            color = AppColors.textSecondary
+                        )
+                    }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                    ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                    SearchField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = "Search parties",
+                        modifier = Modifier.fillMaxWidth().testTag("party_search_bar")
+                    )
+
+                    // Filter Buttons Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val filters = listOf(
+                            "ALL" to "All",
+                            "CUSTOMER" to "Customers",
+                            "SUPPLIER" to "Suppliers",
+                            "OVERDUE" to "Overdue"
+                        )
+                        filters.forEach { (filter, label) ->
+                            FilterChip(
+                                selected = selectedTypeFilter == filter,
+                                onClick = { selectedTypeFilter = filter },
+                                label = { Text(label, fontSize = 13.sp) },
+                                shape = RoundedCornerShape(999.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = AppColors.primary,
+                                    selectedLabelColor = AppColors.textOnPrimary
+                                ),
+                                modifier = Modifier.m3SpringPress()
+                            )
+                        }
+                    }
+                    }
+                    }
+
+                    val totalReceivables = partyBalances.values.filter { it > 0.005 }.sum()
+                    val totalPayables = partyBalances.values.filter { it < -0.005 }.sumOf { -it }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        ZbCard(modifier = Modifier.weight(1f), contentPadding = 14) {
+                            Text(
+                                "RECEIVABLES",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AppColors.textTertiary,
+                                letterSpacing = 0.5.sp
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                Utils.formatIndianCurrency(totalReceivables),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.textPrimary
+                            )
+                        }
+                        ZbCard(modifier = Modifier.weight(1f), contentPadding = 14) {
+                            Text(
+                                "PAYABLES",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AppColors.textTertiary,
+                                letterSpacing = 0.5.sp
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                Utils.formatIndianCurrency(totalPayables),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.textPrimary
+                            )
+                        }
+                    }
+                    HorizontalDivider(color = ScreenBorder)
+
+                    UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
+                    UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
+                    if (partyContentBlocked) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    } else if (parties.isEmpty()) {
+                        Box(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Card(
+                                modifier = Modifier.padding(16.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = AppColors.textTertiary,
+                                        modifier = Modifier.size(56.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        text = "No parties added yet. Tap + to add.",
+                                        color = AppColors.textPrimary,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                    } else if (filteredParties.isEmpty()) {
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                            ) {
+                                Text(
+                                    "No matching parties found.",
+                                    color = AppColors.textSecondary,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .imePadding(),
+                            contentPadding = PaddingValues(start = 0.dp, end = 0.dp, bottom = 120.dp)
+                        ) {
+                            items(filteredParties, key = { it.id }) { party ->
+                                val currentBal = partyBalances[party.id] ?: 0.0
+
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(
+                                            1.dp,
+                                            if (selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.35f) else AppColors.border,
+                                            RoundedCornerShape(16.dp)
+                                        )
+                                        .premiumCombinedClickable(
+                                            onClick = {
+                                                if (selectionController.isSelectionActive) {
+                                                    selectionController.toggleSelection(party.id)
+                                                } else {
+                                                    onPartySelected(party.id)
+                                                }
+                                            },
+                                            onLongClick = { selectionController.enterSelection(party.id) }
+                                        ),
+                                    colors = CardDefaults.cardColors(containerColor = if (selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if (selectionController.isSelectionActive) {
+                                            UniversalSelectionIndicator(isSelected = selectionController.isSelected(party.id))
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(CircleShape)
+                                                .background(AppColors.screenBg),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = party.name.first().uppercase(),
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = AppColors.textPrimary
+                                            )
+                                        }
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = party.name,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = AppColors.textPrimary,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = party.type.lowercase().replaceFirstChar { it.uppercase() },
+                                                fontSize = 14.sp,
+                                                color = AppColors.textSecondary
+                                            )
+                                        }
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            val settled = Math.abs(currentBal) < 0.005
+                                            val displayBal = Utils.formatIndianCurrency(Math.abs(currentBal))
+                                            val balLabel = if (currentBal >= 0) "Dr" else "Cr"
+                                            Text(
+                                                text = if (settled) "Settled" else "$displayBal $balLabel",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = AppColors.textPrimary
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = { editingPartyId = party.id },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(Icons.Default.Edit, contentDescription = "Edit Party", tint = AppColors.textTertiary)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                }
+            }
+        }
+    }
+
+    if (deleteConfirmPartyIds.isNotEmpty()) {
+        val deleteCount = deleteConfirmPartyIds.size
+        AlertDialog(
+            onDismissRequest = { deleteConfirmPartyIds = emptyList() },
+            title = { Text(if (deleteCount == 1) "Delete this party?" else "Delete $deleteCount selected parties?") },
+            text = { Text("This action cannot be undone.") },
+            confirmButton = {
+                Button(onClick = {
+                    deleteConfirmPartyIds.forEach { id -> viewModel.deleteParty(id) }
+                    selectionController.exitSelection()
+                    deleteConfirmPartyIds = emptyList()
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(if (deleteCount == 1) "Party deleted." else "$deleteCount parties deleted.")
+                    }
+                }) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteConfirmPartyIds = emptyList() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddPartyForm(
+    viewModel: AppViewModel,
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var type by remember { mutableStateOf("CUSTOMER") } // "CUSTOMER", "SUPPLIER", "BOTH"
+    var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var pin by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var selectedStateInfo by remember { mutableStateOf(Utils.INDIAN_STATES[18]) } // WB fallback
+    var gstin by remember { mutableStateOf("") }
+    var gstinValid by remember { mutableStateOf<Boolean?>(null) }
+    var pan by remember { mutableStateOf("") }
+    var openingBalStr by remember { mutableStateOf("0") }
+    var balanceType by remember { mutableStateOf("DR") } // "DR", "CR"
+    var creditLimitStr by remember { mutableStateOf("0") }
+    var creditDaysStr by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+
+    var dropdownExpanded by remember { mutableStateOf(false) }
+    var showError by remember { mutableStateOf(false) }
+    var pinLookupMessage by remember { mutableStateOf("") }
+    var pinLookupSuccess by remember { mutableStateOf(false) }
+
+    val scrollState = rememberScrollState()
+
+    PinAutoFillEffect(
+        pin = pin,
+        onInvalid = {
+            pinLookupMessage = ""
+            pinLookupSuccess = false
+        },
+        onResolved = { result ->
+            city = result.city
+            selectedStateInfo = Utils.INDIAN_STATES.firstOrNull { it.first.equals(result.state, ignoreCase = true) }
+                ?: (result.state to result.stateCode.ifBlank { selectedStateInfo.second })
+            pinLookupMessage = "Auto-filled city and state from PIN"
+            pinLookupSuccess = true
+        },
+        onFailed = {
+            pinLookupMessage = "PIN lookup failed. You can enter city and state manually."
+            pinLookupSuccess = false
+        }
+    )
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = AppColors.screenBg,
+        topBar = {
+            TopAppBar(
+                title = { Text("Add New Party", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onDismiss) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AppColors.screenBg)
+                .padding(innerPadding)
+                .imePadding()
+        ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .imePadding()
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Party Name *") },
+                modifier = Modifier.fillMaxWidth().testTag("party_name_input"),
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            // Select Type Segmented Chips
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Type:", fontSize = 12.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.width(12.dp))
+                val typeOptions = listOf("CUSTOMER", "SUPPLIER", "BOTH")
+                typeOptions.forEach { opt ->
+                    FilterChip(
+                        selected = type == opt,
+                        onClick = { type = opt },
+                        label = { Text(opt, fontSize = 11.sp) },
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                }
+            }
+
+            OutlinedTextField(
+                value = phone,
+                onValueChange = { phone = it },
+                label = { Text("Phone Number") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email Address") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            OutlinedTextField(
+                value = address,
+                onValueChange = { address = it },
+                label = { Text("Address") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            OutlinedTextField(
+                value = pin,
+                onValueChange = { pin = it.filter(Char::isDigit).take(6) },
+                label = { Text("PIN Code") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(8.dp)
+            )
+            if (pinLookupMessage.isNotBlank()) {
+                Text(
+                    text = pinLookupMessage,
+                    color = if (pinLookupSuccess) AppColors.success else AppColors.textTertiary,
+                    fontSize = 11.sp
+                )
+            }
+
+            OutlinedTextField(
+                value = city,
+                onValueChange = { city = it },
+                label = { Text("City") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            // State selection dropdown
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = "${selectedStateInfo.first} (${selectedStateInfo.second})",
+                    onValueChange = {},
+                    label = { Text("State") },
+                    readOnly = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            modifier = Modifier.clickable { dropdownExpanded = true }
+                        )
+                    }
+                )
+                StateDropdownMenu(
+                    expanded = dropdownExpanded,
+                    onDismissRequest = { dropdownExpanded = false },
+                    onStateSelected = {
+                        selectedStateInfo = it
+                        dropdownExpanded = false
+                    }
+                )
+            }
+
+            Text(
+                "GSTIN (Optional)",
+                color = AppColors.labelText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+            OutlinedTextField(
+                value = gstin,
+                onValueChange = { value ->
+                    val result = parseGstinInput(
+                        value, pan, selectedStateInfo.first, selectedStateInfo.second
+                    )
+                    gstin = result.gstin
+                    gstinValid = result.valid
+                    if (result.valid == true) {
+                        pan = result.pan
+                        result.stateName?.let { name ->
+                            Utils.INDIAN_STATES.find { it.first == name }
+                                ?.let { selectedStateInfo = it }
+                        }
+                    }
+                },
+                placeholder = { Text("15-digit GSTIN", color = AppColors.inputPlaceholder) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp),
+                colors = mavoInputColors()
+            )
+            GstinValidationFeedback(
+                gstin, gstinValid, pan, selectedStateInfo.first, selectedStateInfo.second
+            )
+
+            OutlinedTextField(
+                value = pan,
+                onValueChange = { pan = it.uppercase() },
+                label = { Text("PAN Number (Optional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = openingBalStr,
+                    onValueChange = { openingBalStr = filterDecimalInput(it) },
+                    label = { Text("Opening Balance (₹)") },
+                    modifier = Modifier.weight(1.2f).onFocusChanged { focusState ->
+                        if (focusState.isFocused && (openingBalStr == "0" || openingBalStr == "0.0" || openingBalStr == "0.00")) {
+                            openingBalStr = ""
+                        } else if (!focusState.isFocused && openingBalStr.isBlank()) {
+                            openingBalStr = "0"
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                
+                Row(modifier = Modifier.weight(0.8f).padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    listOf("DR", "CR").forEach { bType ->
+                        FilterChip(
+                            selected = balanceType == bType,
+                            onClick = { balanceType = bType },
+                            label = { Text(bType) },
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                    }
+                }
+            }
+
+            OutlinedTextField(
+                value = creditLimitStr,
+                onValueChange = { creditLimitStr = filterDecimalInput(it) },
+                label = { Text("Credit Limit") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            OutlinedTextField(
+                value = creditDaysStr,
+                onValueChange = { creditDaysStr = it.filter(Char::isDigit) },
+                label = { Text("Credit Days") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Notes") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3,
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            if (showError) {
+                Text("Please fill in all mandatory (*) fields correctly.", color = Color.Red, fontSize = 12.sp)
+            }
+
+            Button(
+                onClick = {
+                    if (name.isBlank()) {
+                        showError = true
+                    } else {
+                        val partyObj = Party(
+                            id = UUID.randomUUID().toString(),
+                            name = name,
+                            type = type,
+                            phone = phone,
+                            email = email,
+                            address = address,
+                            city = city,
+                            state = selectedStateInfo.first,
+                            stateCode = selectedStateInfo.second,
+                            pin = pin,
+                            gstin = if (gstin.isBlank()) null else gstin,
+                            pan = if (pan.isBlank()) null else pan,
+                            openingBalance = openingBalStr.toDoubleOrNull() ?: 0.0,
+                            balanceType = balanceType,
+                            creditLimit = creditLimitStr.toDoubleOrNull() ?: 0.0,
+                            creditDays = creditDaysStr.toIntOrNull() ?: 0,
+                            notes = notes.trim()
+                        )
+                        viewModel.saveParty(partyObj) {
+                            onDismiss()
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp).testTag("save_party_button"),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                Text("Save Party", fontWeight = FontWeight.Bold)
+            }
+        }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditPartyForm(
+    viewModel: AppViewModel,
+    party: Party?,
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit
+) {
+    if (party == null) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Party not found", color = AppColors.textSecondary)
+        }
+        return
+    }
+
+    var name by remember(party.id) { mutableStateOf(party.name) }
+    var type by remember(party.id) { mutableStateOf(party.type) }
+    var phone by remember(party.id) { mutableStateOf(party.phone) }
+    var email by remember(party.id) { mutableStateOf(party.email) }
+    var address by remember(party.id) { mutableStateOf(party.address) }
+    var pin by remember(party.id) { mutableStateOf(party.pin) }
+    var city by remember(party.id) { mutableStateOf(party.city) }
+    var selectedStateInfo by remember(party.id) { mutableStateOf(Utils.INDIAN_STATES.find { it.first == party.state } ?: Utils.INDIAN_STATES[18]) }
+    var gstin by remember(party.id) { mutableStateOf(party.gstin.orEmpty()) }
+    var gstinValid by remember { mutableStateOf<Boolean?>(null) }
+    var pan by remember(party.id) { mutableStateOf(party.pan.orEmpty()) }
+    var openingBalStr by remember(party.id) { mutableStateOf(party.openingBalance.toString()) }
+    var balanceType by remember(party.id) { mutableStateOf(party.balanceType) }
+    var creditLimitStr by remember(party.id) { mutableStateOf(party.creditLimit.toString()) }
+    var creditDaysStr by remember(party.id) { mutableStateOf(party.creditDays.takeIf { it > 0 }?.toString().orEmpty()) }
+    var notes by remember(party.id) { mutableStateOf(party.notes) }
+    var dropdownExpanded by remember { mutableStateOf(false) }
+    var showError by remember { mutableStateOf(false) }
+    var pinLookupMessage by remember(party.id) { mutableStateOf("") }
+    var pinLookupSuccess by remember(party.id) { mutableStateOf(false) }
+
+    PinAutoFillEffect(
+        pin = pin,
+        onInvalid = {
+            pinLookupMessage = ""
+            pinLookupSuccess = false
+        },
+        onResolved = { result ->
+            city = result.city
+            selectedStateInfo = Utils.INDIAN_STATES.firstOrNull { it.first.equals(result.state, ignoreCase = true) }
+                ?: (result.state to result.stateCode.ifBlank { selectedStateInfo.second })
+            pinLookupMessage = "Auto-filled city and state from PIN"
+            pinLookupSuccess = true
+        },
+        onFailed = {
+            pinLookupMessage = "PIN lookup failed. You can enter city and state manually."
+            pinLookupSuccess = false
+        }
+    )
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = AppColors.screenBg,
+        topBar = {
+            TopAppBar(
+                title = { Text("Edit Party", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onDismiss) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(innerPadding)
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Party Name *") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("CUSTOMER", "SUPPLIER", "BOTH").forEach { option ->
+                    FilterChip(selected = type == option, onClick = { type = option }, label = { Text(option) })
+                }
+            }
+            OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone Number") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email Address") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            OutlinedTextField(value = pin, onValueChange = { pin = it.filter(Char::isDigit).take(6) }, label = { Text("PIN Code") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            if (pinLookupMessage.isNotBlank()) {
+                Text(
+                    text = pinLookupMessage,
+                    color = if (pinLookupSuccess) AppColors.success else AppColors.textTertiary,
+                    fontSize = 11.sp
+                )
+            }
+            OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("City") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(value = "${selectedStateInfo.first} (${selectedStateInfo.second})", onValueChange = {}, readOnly = true, label = { Text("State") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp), trailingIcon = {
+                    Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.clickable { dropdownExpanded = true })
+                })
+                StateDropdownMenu(expanded = dropdownExpanded, onDismissRequest = { dropdownExpanded = false }, onStateSelected = { selectedStateInfo = it; dropdownExpanded = false })
+            }
+            OutlinedTextField(value = gstin, onValueChange = { value ->
+                val result = parseGstinInput(value, pan, selectedStateInfo.first, selectedStateInfo.second)
+                gstin = result.gstin
+                gstinValid = result.valid
+                if (result.valid == true) {
+                    pan = result.pan
+                    result.stateName?.let { name -> Utils.INDIAN_STATES.find { it.first == name }?.let { selectedStateInfo = it } }
+                }
+            }, label = { Text("GSTIN") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp), colors = mavoInputColors())
+            GstinValidationFeedback(gstin, gstinValid, pan, selectedStateInfo.first, selectedStateInfo.second)
+            OutlinedTextField(value = pan, onValueChange = { pan = it.uppercase() }, label = { Text("PAN Number") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            OutlinedTextField(value = openingBalStr, onValueChange = { openingBalStr = filterDecimalInput(it) }, label = { Text("Opening Balance") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("DR", "CR").forEach { option ->
+                    FilterChip(selected = balanceType == option, onClick = { balanceType = option }, label = { Text(option) })
+                }
+            }
+            OutlinedTextField(value = creditLimitStr, onValueChange = { creditLimitStr = filterDecimalInput(it) }, label = { Text("Credit Limit") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            OutlinedTextField(value = creditDaysStr, onValueChange = { creditDaysStr = it.filter(Char::isDigit) }, label = { Text("Credit Days") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp))
+            OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), minLines = 3, shape = RoundedCornerShape(8.dp))
+            if (showError) {
+                Text("Party name is required.", color = Color.Red, fontSize = 12.sp)
+            }
+            Button(
+                onClick = {
+                    if (name.isBlank()) {
+                        showError = true
+                    } else {
+                        viewModel.updateParty(
+                            party.copy(
+                                name = name.trim(),
+                                type = type,
+                                phone = phone.trim(),
+                                email = email.trim(),
+                                address = address.trim(),
+                                pin = pin.trim(),
+                                city = city.trim(),
+                                state = selectedStateInfo.first,
+                                stateCode = selectedStateInfo.second,
+                                gstin = gstin.trim().ifBlank { null },
+                                pan = pan.trim().ifBlank { null },
+                                openingBalance = openingBalStr.toDoubleOrNull() ?: 0.0,
+                                balanceType = balanceType,
+                                creditLimit = creditLimitStr.toDoubleOrNull() ?: 0.0,
+                                creditDays = creditDaysStr.toIntOrNull() ?: 0,
+                                notes = notes.trim()
+                            )
+                        ) {
+                            onDismiss()
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Update Party", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+// Party Detailed General Ledger Statement/Reminder screen
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PartyDetailScreen(
+    viewModel: AppViewModel,
+    partyId: String,
+    modifier: Modifier = Modifier,
+    onNavigateBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val parties by viewModel.parties.collectAsState()
+    val profile by viewModel.profile.collectAsState()
+    val ledgerEntries by viewModel.ledgerEntries.collectAsState()
+    val party = remember(parties, partyId) {
+        parties.firstOrNull { it.id == partyId }
+    }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
+        topBar = {
+            TopAppBar(
+                title = { Text(party?.name ?: "Party Ledger", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+            )
+        }
+    ) { innerPadding ->
+        if (party == null) {
+            PartyDetailSkeleton(innerPadding = innerPadding)
+        } else {
+            val p = party!!
+            val pName = p.name
+
+            // Computes dynamic ledger flow statements
+            val matchedEntries = remember(ledgerEntries, pName) {
+                ledgerEntries.filter { it.accountHead == "Party: $pName" }.sortedBy { it.date }
+            }
+
+            var runningBalance = p.openingBalance * (if (p.balanceType == "DR") 1 else -1)
+            val statementRows = remember(matchedEntries, runningBalance) {
+                var current = runningBalance
+                matchedEntries.map { entry ->
+                    current += (entry.debit - entry.credit)
+                    LedgerStatementRow(entry, current)
+                }.reversed() // descending date view
+            }
+
+            val finalOutstanding = statementRows.firstOrNull()?.runningBalance ?: runningBalance
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Transparent)
+                    .padding(innerPadding)
+                    .imePadding()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Party Details Box
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Phone,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = AppColors.textSecondary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Phone: ${p.phone} | Email: ${p.email}", fontSize = 12.sp, color = AppColors.textSecondary)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Map,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = AppColors.textSecondary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("GSTIN: ${p.gstin ?: "Unregistered"} | State: ${p.state}", fontSize = 12.sp, color = AppColors.textSecondary)
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Outstanding Balance:", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                val color = if (finalOutstanding >= 0) AppColors.debit else AppColors.credit
+                                Text(
+                                    text = Utils.formatIndianCurrency(Math.abs(finalOutstanding)) + if (finalOutstanding >= 0) " DR" else " CR",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = color
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Payment Reminder Trigger email button
+                if (finalOutstanding > 0) {
+                    Button(
+                        onClick = {
+                            val emailSubject = Uri.encode("Payment Reminder — Outstanding Balance from ${profile?.businessName ?: "Mavo"}")
+                            val emailBody = Uri.encode(
+                                """
+                                Dear $pName,
+
+                                This is a friendly reminder that you have an outstanding balance of ${Utils.formatIndianCurrency(finalOutstanding)} payable to ${profile?.businessName ?: "us"}.
+
+                                Please arrange a clearance transfer of the outstanding amount.
+
+                                Bank account details for your transfer:
+                                Bank Name: ${profile?.bankName ?: "N/A"}
+                                Account No: ${profile?.accountNo ?: "N/A"}
+                                IFSC: ${profile?.ifsc ?: "N/A"}
+
+                                Thank you for your continued partnership.
+                                
+                                Best Regards,
+                                ${profile?.businessName ?: "Mavo Dealer"}
+                                ${profile?.phone ?: ""}
+                                """.trimIndent()
+                            )
+                            val mailtoUri = "mailto:${p.email}?subject=$emailSubject&body=$emailBody"
+                            val mailToIntent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = Uri.parse(mailtoUri)
+                            }
+                            try {
+                                context.startActivity(Intent.createChooser(mailToIntent, "Send Reminder Email"))
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "No email client configured on device.", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(44.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(imageVector = Icons.Default.Email, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
+                        Text("Send Email Payment Reminder")
+                    }
+                }
+
+                // Statement Header
+                Text("LEDGER STATEMENT", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppColors.textPrimary)
+
+                // Sub-statement Table Grid
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppColors.sectionHeaderBg)
+                                .padding(horizontal = 12.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Date", fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.9f))
+                            Text("Debit (₹)", fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Text("Credit (₹)", fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Text("Balance (₹)", fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1.2f))
+                        }
+
+                        if (statementRows.isEmpty()) {
+                            Box(
+                                modifier = Modifier.weight(1f).fillMaxWidth().padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No ledger activities recorded", fontSize = 13.sp, color = AppColors.textSecondary)
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .imePadding(),
+                                contentPadding = PaddingValues(start = 0.dp, end = 0.dp, bottom = 120.dp)
+                            ) {
+                                items(statementRows, key = { it.entry.id }) { row ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(Utils.formatDate(row.entry.date), fontSize = 11.sp, modifier = Modifier.weight(0.9f))
+                                        Text(if (row.entry.debit > 0) String.format("%.2f", row.entry.debit) else "-", fontSize = 11.sp, modifier = Modifier.weight(1f))
+                                        Text(if (row.entry.credit > 0) String.format("%.2f", row.entry.credit) else "-", fontSize = 11.sp, modifier = Modifier.weight(1f))
+                                        
+                                        val rowBal = row.runningBalance
+                                        val displayStr = Utils.formatIndianCurrency(Math.abs(rowBal)) + if (rowBal >= 0) " DR" else " CR"
+                                        val color = if (rowBal >= 0) AppColors.debit else AppColors.credit
+
+                                        Text(displayStr, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = color, modifier = Modifier.weight(1.2f))
+                                    }
+                                    HorizontalDivider(color = AppColors.border)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun PartyDetailSkeleton(
+    innerPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(AppColors.screenBg)
+            .padding(innerPadding)
+            .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        LoadingCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, AppColors.border, RoundedCornerShape(8.dp))
+        ) {
+            repeat(3) {
+                LoadingListItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    lineCount = 1
+                )
+            }
+        }
+
+        LoadingCard(modifier = Modifier.fillMaxWidth()) {
+            LoadingText(
+                modifier = Modifier.fillMaxWidth(0.45f),
+                height = 20.dp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            repeat(5) {
+                LoadingListItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    lineCount = 2
+                )
+            }
+        }
+    }
+}
+
+data class LedgerStatementRow(val entry: LedgerEntry, val runningBalance: Double)

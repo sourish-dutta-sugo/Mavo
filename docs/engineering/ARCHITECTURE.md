@@ -60,7 +60,11 @@ app/src/main/java/com/mavo/app/
 │   ├── AppViewModel.kt       # Main ViewModel (DB init, all state)
 │   ├── DashboardViewModel.kt # Dashboard-specific ViewModel
 │   ├── UiDataCache.kt        # Process-local cached UI snapshots and read states
-│   ├── screens/              # 26 Compose screen files incl. FirstRunFlow (see ../design/SCREENS.md)
+│   ├── screens/              # Screen architecture with thin routers delegating by window size
+│   │   ├── common/           # Shared screen helpers and data classes (VoucherHelpers, ProductHelpers, etc.)
+│   │   ├── mobile/           # Dedicated Mobile UI implementations
+│   │   ├── tablet/           # Dedicated Tablet UI implementations
+│   │   └── *.kt              # Thin routers (DashboardScreen, VouchersScreen, PartiesScreen, etc.)
 │   ├── components/           # Shared composables (LoadingIndicator)
 │   ├── theme/                # Design system (see ../design/DESIGN_SYSTEM.md)
 │   ├── animation/            # Animation utilities

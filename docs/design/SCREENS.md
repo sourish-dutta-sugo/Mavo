@@ -36,18 +36,20 @@ The shell is hidden during onboarding, PIN entry, and full-screen entry flows.
 
 ### Full screen map
 
-| Screen file | Route | Purpose | Entry from | Exit to |
-|-------------|-------|---------|------------|---------|
-| `SplashScreen.kt` | (initial) | Mavo splash on shared graph-paper canvas | App launch | Initialising, Setup or Dashboard |
-| `MainActivity.kt` (`MainAppEntry` / `AppContent`) | (initial) | Database loading progress, retryable DB error, setup and PIN gates | App launch | Wizard, PIN or Dashboard |
-| `FirstRunFlow.kt` | (initial, no profile) | First-run wizard: step order, Back handling, shared `SetupDraft`; two onboarding pages, Terms & Privacy page, permission step (all Zero restyle) | Splash (no profile) | Dashboard (after profile save) |
-| `SetupScreen.kt` | (wizard steps 1–3) | Setup 1 "Basic details", Setup 2 "Where you are", Setup 3 "Tax & bank"; Zero header (circle back + "Step N of 3"), 3-segment progress, pill CTA | FirstRunFlow | FirstRunFlow → Dashboard |
-| `DashboardScreen.kt` | `dashboard` | Action-first daily workspace with cached totals, responsive bento metrics, loading/retry states, stock alerts, recent activity, and width-constrained content | Adaptive Home destination | Any feature screen |
-| `VouchersScreen.kt` | `vouchers` | Cached voucher list with loading/error/retry states, status/type filters, search, multi-select, export/delete; expanded list/detail panes | Adaptive Vouchers destination | VoucherDetail, NewVoucher |
-| `PartiesScreen.kt` | `parties` | Cached customer/supplier list with loading/error/retry states, CRUD; expanded list/detail panes | Adaptive Parties destination | PartyDetail |
-| `PartySheets.kt` | (bottom sheet in Parties) | Add/edit party form | PartiesScreen | PartiesScreen |
-| `SettingsScreen.kt` | `settings` | More hub for Products, Reports, Ledger, Bank & Cash, Expenses, and Settings; expanded settings panes | Adaptive More destination | Sub-sections inline |
-| `ProductsScreen.kt` | `products` | Width-constrained cached catalog with loading/error/retry states, CRUD, stock info; Zero "New Product / Edit Product" full-screen entry (WizardHeader + pinned Cancel / Save bar) | Settings → Products | LowStock, back |
+Each root screen file serves as a thin router delegating by window size to either `mobile/Mobile<Screen>.kt` or `tablet/Tablet<Screen>.kt`, sharing types in `common/`.
+
+| Screen router file | Mobile implementation | Tablet implementation | Route | Purpose | Entry from | Exit to |
+|-------------|-------|---------|------------|---------|---|---|
+| `SplashScreen.kt` | `mobile/MobileSplashScreen.kt` | `tablet/TabletSplashScreen.kt` | (initial) | Mavo splash on shared graph-paper canvas | App launch | Initialising, Setup or Dashboard |
+| `DashboardScreen.kt` | `mobile/MobileDashboardScreen.kt` | `tablet/TabletDashboardScreen.kt` | `dashboard` | Action-first daily workspace with cached totals, responsive bento metrics, loading/retry states, stock alerts, recent activity | Adaptive Home destination | Any feature screen |
+| `VouchersScreen.kt` | `mobile/MobileVouchersScreen.kt` | `tablet/TabletVouchersScreen.kt` | `vouchers` | Cached voucher list with loading/error/retry states, status/type filters, search, multi-select, export/delete | Adaptive Vouchers destination | VoucherDetail, NewVoucher |
+| `PartiesScreen.kt` | `mobile/MobilePartiesScreen.kt` | `tablet/TabletPartiesScreen.kt` | `parties` | Cached customer/supplier list with loading/error/retry states, CRUD | Adaptive Parties destination | PartyDetail |
+| `SettingsScreen.kt` | `mobile/MobileSettingsScreen.kt` | `tablet/TabletSettingsScreen.kt` | `settings` | More hub for Products, Reports, Ledger, Bank & Cash, Expenses, and Settings | Adaptive More destination | Sub-sections inline |
+| `ProductsScreen.kt` | `mobile/MobileProductsScreen.kt` | `tablet/TabletProductsScreen.kt` | `products` | Cached catalog with loading/error/retry states, CRUD, stock info | Settings → Products | LowStock, back |
+| `ReportsScreen.kt` | `mobile/MobileReportsScreen.kt` | `tablet/TabletReportsScreen.kt` | `reports` | Reports hub, trial balance, P&L, balance sheet, aged & payable bills | Settings → Reports | back |
+| `BankCashScreen.kt` | `mobile/MobileBankCashScreen.kt` | `tablet/TabletBankCashScreen.kt` | `bank_cash` | Cash and bank ledger view and entry | Settings → Bank & Cash | back |
+| `LedgerScreens.kt` | `mobile/MobileLedgerScreens.kt` | `tablet/TabletLedgerScreens.kt` | `expenses` | Expense and income ledger tracking | Settings → Expenses | back |
+| `InvoiceScreen.kt` | `mobile/MobileInvoiceScreen.kt` | `tablet/TabletInvoiceScreen.kt` | `invoice/{voucherId}` | Printable invoice preview, thermal print & PDF share | Vouchers, NewVoucher | back |
 | `ReportsScreen.kt` | `reports` | FY-scoped business and financial reports; cached reads with loading/error/retry states; expanded report menu and detail panes | Dashboard quick action | Back to Dashboard |
 | `StockReportScreen.kt` | (inline in Reports, NewVoucher stock sheet) | Stock Summary: SKU / stock value / low-out stat cards, search toggle, All/Low/Out chips, status pills, CSV export | ReportsScreen, NewVoucher | ReportsScreen |
 | `LowStockScreen.kt` | `lowstock` | "Inventory alerts": Low & Out of Stock list with Reorder pills; Dismiss / Create purchase order → Purchase voucher | Products banner, Dashboard stock alert | NewVoucher, back |

@@ -1,0 +1,2184 @@
+package com.mavo.app.ui.screens.mobile
+
+import com.mavo.app.ui.screens.StockReportScreen
+
+import android.app.DatePickerDialog
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.animation.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.mavo.app.data.*
+import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.UiLoadState
+import com.mavo.app.ui.components.UiLoadStateNotice
+import com.mavo.app.ui.components.blocksContent
+import com.mavo.app.ui.components.valueOrEmpty
+import com.mavo.app.services.EmailComposer
+import com.mavo.app.ui.theme.AppColors
+import com.mavo.app.ui.theme.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import kotlinx.coroutines.launch
+import com.mavo.app.ui.animation.pressScale
+import com.mavo.app.ui.animation.premiumClickable
+import java.util.Calendar
+
+private data class DesktopReportMenuItem(
+    val type: String,
+    val title: String,
+    val description: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
+private data class ReportMenuCardItem(
+    val title: String,
+    val description: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val onClick: () -> Unit
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MobileReportsScreen(
+    viewModel: AppViewModel,
+    isDesktop: Boolean = false,
+    modifier: Modifier = Modifier,
+    navigateToLedgerBooks: () -> Unit,
+    navigateToExpenses: () -> Unit = {},
+    navigateToNewVoucher: (String?) -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    val profile by viewModel.profile.collectAsState()
+    val ledgerEntriesReadState by viewModel.ledgerEntriesUiState.collectAsState()
+    val partiesReadState by viewModel.partiesUiState.collectAsState()
+    val productsReadState by viewModel.productsUiState.collectAsState()
+    val vouchersReadState by viewModel.vouchersUiState.collectAsState()
+    val ledgerEntries = ledgerEntriesReadState.valueOrEmpty()
+    val parties = partiesReadState.valueOrEmpty()
+    val products = productsReadState.valueOrEmpty()
+    val vouchers = vouchersReadState.valueOrEmpty()
+    val financialYear by viewModel.financialYear.collectAsState()
+
+    var activeReport by remember { mutableStateOf(if (isDesktop) "TRIAL" else "MENU") }
+
+    val context = LocalContext.current
+
+    // Compute ledger closing balances reactively
+    val (ledgerBalances, debtorsList, creditorsList) = remember(ledgerEntries, parties) {
+        val balances = mutableMapOf<String, Double>()
+
+        // 1. Initialise standard ledger accounts with 0
+        balances["Cash"] = 0.0
+        balances["Bank"] = 0.0
+        balances["Sales Account"] = 0.0
+        balances["Purchases Account"] = 0.0
+        balances["CGST Payable"] = 0.0
+        balances["SGST Payable"] = 0.0
+        balances["IGST Payable"] = 0.0
+        balances["CGST Receivable"] = 0.0
+        balances["SGST Receivable"] = 0.0
+        balances["IGST Receivable"] = 0.0
+        balances["Round Off Account"] = 0.0
+
+        // 2. Add party opening balances
+        parties.forEach { p ->
+            val initialVal = if (p.balanceType == "DR") p.openingBalance else -p.openingBalance
+            balances["Party: ${p.name}"] = initialVal
+        }
+
+        // 3. Accumulate ledger entries
+        ledgerEntries.forEach { entry ->
+            val head = entry.accountHead
+            val current = balances[head] ?: 0.0
+            balances[head] = current + (entry.debit - entry.credit)
+        }
+
+        // Filter debtors (positive balances) and creditors (negative balances)
+        val debtors = mutableListOf<Pair<Party, Double>>()
+        val creditors = mutableListOf<Pair<Party, Double>>()
+
+        parties.forEach { p ->
+            val bal = balances["Party: ${p.name}"] ?: 0.0
+            if (bal > 0.0) {
+                debtors.add(p to bal)
+            } else if (bal < 0.0) {
+                creditors.add(p to Math.abs(bal))
+            }
+        }
+
+        Triple(balances, debtors.sortedByDescending { it.second }, creditors.sortedByDescending { it.second })
+    }
+
+    // Compute shared balances & items
+    val currentStockValue = remember(products) {
+        products.sumOf { it.openingStock * it.purchaseRate }
+    }
+
+    val salesRevenue = Math.abs(ledgerBalances["Sales Account"] ?: 0.0)
+    val purchasesCost = ledgerBalances["Purchases Account"] ?: 0.0
+
+    val cgstPayable = ledgerBalances["CGST Payable"] ?: 0.0
+    val sgstPayable = ledgerBalances["SGST Payable"] ?: 0.0
+    val igstPayable = ledgerBalances["IGST Payable"] ?: 0.0
+
+    val cgstRec = ledgerBalances["CGST Receivable"] ?: 0.0
+    val sgstRec = ledgerBalances["SGST Receivable"] ?: 0.0
+    val igstRec = ledgerBalances["IGST Receivable"] ?: 0.0
+
+    val outputTaxTotal = cgstPayable + sgstPayable + igstPayable
+    val inputTaxCredit = cgstRec + sgstRec + igstRec
+    val netGstBalance = outputTaxTotal - inputTaxCredit
+
+    val roundOffValue = ledgerBalances["Round Off Account"] ?: 0.0
+
+    // P&L Calculations
+    val tradingDebit = purchasesCost
+    val tradingCredit = salesRevenue + currentStockValue
+    val grossProfit = tradingCredit - tradingDebit
+
+    val netProfit = grossProfit - (if (roundOffValue > 0) roundOffValue else 0.0)
+
+    // Assets and liabilities calculations for Balance Sheet
+    val cashVal = ledgerBalances["Cash"] ?: 0.0
+    val bankVal = ledgerBalances["Bank"] ?: 0.0
+    val totalDebtors = debtorsList.sumOf { it.second }
+    val totalCreditors = creditorsList.sumOf { it.second }
+
+    val assetsDuties = if (netGstBalance < 0.0) -netGstBalance else 0.0
+    val liabilitiesDuties = if (netGstBalance > 0.0) netGstBalance else 0.0
+
+    val totalAssets = cashVal + bankVal + totalDebtors + currentStockValue + assetsDuties
+    val otherLiabilities = totalCreditors + liabilitiesDuties
+    val balancingCapitalEquity = totalAssets - otherLiabilities
+
+    val reportReadStates = listOf(
+        ledgerEntriesReadState,
+        partiesReadState,
+        productsReadState,
+        vouchersReadState
+    )
+    val blockingReadStates = reportReadStates.filter { it.blocksContent() }
+    if (blockingReadStates.isNotEmpty()) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            blockingReadStates.forEach { state ->
+                UiLoadStateNotice(state, viewModel::retryFailedReads)
+            }
+        }
+        return
+    }
+
+    Column(modifier = modifier.fillMaxSize()) {
+        reportReadStates.filterIsInstance<UiLoadState.Error<*>>()
+            .filter { it.hasCachedValue }
+            .forEach { state ->
+                UiLoadStateNotice(state, viewModel::retryFailedReads)
+            }
+        Box(modifier = Modifier.weight(1f)) {
+    if (isDesktop) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            // Left menu pane
+            Box(modifier = Modifier.width(360.dp).fillMaxHeight()) {
+                Scaffold(
+                    containerColor = AppColors.screenBg,
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("Regulatory Financial Books", fontWeight = FontWeight.Bold) },
+                            colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+                        )
+                    }
+                ) { innerPadding ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(AppColors.screenBg)
+                            .verticalScroll(rememberScrollState())
+                            .padding(innerPadding)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Reports Menu ($financialYear)",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.textSecondary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppColors.sectionHeaderBg, RoundedCornerShape(16.dp))
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        )
+
+                        val desktopReportsList = listOf(
+                            DesktopReportMenuItem("TRIAL", "Trial Balance", "Interactive Net Debits & Credits verification", Icons.Default.AccountBalance),
+                            DesktopReportMenuItem("PL", "Profit & Loss Account", "Gross Margin & Net P&L side-by-side", Icons.AutoMirrored.Filled.Assignment),
+                            DesktopReportMenuItem("BALANCE", "Balance Sheet", "Real assets, liabilities & equity distribution", Icons.Default.Receipt),
+                            DesktopReportMenuItem("GST", "GST Summary Status", "Tax output liability offset against Input credits", Icons.Default.Percent),
+                            DesktopReportMenuItem("RECEIVABLES", "Outstanding Receivables", "Automated customer aging list & alerts", Icons.AutoMirrored.Filled.TrendingUp),
+                            DesktopReportMenuItem("PAYABLES", "Outstanding Payables", "Supplier credit balances status", Icons.AutoMirrored.Filled.TrendingDown),
+                            DesktopReportMenuItem("STOCK", "Stock Report", "Current stock, low stock, and out-of-stock items", Icons.Default.Inventory2)
+                        )
+
+                        desktopReportsList.chunked(2).forEach { rowItems ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                rowItems.forEach { (type, name, desc, icon) ->
+                                    ReportMenuCard(
+                                        title = name,
+                                        description = desc,
+                                        icon = icon,
+                                        isSelected = activeReport == type,
+                                        modifier = Modifier.weight(1f),
+                                        onClick = { activeReport = type }
+                                    )
+                                }
+                                if (rowItems.size < 2) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+                    // Right Detail view pane
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(8.dp)
+            ) {
+                Scaffold(
+                    containerColor = AppColors.screenBg,
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Column {
+                                    Text(
+                                        text = when (activeReport) {
+                                            "TRIAL" -> "Trial Balance"
+                                            "PL" -> "Trading & Profit & Loss Statement"
+                                            "BALANCE" -> "Balance Sheet Statement"
+                                            "GST" -> "GST Register Summary"
+                                            "RECEIVABLES" -> "Outstanding Receivables Ledger"
+                                            "PAYABLES" -> "Outstanding Payables Ledger"
+                                            "STOCK" -> "Stock Report"
+                                            else -> activeReport
+                                        },
+                                        fontWeight = FontWeight.Bold,
+                                        color = AppColors.textPrimary,
+                                        fontSize = 16.sp
+                                    )
+                                    Text(
+                                        text = "Mavo • Financial Year $financialYear",
+                                        fontSize = 11.sp,
+                                        color = AppColors.textTertiary
+                                    )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+                        )
+                    }
+                ) { innerPadding ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(AppColors.screenBg)
+                            .padding(innerPadding)
+                            .padding(16.dp)
+                    ) {
+                        when (activeReport) {
+                            "TRIAL" -> {
+                                TrialBalanceView(
+                                    ledgerBalances = ledgerBalances,
+                                    debtorsList = debtorsList,
+                                    creditorsList = creditorsList,
+                                    currentStockValue = currentStockValue,
+                                    roundOffValue = roundOffValue,
+                                    salesRevenue = salesRevenue,
+                                    purchasesCost = purchasesCost,
+                                    cgstPayable = cgstPayable,
+                                    sgstPayable = sgstPayable,
+                                    igstPayable = igstPayable,
+                                    cgstRec = cgstRec,
+                                    sgstRec = sgstRec,
+                                    igstRec = igstRec
+                                )
+                            }
+
+                            "PL" -> {
+                                TradingAndPLView(
+                                    salesRevenue = salesRevenue,
+                                    purchasesCost = purchasesCost,
+                                    currentStockValue = currentStockValue,
+                                    grossProfit = grossProfit,
+                                    netProfit = netProfit,
+                                    roundOffValue = roundOffValue
+                                )
+                            }
+
+                            "BALANCE" -> {
+                                BalanceSheetView(
+                                    cashVal = cashVal,
+                                    bankVal = bankVal,
+                                    totalDebtors = totalDebtors,
+                                    closingStockVal = currentStockValue,
+                                    totalCreditors = totalCreditors,
+                                    liabilitiesDuties = liabilitiesDuties,
+                                    assetsDuties = assetsDuties,
+                                    balancingCapital = balancingCapitalEquity,
+                                    netProfit = netProfit,
+                                    totalAssets = totalAssets
+                                )
+                            }
+
+                            "GST" -> {
+                                GSTSummaryView(
+                                    cgstPay = cgstPayable,
+                                    sgstPay = sgstPayable,
+                                    igstPay = igstPayable,
+                                    cgstRec = cgstRec,
+                                    sgstRec = sgstRec,
+                                    igstRec = igstRec,
+                                    outputTotal = outputTaxTotal,
+                                    inputTotal = inputTaxCredit,
+                                    netPayable = netGstBalance
+                                )
+                            }
+
+                            "RECEIVABLES" -> {
+                                var mSelectedTab by remember { mutableStateOf("BILLS") } // "PARTIES" vs "BILLS"
+                                val billsReceivableReadState by viewModel.billsReceivableUiState.collectAsState()
+                                val billsReceivable = billsReceivableReadState.valueOrEmpty()
+                                val billsReceivableError = billsReceivableReadState as? UiLoadState.Error<*>
+
+                                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    TabRow(
+                                        selectedTabIndex = if (mSelectedTab == "PARTIES") 0 else 1,
+                                        containerColor = AppColors.cardBg,
+                                        contentColor = AppColors.primary
+                                    ) {
+                                        Tab(
+                                            selected = mSelectedTab == "PARTIES",
+                                            onClick = { mSelectedTab = "PARTIES" },
+                                            text = { Text("By Customers", fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                                        )
+                                        Tab(
+                                            selected = mSelectedTab == "BILLS",
+                                            onClick = { mSelectedTab = "BILLS" },
+                                            text = { Text("Bill-wise Outstanding", fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                                        )
+                                    }
+
+                                    if (billsReceivableError?.hasCachedValue == true) {
+                                        UiLoadStateNotice(billsReceivableReadState, viewModel::retryFailedReads)
+                                    }
+                                    if (mSelectedTab == "PARTIES") {
+                                        DebtorsRemindersView(
+                                            debtors = debtorsList,
+                                            profile = profile,
+                                            context = context
+                                        )
+                                    } else if (billsReceivableReadState.blocksContent()) {
+                                        UiLoadStateNotice(billsReceivableReadState, viewModel::retryFailedReads)
+                                    } else {
+                                        AgedBillsListView(
+                                            bills = billsReceivable,
+                                            parties = parties,
+                                            viewModel = viewModel,
+                                            navigateToNewVoucher = navigateToNewVoucher
+                                        )
+                                    }
+                                }
+                            }
+
+                            "PAYABLES" -> {
+                                PayablesBillsListView(
+                                    vouchers = vouchers,
+                                    parties = parties,
+                                    navigateToNewVoucher = navigateToNewVoucher,
+                                    viewModel = viewModel
+                                )
+                            }
+
+                            "STOCK" -> {
+                                StockReportScreen(products = products)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        if (activeReport == "MENU") {
+            Scaffold(
+                containerColor = AppColors.screenBg,
+                topBar = {
+                    TopAppBar(
+                        title = { Text("Regulatory Financial Books & GST Reports", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AppColors.textPrimary)
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+                    )
+                }
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(AppColors.screenBg)
+                        .verticalScroll(rememberScrollState())
+                        .padding(innerPadding)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Double Entry Ledger Reports Summary ($financialYear)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = AppColors.textSecondary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(AppColors.sectionHeaderBg, RoundedCornerShape(16.dp))
+                            .padding(horizontal = 16.dp, vertical = 16.dp)
+                    )
+
+                    val mobileReportsList = listOf(
+                        ReportMenuCardItem("Trial Balance", "Interactive Group-wise trial verification statement of net Debits and Credits", Icons.Default.AccountBalance) { activeReport = "TRIAL" },
+                        ReportMenuCardItem("Profit & Loss Account", "View real double-entry Trading (Gross GP) and P&L statements side-by-side", Icons.AutoMirrored.Filled.Assignment) { activeReport = "PL" },
+                        ReportMenuCardItem("Balance Sheet", "Double entry balanced visual assets, liabilities, and proprietor equity", Icons.Default.Receipt) { activeReport = "BALANCE" },
+                        ReportMenuCardItem("GST Summary Status", "Estimated output liabilities offset against input credits", Icons.Default.Percent) { activeReport = "GST" },
+                        ReportMenuCardItem("Outstanding Receivables", "Client outstanding report with automated invoice reminders", Icons.AutoMirrored.Filled.TrendingUp) { activeReport = "RECEIVABLES" },
+                        ReportMenuCardItem("Outstanding Payables", "Supplier credits outstanding ledger status", Icons.AutoMirrored.Filled.TrendingDown) { activeReport = "PAYABLES" },
+                        ReportMenuCardItem("Stock Report", "Current stock, thresholds, and low stock export", Icons.Default.Inventory2) { activeReport = "STOCK" },
+                        ReportMenuCardItem("Ledger Books", "Browse chart of accounts and ledger balances", Icons.Default.AccountBalance) { navigateToLedgerBooks() },
+                        ReportMenuCardItem("Expenses", "Track operating expenses and export the register", Icons.Default.Payments) { navigateToExpenses() }
+                    )
+
+                    mobileReportsList.chunked(2).forEach { rowItems ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            rowItems.forEach { item ->
+                                ReportMenuCard(
+                                    title = item.title,
+                                    description = item.description,
+                                    icon = item.icon,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = item.onClick
+                                )
+                            }
+                            if (rowItems.size < 2) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            Scaffold(
+                containerColor = AppColors.screenBg,
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Column {
+                                Text(
+                                    text = when (activeReport) {
+                                        "TRIAL" -> "Trial Balance"
+                                        "PL" -> "Trading & Profit & Loss Statement"
+                                        "BALANCE" -> "Balance Sheet Statement"
+                                        "GST" -> "GST Register Summary"
+                                        "RECEIVABLES" -> "Outstanding Receivables Ledger"
+                                        "PAYABLES" -> "Outstanding Payables Ledger"
+                                        "STOCK" -> "Stock Report"
+                                        else -> activeReport
+                                    },
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.textPrimary,
+                                    fontSize = 16.sp
+                                )
+                                Text(
+                                    text = "Mavo • Financial Year $financialYear",
+                                    fontSize = 11.sp,
+                                    color = AppColors.textTertiary
+                                )
+                            }
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { activeReport = "MENU" }) {
+                                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AppColors.textPrimary)
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
+                    )
+                }
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(AppColors.screenBg)
+                        .padding(innerPadding)
+                        .padding(16.dp)
+                ) {
+                    when (activeReport) {
+                        "TRIAL" -> {
+                            TrialBalanceView(
+                                ledgerBalances = ledgerBalances,
+                                debtorsList = debtorsList,
+                                creditorsList = creditorsList,
+                                currentStockValue = currentStockValue,
+                                roundOffValue = roundOffValue,
+                                salesRevenue = salesRevenue,
+                                purchasesCost = purchasesCost,
+                                cgstPayable = cgstPayable,
+                                sgstPayable = sgstPayable,
+                                igstPayable = igstPayable,
+                                cgstRec = cgstRec,
+                                sgstRec = sgstRec,
+                                igstRec = igstRec
+                            )
+                        }
+
+                        "PL" -> {
+                            TradingAndPLView(
+                                salesRevenue = salesRevenue,
+                                purchasesCost = purchasesCost,
+                                currentStockValue = currentStockValue,
+                                grossProfit = grossProfit,
+                                netProfit = netProfit,
+                                roundOffValue = roundOffValue
+                            )
+                        }
+
+                        "BALANCE" -> {
+                            BalanceSheetView(
+                                cashVal = cashVal,
+                                bankVal = bankVal,
+                                totalDebtors = totalDebtors,
+                                closingStockVal = currentStockValue,
+                                totalCreditors = totalCreditors,
+                                liabilitiesDuties = liabilitiesDuties,
+                                assetsDuties = assetsDuties,
+                                balancingCapital = balancingCapitalEquity,
+                                netProfit = netProfit,
+                                totalAssets = totalAssets
+                            )
+                        }
+
+                        "GST" -> {
+                            GSTSummaryView(
+                                cgstPay = cgstPayable,
+                                sgstPay = sgstPayable,
+                                igstPay = igstPayable,
+                                cgstRec = cgstRec,
+                                sgstRec = sgstRec,
+                                igstRec = igstRec,
+                                outputTotal = outputTaxTotal,
+                                inputTotal = inputTaxCredit,
+                                netPayable = netGstBalance
+                            )
+                        }
+
+                        "RECEIVABLES" -> {
+                            var mSelectedTab by remember { mutableStateOf("BILLS") } // "PARTIES" vs "BILLS"
+                            val billsReceivableReadState by viewModel.billsReceivableUiState.collectAsState()
+                            val billsReceivable = billsReceivableReadState.valueOrEmpty()
+                            val billsReceivableError = billsReceivableReadState as? UiLoadState.Error<*>
+
+                            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                TabRow(
+                                    selectedTabIndex = if (mSelectedTab == "PARTIES") 0 else 1,
+                                    containerColor = AppColors.cardBg,
+                                    contentColor = AppColors.primary
+                                ) {
+                                    Tab(
+                                        selected = mSelectedTab == "PARTIES",
+                                        onClick = { mSelectedTab = "PARTIES" },
+                                        text = { Text("By Customers", fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                                    )
+                                    Tab(
+                                        selected = mSelectedTab == "BILLS",
+                                        onClick = { mSelectedTab = "BILLS" },
+                                        text = { Text("Bill-wise Outstanding", fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                                    )
+                                }
+
+                                if (billsReceivableError?.hasCachedValue == true) {
+                                    UiLoadStateNotice(billsReceivableReadState, viewModel::retryFailedReads)
+                                }
+                                if (mSelectedTab == "PARTIES") {
+                                    DebtorsRemindersView(
+                                        debtors = debtorsList,
+                                        profile = profile,
+                                        context = context
+                                    )
+                                } else if (billsReceivableReadState.blocksContent()) {
+                                    UiLoadStateNotice(billsReceivableReadState, viewModel::retryFailedReads)
+                                } else {
+                                    AgedBillsListView(
+                                        bills = billsReceivable,
+                                        parties = parties,
+                                        viewModel = viewModel,
+                                        navigateToNewVoucher = navigateToNewVoucher
+                                    )
+                                }
+                            }
+                        }
+
+                            "PAYABLES" -> {
+                                PayablesBillsListView(
+                                    vouchers = vouchers,
+                                    parties = parties,
+                                    navigateToNewVoucher = navigateToNewVoucher,
+                                    viewModel = viewModel
+                                )
+                            }
+
+                            "STOCK" -> {
+                                StockReportScreen(products = products)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+}
+
+@Composable
+fun PayablesBillsListView(
+    vouchers: List<Voucher>,
+    parties: List<Party>,
+    viewModel: AppViewModel,
+    modifier: Modifier = Modifier,
+    navigateToNewVoucher: (String?) -> Unit
+) {
+    val purchaseBills = remember(vouchers) {
+        vouchers
+            .filter { voucher ->
+                voucher.type == "PURCHASE" &&
+                    voucher.status == "POSTED" &&
+                    voucher.partyId != null &&
+                    voucher.outstandingAmount > 0.0
+            }
+            .sortedByDescending { it.date }
+    }
+
+    if (purchaseBills.isEmpty()) {
+        Box(modifier = modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+            Text("No active supplier bills are awaiting payment.", fontSize = 13.sp, color = AppColors.textSecondary)
+        }
+    } else {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)
+        ) {
+            items(purchaseBills) { bill ->
+                val party = parties.find { it.id == bill.partyId }
+                val outstanding = bill.outstandingAmount.coerceAtLeast(0.0)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                    border = BorderStroke(1.dp, AppColors.border)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Purchase #${bill.voucherNo}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = AppColors.textPrimary
+                            )
+                            val isPartial = outstanding < bill.netAmount
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isPartial) AppColors.badgePartialBg else AppColors.badgePaymentBg
+                                ),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = if (isPartial) "PARTIAL" else "UNPAID",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isPartial) AppColors.badgePartialText else AppColors.badgePaymentText,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "Supplier: ${party?.name ?: "Unknown Supplier"}",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = AppColors.textSecondary
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text("Bill Date: ${Utils.formatDate(bill.date)}", fontSize = 11.sp, color = AppColors.textTertiary)
+                                party?.phone?.takeIf { it.isNotBlank() }?.let {
+                                    Text("Phone: $it", fontSize = 11.sp, color = AppColors.textTertiary)
+                                }
+                            }
+
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("Original: ${Utils.formatIndianCurrency(bill.netAmount)}", fontSize = 11.sp, color = AppColors.textSecondary)
+                                Text(
+                                    "Paid so far: ${Utils.formatIndianCurrency((bill.netAmount - outstanding).coerceAtLeast(0.0))}",
+                                    fontSize = 11.sp,
+                                    color = AppColors.textSecondary
+                                )
+                                Text(
+                                    "Remaining: ${Utils.formatIndianCurrency(outstanding)}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.error
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(color = AppColors.border.copy(alpha = 0.5f))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Button(
+                                onClick = {
+                                    viewModel.setVoucherPrefillRequest(
+                                        AppViewModel.VoucherPrefillRequest(
+                                            voucherType = "PAYMENT",
+                                            partyId = bill.partyId,
+                                            invoiceId = bill.id,
+                                            amount = outstanding
+                                        )
+                                    )
+                                    navigateToNewVoucher(null)
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Pay", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+// TRIAL BALANCE VIEW (Grouped, Expandable, with Subheads)
+// ═══════════════════════════════════════════════════════
+@Composable
+fun TrialBalanceView(
+    ledgerBalances: Map<String, Double>,
+    debtorsList: List<Pair<Party, Double>>,
+    creditorsList: List<Pair<Party, Double>>,
+    currentStockValue: Double,
+    roundOffValue: Double,
+    salesRevenue: Double,
+    purchasesCost: Double,
+    cgstPayable: Double,
+    sgstPayable: Double,
+    igstPayable: Double,
+    cgstRec: Double,
+    sgstRec: Double,
+    igstRec: Double,
+    modifier: Modifier = Modifier
+) {
+    var expandedGroups by remember { mutableStateOf(setOf<String>()) }
+    val listState = rememberScrollState()
+
+    val toggleGroup: (String) -> Unit = { groupName ->
+        expandedGroups = if (expandedGroups.contains(groupName)) {
+            expandedGroups - groupName
+        } else {
+            expandedGroups + groupName
+        }
+    }
+
+    // Prepare groups:
+    val gstPayBalance = cgstPayable + sgstPayable + igstPayable
+    val gstRecBalance = cgstRec + sgstRec + igstRec
+
+    val cashBalance = ledgerBalances["Cash"] ?: 0.0
+    val bankBalance = ledgerBalances["Bank"] ?: 0.0
+
+    val debtorsTotal = debtorsList.sumOf { it.second }
+    val creditorsTotal = creditorsList.sumOf { it.second }
+
+    // Column grand summation
+    val grandDr = purchasesCost + cashBalance + bankBalance + debtorsTotal + currentStockValue + gstRecBalance + (if (roundOffValue > 0.0) roundOffValue else 0.0)
+    val grandCr = salesRevenue + CapitalAccountDefault + creditorsTotal + gstPayBalance + (if (roundOffValue < 0.0) -roundOffValue else 0.0)
+
+    val difference = Math.abs(grandDr - grandCr)
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(listState)
+            .border(1.dp, AppColors.border, RoundedCornerShape(8.dp))
+            .background(AppColors.cardBg)
+    ) {
+        // Table Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(AppColors.primary)
+                .padding(vertical = 12.dp, horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("PARTICULARS", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1.5f))
+            Text("DEBIT DR (₹)", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+            Text("CREDIT CR (₹)", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+        }
+
+        // Expanded Group helper
+        @Composable
+        fun TrialGroupHeader(
+            name: String,
+            dr: Double,
+            cr: Double,
+            isExpanded: Boolean,
+            modifier: Modifier = Modifier,
+            onClick: () -> Unit
+        ) {
+            Row(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable { onClick() }
+                    .padding(vertical = 12.dp, horizontal = 12.dp)
+                    .background(AppColors.sectionHeaderBg),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = AppColors.primaryText,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = AppColors.primaryText,
+                    modifier = Modifier.weight(1.5f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = if (dr > 0) Utils.formatIndianNumber(dr) else "-",
+                    fontFamily = NumericFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    color = if (dr > 0) AppColors.debit else AppColors.textPrimary,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.End
+                )
+                Text(
+                    text = if (cr > 0) Utils.formatIndianNumber(cr) else "-",
+                    fontFamily = NumericFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    color = if (cr > 0) AppColors.credit else AppColors.textPrimary,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.End
+                )
+            }
+            HorizontalDivider(color = AppColors.divider)
+        }
+
+        @Composable
+        fun TrialLedgerRow(
+            name: String,
+            balance: Double,
+            isDr: Boolean,
+            paddingLeft: Int = 24,
+            rowIndex: Int = 0,
+            modifier: Modifier = Modifier
+        ) {
+            Row(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .background(if (rowIndex % 2 == 0) AppColors.tableRowEven else AppColors.tableRowOdd)
+                    .padding(vertical = 8.dp, horizontal = 12.dp)
+                    .padding(start = paddingLeft.dp)
+            ) {
+                Text(
+                    text = name,
+                    fontSize = 11.sp,
+                    color = AppColors.textPrimary,
+                    modifier = Modifier.weight(1.5f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = if (isDr) Utils.formatIndianNumber(balance) else "-",
+                    fontFamily = NumericFontFamily,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AppColors.debit,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.End
+                )
+                Text(
+                    text = if (!isDr) Utils.formatIndianNumber(balance) else "-",
+                    fontFamily = NumericFontFamily,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AppColors.credit,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.End
+                )
+            }
+            HorizontalDivider(color = AppColors.divider)
+        }
+
+        // 1. CAPITAL ACCOUNT GROUP
+        val isCapExpanded = expandedGroups.contains("CAPITAL")
+        TrialGroupHeader("Capital Account", dr = 0.0, cr = CapitalAccountDefault, isExpanded = isCapExpanded, onClick = { toggleGroup("CAPITAL") })
+        if (isCapExpanded) {
+            TrialLedgerRow("Proprietor Capital", CapitalAccountDefault, isDr = false)
+        }
+
+        // 2. SUNDRY CREDITORS GROUP
+        val isCredsExpanded = expandedGroups.contains("CREDITORS")
+        TrialGroupHeader("Sundry Creditors (Current Liabilities)", dr = 0.0, cr = creditorsTotal, isExpanded = isCredsExpanded, onClick = { toggleGroup("CREDITORS") })
+        if (isCredsExpanded) {
+            if (creditorsList.isEmpty()) {
+                TrialLedgerRow("[No Supplier Dues]", 0.0, isDr = false)
+            } else {
+                creditorsList.forEach { (p, b) ->
+                    TrialLedgerRow(p.name, b, isDr = false)
+                }
+            }
+        }
+
+        // 3. DUTIES & TAXES PAYABLE
+        val isDutiesPayExpanded = expandedGroups.contains("DUTIESPAY")
+        TrialGroupHeader("Duties & Taxes (GST Payable)", dr = 0.0, cr = gstPayBalance, isExpanded = isDutiesPayExpanded, onClick = { toggleGroup("DUTIESPAY") })
+        if (isDutiesPayExpanded) {
+            if (cgstPayable > 0) TrialLedgerRow("CGST Output Tax", cgstPayable, isDr = false)
+            if (sgstPayable > 0) TrialLedgerRow("SGST Output Tax", sgstPayable, isDr = false)
+            if (igstPayable > 0) TrialLedgerRow("IGST Output Tax", igstPayable, isDr = false)
+        }
+
+        // 4. FIXED ASSETS
+        val isFixedExpanded = expandedGroups.contains("FIXED")
+        TrialGroupHeader("Fixed Assets", dr = 0.0, cr = 0.0, isExpanded = isFixedExpanded, onClick = { toggleGroup("FIXED") })
+        if (isFixedExpanded) {
+            TrialLedgerRow("[No Fixed Asset Ledger Setup]", 0.0, isDr = true)
+        }
+
+        // 5. CURRENT ASSETS (CASH & BANK)
+        val isCashBankExpanded = expandedGroups.contains("CASHBANK")
+        TrialGroupHeader("Cash-in-hand & Bank Accounts", dr = (cashBalance + bankBalance), cr = 0.0, isExpanded = isCashBankExpanded, onClick = { toggleGroup("CASHBANK") })
+        if (isCashBankExpanded) {
+            TrialLedgerRow("Cash in Hand", cashBalance, isDr = true)
+            TrialLedgerRow("Bank Account Balance", bankBalance, isDr = true)
+        }
+
+        // 6. SUNDRY DEBTORS GROUP
+        val isDebtorsExpanded = expandedGroups.contains("DEBTORS")
+        TrialGroupHeader("Sundry Debtors (Current Assets)", dr = debtorsTotal, cr = 0.0, isExpanded = isDebtorsExpanded, onClick = { toggleGroup("DEBTORS") })
+        if (isDebtorsExpanded) {
+            if (debtorsList.isEmpty()) {
+                TrialLedgerRow("[No Active Debtor Dues]", 0.0, isDr = true)
+            } else {
+                debtorsList.forEach { (p, b) ->
+                    TrialLedgerRow(p.name, b, isDr = true)
+                }
+            }
+        }
+
+        // 7. STOCK IN HAND
+        val isStockExpanded = expandedGroups.contains("STOCK")
+        TrialGroupHeader("Stock-in-hand (Inventory)", dr = currentStockValue, cr = 0.0, isExpanded = isStockExpanded, onClick = { toggleGroup("STOCK") })
+        if (isStockExpanded) {
+            TrialLedgerRow("Closing Stock Value", currentStockValue, isDr = true)
+        }
+
+        // 8. DUTIES & TAXES RECEIVABLE
+        val isDutiesRecExpanded = expandedGroups.contains("DUTIESREC")
+        TrialGroupHeader("Duties & Taxes (ITC Credit)", dr = gstRecBalance, cr = 0.0, isExpanded = isDutiesRecExpanded, onClick = { toggleGroup("DUTIESREC") })
+        if (isDutiesRecExpanded) {
+            if (cgstRec > 0) TrialLedgerRow("CGST Input Credit", cgstRec, isDr = true)
+            if (sgstRec > 0) TrialLedgerRow("SGST Input Credit", sgstRec, isDr = true)
+            if (igstRec > 0) TrialLedgerRow("IGST Input Credit", igstRec, isDr = true)
+        }
+
+        // 9. SALES ACCOUNT GROUP
+        val isSalesExpanded = expandedGroups.contains("SALES")
+        TrialGroupHeader("Sales Accounts", dr = 0.0, cr = salesRevenue, isExpanded = isSalesExpanded, onClick = { toggleGroup("SALES") })
+        if (isSalesExpanded) {
+            TrialLedgerRow("Sales Account Sales Revenue", salesRevenue, isDr = false)
+        }
+
+        // 10. PURCHASE ACCOUNT GROUP
+        val isPurchExpanded = expandedGroups.contains("PURCHASE_GP")
+        TrialGroupHeader("Purchase Accounts", dr = purchasesCost, cr = 0.0, isExpanded = isPurchExpanded, onClick = { toggleGroup("PURCHASE_GP") })
+        if (isPurchExpanded) {
+            TrialLedgerRow("Purchases Supplier Cost", purchasesCost, isDr = true)
+        }
+
+        // 11. INDIRECT EXPENSES & ADJUSTS
+        if (roundOffValue != 0.0) {
+            val isIndExpanded = expandedGroups.contains("INDIRECT")
+            val drVal = if (roundOffValue > 0.0) roundOffValue else 0.0
+            val crVal = if (roundOffValue < 0.0) -roundOffValue else 0.0
+            TrialGroupHeader("Indirect Adjustments (Round Off)", dr = drVal, cr = crVal, isExpanded = isIndExpanded, onClick = { toggleGroup("INDIRECT") })
+            if (isIndExpanded) {
+                TrialLedgerRow("Invoice Round Off Ledger", Math.abs(roundOffValue), isDr = roundOffValue > 0.0)
+            }
+        }
+
+        // Difference entry (balancing parameters)
+        if (difference >= 0.01) {
+            val reconcileWithCapital = grandDr - grandCr
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(AppColors.warning.copy(alpha = 0.12f))
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "Unreconciled Difference (review required):",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.textPrimary,
+                    modifier = Modifier.weight(1.5f),
+                    maxLines = 2
+                )
+                Text(
+                    text = if (reconcileWithCapital < 0) "DR: " + Utils.formatIndianNumber(-reconcileWithCapital) else "-",
+                    fontFamily = NumericFontFamily,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.error,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.End
+                )
+                Text(
+                    text = if (reconcileWithCapital > 0) "CR: " + Utils.formatIndianNumber(reconcileWithCapital) else "-",
+                    fontFamily = NumericFontFamily,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.success,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.End
+                )
+            }
+            HorizontalDivider()
+        }
+
+        // Grand Totals — show the REAL debit and credit totals, do not force them equal
+        val finalDrSum = grandDr
+        val finalCrSum = grandCr
+        val isBalanced = difference < 0.01
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(if (isBalanced) AppColors.primary else AppColors.error)
+                .padding(vertical = 12.dp, horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                if (isBalanced) "GRAND TOTALS (BALANCED)" else "GRAND TOTALS (NOT BALANCED — REVIEW)",
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp,
+                color = AppColors.textOnPrimary,
+                modifier = Modifier.weight(1.5f)
+            )
+            Text(Utils.formatIndianCurrency(finalDrSum), fontFamily = NumericFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+            Text(Utils.formatIndianCurrency(finalCrSum), fontFamily = NumericFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textOnPrimary, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+// TRADING AND P&L VIEW (Two Columns: Debit vs Credit)
+// ═══════════════════════════════════════════════════════
+@Composable
+fun TradingAndPLView(
+    salesRevenue: Double,
+    purchasesCost: Double,
+    currentStockValue: Double,
+    grossProfit: Double,
+    netProfit: Double,
+    roundOffValue: Double,
+    modifier: Modifier = Modifier
+) {
+    val scroll = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(scroll),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    "PART I: TRADING ACCOUNT (Gross Margin Analysis)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    color = AppColors.primary
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Dual column split representation
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, AppColors.border)
+                ) {
+                    // Left: DEBIT SIDE (Costs)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .border(BorderStroke(1.dp, AppColors.border))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppColors.screenBg)
+                                .padding(8.dp)
+                        ) {
+                            Text("DEBIT (DR) / COST", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.textPrimary)
+                        }
+                        HorizontalDivider()
+
+                        PLColumnItem("Opening Stock", 0.0)
+                        PLColumnItem("Purchase Cost ledger", purchasesCost)
+
+                        if (grossProfit >= 0) {
+                            PLColumnItem("Gross Profit c/o", grossProfit, highlight = true, isProfit = true)
+                        } else {
+                            PLColumnItem("", 0.0)
+                        }
+
+                        HorizontalDivider()
+
+                        val lhsSum = purchasesCost + (if (grossProfit >= 0) grossProfit else 0.0)
+                        PLTotalItem(lhsSum)
+                    }
+
+                    // Right: CREDIT SIDE (Sales & Stock)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .border(BorderStroke(1.dp, AppColors.border))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppColors.screenBg)
+                                .padding(8.dp)
+                        ) {
+                            Text("CREDIT (CR) / REVENUE", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.textPrimary)
+                        }
+                        HorizontalDivider()
+
+                        PLColumnItem("Sales Value ledger", salesRevenue)
+                        PLColumnItem("Stock Valuation", currentStockValue)
+
+                        if (grossProfit < 0) {
+                            PLColumnItem("Gross Loss c/o", -grossProfit, highlight = true, isProfit = false)
+                        } else {
+                            PLColumnItem("", 0.0)
+                        }
+
+                        HorizontalDivider()
+
+                        val rhsSum = salesRevenue + currentStockValue + (if (grossProfit < 0) -grossProfit else 0.0)
+                        PLTotalItem(rhsSum)
+                    }
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    "PART II: PROFIT & LOSS ACCOUNT (Business Net Margin)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    color = AppColors.primary
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, AppColors.border)
+                ) {
+                    // Left Column (Loss & Indirect Expenses)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .border(BorderStroke(1.dp, AppColors.border))
+                    ) {
+                         Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppColors.screenBg)
+                                .padding(8.dp)
+                        ) {
+                            Text("DEBIT (DR) / CHARGES", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.textPrimary)
+                        }
+                        HorizontalDivider()
+
+                        if (grossProfit < 0) {
+                            PLColumnItem("Gross Loss b/f", -grossProfit)
+                        } else {
+                            PLColumnItem("", 0.0)
+                        }
+
+                        if (roundOffValue > 0) {
+                            PLColumnItem("Round Off Expense", roundOffValue)
+                        }
+
+                        if (netProfit >= 0) {
+                            PLColumnItem("NET REAL PROFIT", netProfit, highlight = true, isProfit = true)
+                        }
+
+                        HorizontalDivider()
+
+                        val lhsSum = (if (grossProfit < 0) -grossProfit else 0.0) + (if (roundOffValue > 0) roundOffValue else 0.0) + (if (netProfit >= 0) netProfit else 0.0)
+                        PLTotalItem(lhsSum)
+                    }
+
+                    // Right Column (Gross Profit B/F and Indirect Income)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .border(BorderStroke(1.dp, AppColors.border))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppColors.screenBg)
+                                .padding(8.dp)
+                        ) {
+                            Text("CREDIT (CR) / GAINS", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.textPrimary)
+                        }
+                        HorizontalDivider()
+
+                        if (grossProfit >= 0) {
+                            PLColumnItem("Gross Profit b/f", grossProfit)
+                        } else {
+                            PLColumnItem("", 0.0)
+                        }
+
+                        if (roundOffValue < 0) {
+                            PLColumnItem("Round Off Income", -roundOffValue)
+                        }
+
+                        if (netProfit < 0) {
+                            PLColumnItem("NET REAL LOSS", -netProfit, highlight = true, isProfit = false)
+                        }
+
+                        HorizontalDivider()
+
+                        val rhsSum = (if (grossProfit >= 0) grossProfit else 0.0) + (if (roundOffValue < 0) -roundOffValue else 0.0) + (if (netProfit < 0) -netProfit else 0.0)
+                        PLTotalItem(rhsSum)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PLColumnItem(
+    name: String,
+    amount: Double,
+    highlight: Boolean = false,
+    isProfit: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(32.dp)
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (name.isNotEmpty()) {
+            Text(
+                text = name,
+                fontSize = 10.sp,
+                color = if (highlight) (if (isProfit) AppColors.credit else AppColors.debit) else AppColors.textSecondary,
+                fontWeight = if (highlight) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = String.format("%.2f", amount),
+                fontSize = 10.sp,
+                fontFamily = NumericFontFamily,
+                fontWeight = FontWeight.Bold,
+                color = if (highlight) (if (isProfit) AppColors.credit else AppColors.debit) else AppColors.textSecondary,
+                textAlign = TextAlign.End
+            )
+        } else {
+            Text("-", fontSize = 10.sp, color = Color.LightGray)
+        }
+    }
+    HorizontalDivider(color = AppColors.divider)
+}
+
+@Composable
+fun PLTotalItem(total: Double, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(AppColors.primary.copy(alpha = 0.08f))
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("Total", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = AppColors.primary)
+        Text(
+            text = Utils.formatIndianCurrency(total),
+            fontFamily = NumericFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 10.sp,
+            color = AppColors.primary,
+            textAlign = TextAlign.End
+        )
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+// BALANCE SHEET VIEW (Two Columns: Liabilities vs Assets)
+// ═══════════════════════════════════════════════════════
+@Composable
+fun BalanceSheetView(
+    cashVal: Double,
+    bankVal: Double,
+    totalDebtors: Double,
+    closingStockVal: Double,
+    totalCreditors: Double,
+    liabilitiesDuties: Double,
+    assetsDuties: Double,
+    balancingCapital: Double,
+    netProfit: Double,
+    totalAssets: Double,
+    modifier: Modifier = Modifier
+) {
+    val scroll = rememberScrollState()
+    val totalLiabilities = balancingCapital + totalCreditors + (if (liabilitiesDuties > 0) liabilitiesDuties else 0.0)
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(scroll)
+    ) {
+        Text(
+            "Double Entry Statement of Assets, Liabilities, and Owner's Capital",
+            fontSize = 12.sp,
+            color = AppColors.textSecondary,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, AppColors.border)
+        ) {
+            // Left Column: Liabilities
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .border(BorderStroke(1.dp, AppColors.border))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(AppColors.screenBg)
+                        .padding(8.dp)
+                ) {
+                    Text("LIABILITIES & EQUITY", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textPrimary)
+                }
+                HorizontalDivider()
+
+                PLColumnItem("Capital (Balancing Account)", balancingCapital - netProfit)
+                PLColumnItem("Net Profit this term", netProfit, highlight = true, isProfit = true)
+                PLColumnItem("Sundry Creditors (Dues)", totalCreditors)
+
+                if (liabilitiesDuties > 0) {
+                    PLColumnItem("GST Duties Liability", liabilitiesDuties)
+                } else {
+                    PLColumnItem("", 0.0)
+                }
+
+                HorizontalDivider()
+                PLTotalItem(totalLiabilities)
+            }
+
+            // Right Column: Assets
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .border(BorderStroke(1.dp, AppColors.border))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(AppColors.screenBg)
+                        .padding(8.dp)
+                ) {
+                    Text("ASSETS", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = AppColors.textPrimary)
+                }
+                HorizontalDivider()
+
+                PLColumnItem("Stock-in-hand Inventory", closingStockVal)
+                PLColumnItem("Sundry Debtors", totalDebtors)
+                PLColumnItem("Cash-in-hand Account", cashVal)
+                PLColumnItem("Bank Account Reserves", bankVal)
+
+                if (assetsDuties > 0) {
+                    PLColumnItem("GST Input Tax Assets", assetsDuties)
+                } else {
+                    PLColumnItem("", 0.0)
+                }
+
+                HorizontalDivider()
+                PLTotalItem(totalAssets)
+            }
+        }
+
+        val bsDifference = kotlin.math.abs(totalLiabilities - totalAssets)
+        if (bsDifference >= 1.0) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(AppColors.warning.copy(alpha = 0.12f))
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Balance Sheet does not tie out — review required:",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.textPrimary,
+                    modifier = Modifier.weight(1.5f),
+                    maxLines = 2
+                )
+                Text(
+                    text = Utils.formatIndianCurrency(bsDifference),
+                    fontFamily = NumericFontFamily,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.error,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.End
+                )
+            }
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+// GST SUMMARY STATEMENT VIEW
+// ═══════════════════════════════════════════════════════
+@Composable
+fun GSTSummaryView(
+    cgstPay: Double,
+    sgstPay: Double,
+    igstPay: Double,
+    cgstRec: Double,
+    sgstRec: Double,
+    igstRec: Double,
+    outputTotal: Double,
+    inputTotal: Double,
+    netPayable: Double,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("OUTWARD SUPPLY LIABILITIES (OUTPUT TAX)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.primary)
+                HorizontalDivider()
+
+                ReportRow("CGST Output Collector", cgstPay)
+                ReportRow("SGST Output Collector", sgstPay)
+                ReportRow("IGST Output Collector", igstPay)
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Total Outward Tax Liability:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
+                    Text(Utils.formatIndianCurrency(outputTotal), fontFamily = NumericFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("INWARD SUPPLY CREDIT offsets (INPUT TAX CREDIT)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.primary)
+                HorizontalDivider()
+
+                ReportRow("CGST Input credits", cgstRec)
+                ReportRow("SGST Input credits", sgstRec)
+                ReportRow("IGST Input credits", igstRec)
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Total Input Tax credits (ITC):", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
+                    Text(Utils.formatIndianCurrency(inputTotal), fontFamily = NumericFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textPrimary)
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("GST PAYABLE POSITION (NET TO FILE)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.primary)
+                HorizontalDivider()
+
+                val label = if (netPayable >= 0) "Net Payable GST to Government:" else "Carryover ITC balance (Asset Credit):"
+                val color = if (netPayable >= 0) AppColors.error else AppColors.success
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(label, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = AppColors.textPrimary, modifier = Modifier.weight(1f))
+                    Text(
+                        text = Utils.formatIndianCurrency(Math.abs(netPayable)),
+                        fontFamily = NumericFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = color
+                    )
+                }
+                Text(
+                    text = if (netPayable >= 0) "Payable on GSTR-3B filings before the 20th of the following month." else "Automated ITC offset will reduce the next tax period liabilities.",
+                    fontSize = 11.sp,
+                    color = AppColors.textSecondary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ReportRow(label: String, amount: Double, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontSize = 11.sp, color = AppColors.textTertiary)
+        Text(String.format("%.2f", amount), fontFamily = NumericFontFamily, fontSize = 11.sp, color = AppColors.textSecondary)
+    }
+    HorizontalDivider(color = AppColors.divider)
+}
+
+// ═══════════════════════════════════════════════════════
+// OUTSTANDING DEBTORS REMINDERS (Email Automation)
+// ═══════════════════════════════════════════════════════
+@Composable
+fun DebtorsRemindersView(
+    debtors: List<Pair<Party, Double>>,
+    profile: BusinessProfile?,
+    context: Context,
+    modifier: Modifier = Modifier
+) {
+    if (debtors.isEmpty()) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No active outstanding debtor balances.", fontSize = 13.sp, color = AppColors.textSecondary)
+        }
+    } else {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier.fillMaxSize()) {
+            items(debtors) { (party, balance) ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                    border = BorderStroke(1.dp, AppColors.border)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(party.name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppColors.textPrimary)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Email: ${party.email.ifBlank { "N/A" }}", fontSize = 11.sp, color = AppColors.textSecondary)
+                            Text("Phone: ${party.phone}", fontSize = 11.sp, color = AppColors.textSecondary)
+                        }
+
+                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = Utils.formatIndianCurrency(balance),
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.error,
+                                fontSize = 14.sp,
+                                fontFamily = NumericFontFamily
+                            )
+
+                            if (party.email.isNotBlank()) {
+                                Button(
+                                    onClick = {
+                                        sendDebtorReminderEmail(context, party, balance, profile)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    shape = RoundedCornerShape(4.dp),
+                                    modifier = Modifier.height(32.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Send Email", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            } else {
+                                Text("[No Email Configured]", fontSize = 10.sp, color = AppColors.textHint)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Helper to launch email intent
+fun sendDebtorReminderEmail(context: Context, party: Party, balance: Double, profile: BusinessProfile?) {
+    val bName = profile?.businessName ?: "Our Store"
+    val bankDesc = if (profile != null && profile.accountNo.isNotBlank()) {
+        "\nBank details for payments:\nBank: ${profile.bankName}\nA/C No: ${profile.accountNo}\nIFSC Name: ${profile.ifsc}\n"
+    } else ""
+
+    val subject = "Balance Statement Reminder - $bName"
+    val emailText = """Dear ${party.name},
+
+This is a professional notification from $bName. 
+
+Your ledger account shows an active outstanding due amount of ₹ ${Utils.formatIndianNumber(balance)}.
+
+Please clear your pending bills at your earliest convenience.$bankDesc
+If you have already processed the transfer, please share the transaction reference.
+
+Sincerely,
+$bName
+Phone: ${profile?.phone ?: ""}
+""".trimIndent()
+
+    EmailComposer.compose(
+        context = context,
+        draft = EmailComposer.Draft(
+            recipients = listOf(party.email),
+            subject = subject,
+            body = emailText
+        ),
+        chooserTitle = "Send Reminder Email"
+    )
+}
+
+// System Constant for simple retail accounts structure balancing
+const val CapitalAccountDefault = 500000.00
+
+@Composable
+fun ReportMenuCard(
+    title: String,
+    description: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 110.dp)
+            .border(
+                1.dp,
+                if (isSelected) AppColors.primary else AppColors.border,
+                RoundedCornerShape(12.dp)
+            )
+            .premiumClickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isSelected) AppColors.primary else AppColors.textPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = if (isSelected) AppColors.primary else AppColors.textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(2.dp)
+                ) {
+                    val strokeWidth = 1.dp.toPx()
+                    val dashLength = 4.dp.toPx()
+                    val gapLength = 3.dp.toPx()
+                    val pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(dashLength, gapLength), 0f)
+                    drawLine(
+                        color = if (isSelected) AppColors.primary else AppColors.border,
+                        start = Offset(0f, size.height / 2),
+                        end = Offset(size.width, size.height / 2),
+                        strokeWidth = strokeWidth,
+                        pathEffect = pathEffect
+                    )
+                }
+            }
+            Text(
+                text = description,
+                fontSize = 11.sp,
+                color = AppColors.textTertiary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+fun AgedBillsListView(
+    bills: List<com.mavo.app.data.BillReceivable>,
+    parties: List<com.mavo.app.data.Party>,
+    viewModel: com.mavo.app.ui.AppViewModel,
+    modifier: Modifier = Modifier,
+    navigateToNewVoucher: (String?) -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    val activeBills = remember(bills) { bills.filter { it.outstandingAmount > 0.0 } }
+    
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedBill by remember { mutableStateOf<com.mavo.app.data.BillReceivable?>(null) }
+    
+    var paidAmountText by remember { mutableStateOf("") }
+    var paymentMode by remember { mutableStateOf("BANK") } // CASH, BANK, UPI
+    var receiptDate by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    if (activeBills.isEmpty()) {
+        Box(modifier = modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+            Text("All credit invoices have been fully paid off", fontSize = 13.sp, color = AppColors.textSecondary)
+        }
+    } else {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)
+        ) {
+            items(activeBills) { bill ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                    border = BorderStroke(1.dp, AppColors.border)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Invoice #${bill.voucherNo}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = AppColors.textPrimary
+                            )
+                            
+                            val badgeBgColor: Color
+                            val badgeTxtColor: Color
+                            when (bill.status) {
+                                "PAID" -> {
+                                    badgeBgColor = AppColors.badgePaidBg
+                                    badgeTxtColor = AppColors.badgePaidText
+                                }
+                                "OVERDUE" -> {
+                                    badgeBgColor = AppColors.badgeOverdueBg
+                                    badgeTxtColor = AppColors.badgeOverdueText
+                                }
+                                "PARTIAL" -> {
+                                    badgeBgColor = AppColors.badgePartialBg
+                                    badgeTxtColor = AppColors.badgePartialText
+                                }
+                                else -> { // UNPAID
+                                    badgeBgColor = AppColors.badgePaymentBg
+                                    badgeTxtColor = AppColors.badgePaymentText
+                                }
+                            }
+                            
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = badgeBgColor),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = bill.status,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = badgeTxtColor,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        
+                        Text(
+                            text = "Customer: ${bill.partyName}",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = AppColors.textSecondary
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            val dateStr = com.mavo.app.data.Utils.formatDate(bill.billDate)
+                            val dueDateStr = if (bill.dueDate != null) com.mavo.app.data.Utils.formatDate(bill.dueDate!!) else "N/A"
+                            
+                            Column {
+                                Text("Bill Date: $dateStr", fontSize = 11.sp, color = AppColors.textTertiary)
+                                Text("Due Date: $dueDateStr (${bill.daysOverdue} days overdue)", fontSize = 11.sp, color = AppColors.textTertiary)
+                            }
+                            
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("Net bill: ₹${Utils.formatIndianNumber(bill.originalAmount)}", fontSize = 11.sp, color = AppColors.textSecondary)
+                                Text(
+                                    "Pending: ₹${Utils.formatIndianNumber(bill.outstandingAmount)}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.error
+                                )
+                            }
+                        }
+                        
+                        HorizontalDivider(color = AppColors.border.copy(alpha = 0.5f))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Button(
+                                onClick = {
+                                    viewModel.setVoucherPrefillRequest(
+                                        AppViewModel.VoucherPrefillRequest(
+                                            voucherType = "RECEIPT",
+                                            partyId = bill.partyId,
+                                            invoiceId = bill.voucherId,
+                                            amount = bill.outstandingAmount
+                                        )
+                                    )
+                                    navigateToNewVoucher(null)
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                                modifier = Modifier
+                                    .height(32.dp)
+                                    .pressScale()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Receive Payment", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showDialog && selectedBill != null) {
+        val bill = selectedBill!!
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            containerColor = Color(0xFFFFFFFF),
+            titleContentColor = AppColors.textPrimary,
+            textContentColor = AppColors.textPrimary,
+            title = {
+                Text(
+                    "Receive Payment - Invoice #${bill.voucherNo}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = AppColors.textPrimary
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Outstanding: ₹${Utils.formatIndianNumber(bill.outstandingAmount)}",
+                        fontWeight = FontWeight.Bold,
+                        color = AppColors.error,
+                        fontSize = 14.sp
+                    )
+                    
+                    OutlinedTextField(
+                        value = paidAmountText,
+                        onValueChange = { paidAmountText = filterDecimalInput(it) },
+                        label = { Text("Amount to Pay") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                    
+                    Text("Payment Mode", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("CASH", "BANK", "UPI").forEach { mode ->
+                            val isSel = paymentMode == mode
+                            Button(
+                                onClick = { paymentMode = mode },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isSel) AppColors.primary else AppColors.screenBg,
+                                    contentColor = if (isSel) Color.White else AppColors.textSecondary
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .border(
+                                        1.dp,
+                                        if (isSel) AppColors.primary else AppColors.border,
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .pressScale()
+                            ) {
+                                Text(mode, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                    
+                    Text("Receipt Date", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.textSecondary)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val sdf = remember { java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()) }
+                        val receiptContext = LocalContext.current
+                        OutlinedTextField(
+                            value = sdf.format(java.util.Date(receiptDate)),
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Date", fontSize = 12.sp) },
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.DateRange,
+                                    contentDescription = "Pick date",
+                                    modifier = Modifier.clickable {
+                                        val cal = Calendar.getInstance().apply { timeInMillis = receiptDate }
+                                        DatePickerDialog(
+                                            receiptContext,
+                                            { _, year, month, day ->
+                                                val picked = Calendar.getInstance().apply {
+                                                    set(year, month, day, 0, 0, 0)
+                                                    set(Calendar.MILLISECOND, 0)
+                                                }
+                                                receiptDate = picked.timeInMillis
+                                            },
+                                            cal.get(Calendar.YEAR),
+                                            cal.get(Calendar.MONTH),
+                                            cal.get(Calendar.DAY_OF_MONTH)
+                                        ).show()
+                                    }
+                                )
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    val cal = Calendar.getInstance().apply { timeInMillis = receiptDate }
+                                    DatePickerDialog(
+                                        receiptContext,
+                                        { _, year, month, day ->
+                                            val picked = Calendar.getInstance().apply {
+                                                set(year, month, day, 0, 0, 0)
+                                                set(Calendar.MILLISECOND, 0)
+                                            }
+                                            receiptDate = picked.timeInMillis
+                                        },
+                                        cal.get(Calendar.YEAR),
+                                        cal.get(Calendar.MONTH),
+                                        cal.get(Calendar.DAY_OF_MONTH)
+                                    ).show()
+                                }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val amtVal = paidAmountText.toDoubleOrNull()
+                        if (amtVal == null || amtVal <= 0.0) {
+                            Toast.makeText(context, "Enter a valid positive payment amount", Toast.LENGTH_SHORT).show()
+                        } else if (amtVal > bill.outstandingAmount) {
+                            Toast.makeText(context, "Payment amount cannot exceed outstanding balance", Toast.LENGTH_SHORT).show()
+                        } else {
+                            val receiptVoucherId = java.util.UUID.randomUUID().toString()
+                            scope.launch {
+                                val nextNo = viewModel.generateNextVoucherNo("RECEIPT", receiptDate)
+                                val recvVoucher = com.mavo.app.data.Voucher(
+                                    id = receiptVoucherId,
+                                    voucherNo = nextNo,
+                                    type = "RECEIPT",
+                                    date = receiptDate,
+                                    partyId = bill.partyId,
+                                    narration = "Amount received from ${bill.partyName} on Invoice #${bill.voucherNo}",
+                                    taxableAmount = amtVal,
+                                    cgst = 0.0,
+                                    sgst = 0.0,
+                                    igst = 0.0,
+                                    roundOff = 0.0,
+                                    netAmount = amtVal,
+                                    paymentMode = paymentMode,
+                                    chequeNo = null,
+                                    chequeDate = null,
+                                    bankName = null,
+                                    isIgst = false,
+                                    status = "POSTED",
+                                    outstandingAmount = 0.0,
+                                    createdAt = System.currentTimeMillis()
+                                )
+                                
+                                viewModel.saveVoucher(recvVoucher, emptyList(), bill.partyName) {
+                                    val allocation = com.mavo.app.data.ReceiptAllocation(
+                                        id = java.util.UUID.randomUUID().toString(),
+                                        receiptId = receiptVoucherId,
+                                        invoiceId = bill.voucherId,
+                                        allocatedAmount = amtVal,
+                                        createdAt = System.currentTimeMillis()
+                                    )
+                                    viewModel.insertAllocation(allocation)
+                                    Toast.makeText(context, "Payment of ₹${Utils.formatIndianNumber(amtVal)} captured", Toast.LENGTH_SHORT).show()
+                                    showDialog = false
+                                }
+                            }
+                        }
+                    }
+                    ,
+                    modifier = Modifier.pressScale()
+                ) {
+                    Text("Capture Payment")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Dismiss")
+                }
+            }
+        )
+    }
+}

@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.sp
 import com.mavo.app.data.BusinessProfile
 import com.mavo.app.data.Utils
 import com.mavo.app.ui.AppViewModel
+import com.mavo.app.ui.screens.mobile.MobilePair
+import com.mavo.app.ui.screens.tablet.TabletPair
 import com.mavo.app.ui.theme.AppColors
 import com.mavo.app.ui.theme.parseGstinInput
 import java.io.Serializable
@@ -110,7 +112,7 @@ typealias DraftUpdate = (transform: (SetupDraft) -> SetupDraft) -> Unit
 private val BUSINESS_TYPES = listOf("Manufacturer", "Wholesaler", "Retailer")
 private val SELLING_TYPES = listOf("Products", "Services")
 
-/** Row of fields on tablets, stacked on phones — same children either way. */
+/** Row of fields on tablets (side-by-side), stacked on phones vertically. */
 @Composable
 private fun AdaptivePair(
     isTablet: Boolean,
@@ -118,21 +120,9 @@ private fun AdaptivePair(
     second: @Composable () -> Unit
 ) {
     if (isTablet) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(modifier = Modifier.weight(1f)) { first() }
-            Box(modifier = Modifier.weight(1f)) { second() }
-        }
+        TabletPair(first = first, second = second)
     } else {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            first()
-            second()
-        }
+        MobilePair(first = first, second = second)
     }
 }
 
