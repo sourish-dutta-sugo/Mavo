@@ -5,14 +5,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.mavo.app.ui.theme.CafePalette
+import com.mavo.app.ui.theme.BrandColors
 
 @Composable
 fun GraphPaperBackground(modifier: Modifier = Modifier) {
-    // 60% Warm, eye-friendly cafe base
+    // 60% Warm Peach Paper base (#F6E0CF)
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(CafePalette.creamBase)
+            .background(BrandColors.peachPaper)
     )
 }

@@ -22,26 +22,27 @@ object AppColors {
     val textSecondary get() = theme.textSecondary
     val textTertiary get() = theme.textTertiary
     val textHint get() = theme.textTertiary
-    val textOnPrimary get() = if (theme.isDark) Color(0xFF082018) else Color(0xFFFFFFFF)
+    // Aubergine on Mango accent (6.9:1). Never white text on Mango!
+    val textOnPrimary get() = Color(0xFF3A263A)
     val textOnDark = Color(0xFFFFFFFF)
-    val textDisabled = Color(0xFFB0B0B0)
+    val textDisabled = Color(0xFFA693A6)
 
     val primary get() = theme.accentPrimary
-    val primaryDark get() = theme.accentPrimary.copy(alpha = 0.85f)
+    val primaryDark get() = Color(0xFFD68E28)
     val primaryLight get() = theme.accentLight
     val primaryText get() = theme.accentPrimary
 
-    val border get() = theme.textTertiary.copy(alpha = if (theme.isDark) 0.32f else 0.22f)
+    val border get() = theme.textTertiary.copy(alpha = 0.22f)
     val borderFocus get() = theme.accentPrimary
     val borderLight get() = theme.backgroundTertiary
 
-    val debit = Color(0xFFA85F55)
-    val debitBg get() = if (theme.isDark) Color(0xFF452522) else Color(0xFFF4E4E0)
-    val credit = Color(0xFF58745B)
-    val creditBg get() = if (theme.isDark) Color(0xFF344735) else Color(0xFFE3EDE1)
+    val debit = Semantic.debit
+    val debitBg get() = Semantic.debitBg
+    val credit = Semantic.credit
+    val creditBg get() = Semantic.creditBg
 
-    val gold = Color(0xFFC8943A)
-    val goldLight = Color(0xFFF0C060)
+    val gold = Color(0xFFF2A83B)
+    val goldLight = Color(0xFFFADAA8)
 
     val badgeSaleBg = Badge.saleBg
     val badgeSaleText = Badge.saleText
@@ -66,12 +67,12 @@ object AppColors {
     val inputBorderFocus get() = theme.accentPrimary
     val labelText get() = theme.textSecondary
 
-    val success = Color(0xFF58745B)
-    val successBg get() = if (theme.isDark) Color(0xFF344735) else Color(0xFFE3EDE1)
-    val error = Color(0xFFA85F55)
-    val errorBg get() = if (theme.isDark) Color(0xFF452522) else Color(0xFFF4E4E0)
-    val warning = Color(0xFFA66F3F)
-    val warningBg get() = if (theme.isDark) Color(0xFF49371D) else Color(0xFFF4E9D8)
-    val info = Color(0xFF6D7165)
-    val infoBg get() = if (theme.isDark) Color(0xFF3D4137) else Color(0xFFE7E8DE)
+    val success = Semantic.success
+    val successBg get() = Semantic.successBg
+    val error = Semantic.error
+    val errorBg get() = Semantic.errorBg
+    val warning = Semantic.warning
+    val warningBg get() = Semantic.warningBg
+    val info = Semantic.info
+    val infoBg get() = Semantic.infoBg
 }

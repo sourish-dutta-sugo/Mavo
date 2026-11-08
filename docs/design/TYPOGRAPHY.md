@@ -5,11 +5,11 @@
 
 ## Typography System
 
-Mavo enforces a dedicated, self-contained typography hierarchy independent of device settings:
-- **Headers & Headlines (`display*`, `headline*`):** `Playwrite Polska` (`PlaywritePolskaFontFamily`, bundled in `res/font/playwrite_polska.ttf`).
-- **Body, Titles, and Labels (`title*`, `body*`, `label*`):** `DynaPuff` (`DynaPuffFontFamily`, bundled in `res/font/dynapuff.ttf`).
-- **Numerics & Financial Figures:** `Tomorrow` (`NumericFontFamily`, bundled weights Regular→Black in `res/font/tomorrow_*.ttf`) to sit visually with the other two families while keeping digit shapes clean and legible.
-- **Device Override Protection:** `MavoTheme` enforces `LocalDensity` with fixed `fontScale = 1.0f`, guaranteeing external OS display size or font settings do not distort the visual hierarchy or break retail layouts.
+Mavo enforces a clean two-family typography system:
+- **Display, Screen Titles & Section Headings (`display*`, `headline*`, `title*`):** `DynaPuff` (`DynaPuffFontFamily`, bundled in `res/font/dynapuff.ttf`).
+- **Body, Labels, Inputs, Tables & Numerics (`body*`, `label*`, `NumericFontFamily`):** `Tomorrow` (`TomorrowFontFamily`, bundled weights Regular→Black in `res/font/tomorrow_*.ttf`).
+- **Playwrite PL Removed:** Handwriting font removed from production UI to maintain crisp retail readability.
+- **Accessible Scaling:** Font scaling scales freely with Android system font scale settings without artificial locks.
 
 ---
 

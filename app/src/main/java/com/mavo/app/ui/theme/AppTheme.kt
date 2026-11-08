@@ -8,13 +8,9 @@ import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,78 +33,38 @@ data class AppTheme(
     val isDark: Boolean = false
 ) {
     companion object {
-        // Harmonious 60:30:10 Cafe themes
-        val ZERO = AppTheme(
-            name = ThemeNames.ZERO,
-            backgroundPrimary = Color(0xFFFBF8F4), // 60% warm latte cream
-            backgroundSecondary = Color(0xFFFFFDFB), // Surface card
-            backgroundTertiary = Color(0xFFF2EDE5),  // Sub-folder container
-            accentPrimary = Color(0xFFC86D44),       // 10% Warm caramel terracotta accent
-            accentLight = Color(0xFFF6E7DD),
-            textPrimary = Color(0xFF2E1F16),         // 30% Espresso structure
-            textSecondary = Color(0xFF6E5A4D),
-            textTertiary = Color(0xFF9E8B7E),
-            statusBarColor = Color(0xFFFBF8F4),
+        // Mavo Loop 60:30:10 Single Canonical Theme
+        // 60% Peach Paper canvas (#F6E0CF)
+        // 30% Aubergine Ink structure & text (#3A263A)
+        // 10% Mango Punch accent (#F2A83B)
+        val MAVO = AppTheme(
+            name = ThemeNames.MAVO,
+            backgroundPrimary = Color(0xFFF6E0CF), // 60% Peach Paper
+            backgroundSecondary = Color(0xFFFAF0E6), // Light Peach card surface
+            backgroundTertiary = Color(0xFFEED6C2),  // Grouped surface
+            accentPrimary = Color(0xFFF2A83B),       // 10% Mango Punch
+            accentLight = Color(0xFFFADAA8),
+            textPrimary = Color(0xFF3A263A),         // 30% Aubergine Ink
+            textSecondary = Color(0xFF5E455E),
+            textTertiary = Color(0xFF8A718A),
+            statusBarColor = Color(0xFFF6E0CF),
             statusBarDarkIcons = true
         )
 
-        val SAFFRON = AppTheme(
-            name = ThemeNames.SAFFRON,
-            backgroundPrimary = Color(0xFFFBF8F4),
-            backgroundSecondary = Color(0xFFFFFDFB),
-            backgroundTertiary = Color(0xFFF4ECE2),
-            accentPrimary = Color(0xFFD6783C),
-            accentLight = Color(0xFFFBEADB),
-            textPrimary = Color(0xFF2E1F16),
-            textSecondary = Color(0xFF6E5A4D),
-            textTertiary = Color(0xFF9E8B7E),
-            statusBarColor = Color(0xFFFBF8F4),
-            statusBarDarkIcons = true
-        )
+        val ZERO = MAVO
+        val SAFFRON = MAVO
+        val SLATE = MAVO
+        val LEDGER = MAVO
+        val NIGHT = MAVO
 
-        val SLATE = AppTheme(
-            name = ThemeNames.SLATE,
-            backgroundPrimary = Color(0xFFFBF8F4),
-            backgroundSecondary = Color(0xFFFFFDFB),
-            backgroundTertiary = Color(0xFFEDE9E3),
-            accentPrimary = Color(0xFF5D4432),
-            accentLight = Color(0xFFE8E0D7),
-            textPrimary = Color(0xFF2E1F16),
-            textSecondary = Color(0xFF6E5A4D),
-            textTertiary = Color(0xFF9E8B7E),
-            statusBarColor = Color(0xFFFBF8F4),
-            statusBarDarkIcons = true
-        )
-
-        val LEDGER = AppTheme(
-            name = ThemeNames.LEDGER,
-            backgroundPrimary = Color(0xFFFBF8F4),
-            backgroundSecondary = Color(0xFFFFFDFB),
-            backgroundTertiary = Color(0xFFE9F1E8),
-            accentPrimary = Color(0xFF4E7756),
-            accentLight = Color(0xFFDDEADE),
-            textPrimary = Color(0xFF2E1F16),
-            textSecondary = Color(0xFF6E5A4D),
-            textTertiary = Color(0xFF9E8B7E),
-            statusBarColor = Color(0xFFFBF8F4),
-            statusBarDarkIcons = true
-        )
-
-        val NIGHT = ZERO
-
-        fun fromName(themeName: String): AppTheme = when (themeName) {
-            ThemeNames.SAFFRON -> SAFFRON
-            ThemeNames.SLATE -> SLATE
-            ThemeNames.LEDGER -> LEDGER
-            else -> ZERO
-        }
+        fun fromName(themeName: String): AppTheme = MAVO
     }
 }
 
-val LocalAppTheme = staticCompositionLocalOf { AppTheme.ZERO }
+val LocalAppTheme = staticCompositionLocalOf { AppTheme.MAVO }
 
 object ThemeRuntime {
-    val currentTheme = mutableStateOf(AppTheme.ZERO)
+    val currentTheme = mutableStateOf(AppTheme.MAVO)
 }
 
 class ThemeViewModel(application: Application) : AndroidViewModel(application) {
@@ -118,22 +74,20 @@ class ThemeViewModel(application: Application) : AndroidViewModel(application) {
     val currentTheme: StateFlow<AppTheme> = _currentTheme.asStateFlow()
 
     private fun loadTheme(): AppTheme {
-        val themeName = prefs.getString("selected_theme", ThemeNames.ZERO) ?: ThemeNames.ZERO
-        val theme = AppTheme.fromName(themeName)
-        ThemeRuntime.currentTheme.value = theme
-        return theme
+        ThemeRuntime.currentTheme.value = AppTheme.MAVO
+        return AppTheme.MAVO
     }
 
     fun setTheme(theme: AppTheme) {
         viewModelScope.launch {
-            prefs.edit().putString("selected_theme", theme.name).apply()
-            ThemeRuntime.currentTheme.value = theme
-            _currentTheme.value = theme
+            prefs.edit().putString("selected_theme", AppTheme.MAVO.name).apply()
+            ThemeRuntime.currentTheme.value = AppTheme.MAVO
+            _currentTheme.value = AppTheme.MAVO
         }
     }
 
     fun setTheme(themeName: String) {
-        setTheme(AppTheme.fromName(themeName))
+        setTheme(AppTheme.MAVO)
     }
 }
 
@@ -144,11 +98,11 @@ fun MavoTheme(
 ) {
     val colorScheme = lightColorScheme(
         primary = appTheme.accentPrimary,
-        onPrimary = Color.White,
+        onPrimary = appTheme.textPrimary, // Never white on Mango! Aubergine on Mango 6.9:1
         primaryContainer = appTheme.accentLight,
         onPrimaryContainer = appTheme.textPrimary,
         secondary = appTheme.textSecondary,
-        onSecondary = Color.White,
+        onSecondary = Color(0xFFF6E0CF),
         background = appTheme.backgroundPrimary,
         onBackground = appTheme.textPrimary,
         surface = appTheme.backgroundSecondary,

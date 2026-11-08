@@ -150,7 +150,7 @@ Shadows stay neutral and soft — no colored shadows, glows, or ambient tints.
 
 ## Typography
 
-Defined in `Type.kt`. Headers (`display*`, `headline*`) use `Playwrite Polska` (`res/font/playwrite_polska.ttf`). All titles, body, and labels use `DynaPuff` (`res/font/dynapuff.ttf`). Numerics and financial figures preserve clean alignment via `NumericFontFamily`. Device font scaling overrides are locked (`fontScale = 1.0f`) in `MavoTheme`.
+Defined in `Type.kt`. Display and headings use `DynaPuff` (`res/font/dynapuff.ttf`). All body text, buttons, labels, and numerics use `Tomorrow` (`res/font/tomorrow_*.ttf`). `Playwrite PL` is removed. Font scaling remains accessible and unlocked.
 
 | Style | Size | Weight | Line height | Letter spacing |
 |-------|------|--------|-------------|----------------|
@@ -214,7 +214,7 @@ The redesign is specified in Penpot only (pages **Mavo · Redesign** and **Mavo 
 |------|------|-------|
 | Display / body | DynaPuff | Titles, headlines, section labels |
 | Numerals / labels | Tomorrow | Currency, dates, field labels, captions |
-| Editorial accents | Playwrite PL | Short decorative lines |
+| Editorial accents | DynaPuff | Short decorative headers |
 | Icons | Custom 77 SVG set | Dock, header actions, list row avatars (replaces Material Symbols glyphs, which rendered poorly in Penpot export) |
 
 ### Motion rules

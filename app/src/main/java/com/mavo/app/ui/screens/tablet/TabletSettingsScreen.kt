@@ -414,13 +414,13 @@ fun TabletSettingsScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "App Appearance",
+                                text = "Mavo Brand Palette",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = AppColors.textPrimary
                             )
                             Text(
-                                text = "Pick a theme and the whole app updates immediately.",
+                                text = "Mavo Loop 60:30:10 — Peach Paper, Aubergine Ink & Mango Punch.",
                                 fontSize = 12.sp,
                                 color = AppColors.textSecondary
                             )
@@ -1335,25 +1335,22 @@ private fun ThemePickerRow(
     onThemeSelected: (String) -> Unit
 ) {
     val themeOptions = listOf(
-        AppTheme.ZERO to "Zero",
-        AppTheme.SAFFRON to "Saffron",
-        AppTheme.SLATE to "Slate",
-        AppTheme.LEDGER to "Ledger"
-    ).map { (theme, label) -> Triple(theme.name, label, theme.accentPrimary) }
+        Triple("Peach Paper", "Peach Paper (60%)", BrandColors.peachPaper),
+        Triple("Aubergine Ink", "Aubergine Ink (30%)", BrandColors.aubergineInk),
+        Triple("Mango Punch", "Mango Punch (10%)", BrandColors.mangoPunch)
+    )
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top
     ) {
-        themeOptions.forEach { (name, label, swatch) ->
-            val isSelected = selectedThemeName == name
+        themeOptions.forEach { (_, label, swatch) ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .weight(1f)
-                    .premiumClickable { onThemeSelected(name) }
             ) {
                 Box(
                     modifier = Modifier
@@ -1362,16 +1359,16 @@ private fun ThemePickerRow(
                         .background(swatch)
                         .border(
                             width = 1.dp,
-                            color = if (isSelected) AppColors.primary else AppColors.border,
+                            color = AppColors.border,
                             shape = RoundedCornerShape(20.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (isSelected) {
+                    if (swatch == BrandColors.mangoPunch) {
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = label,
-                            tint = Color.White,
+                            tint = BrandColors.aubergineInk,
                             modifier = Modifier.size(20.dp)
                         )
                     }
