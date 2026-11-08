@@ -36,6 +36,7 @@
 | [design/TYPOGRAPHY.md](design/TYPOGRAPHY.md) | Material 3 type scale, font weights, line heights, and numeric formatting rules |
 | [design/COMPONENTS.md](design/COMPONENTS.md) | Shared UI composables catalog, properties, states, and usage locations |
 | [design/design.md](design/design.md) | Responsive Compose design direction, layout contract, token rules, and visual QA checklist |
+| [../Newlook.md](../Newlook.md) | Proposed Mavo brand direction, palette, typography, pattern, spacing, and research |
 
 ---
 

@@ -281,7 +281,7 @@ fun MobileDashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(R.drawable.logo_icon),
+                        painter = painterResource(R.drawable.ic_mavo_logo),
                         contentDescription = "Mavo Logo",
                         modifier = Modifier.size(52.dp)
                     )

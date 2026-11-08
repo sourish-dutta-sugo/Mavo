@@ -319,7 +319,7 @@ fun MobileSettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painter = painterResource(R.drawable.logo_icon),
+                    painter = painterResource(R.drawable.ic_mavo_logo),
                     contentDescription = "Mavo",
                     modifier = Modifier.size(72.dp),
                     contentScale = ContentScale.Fit

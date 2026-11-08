@@ -10,6 +10,8 @@
 
 ### Added
 - Folder/Dossier filing visual components (`FolderTab`, `FolderDossier`, `SubFileRow`) in `FolderComponents.kt` giving accounting screens a physical filing binder look.
+- Mavo Motion hierarchy in `Newlook.md` and the Mavo brand board canvas, covering restrained tactile feedback, timing tokens, Compose choices, reduced motion, and financial-screen guardrails.
+- Interactive Mavo screen mockup gallery in the brand board canvas, covering launch, first-run, setup, workspace, catalog, reports, registers, vouchers, invoices, and inventory alerts.
 
 ### Changed
 - Removed checkered graph paper grid lines across all screens (`GraphPaperCanvas.kt` & `GraphPaperBackground.kt`); background now renders as seamless solid warm cafe paper without overlaying cards or controls.

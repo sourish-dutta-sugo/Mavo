@@ -72,21 +72,11 @@ fun SplashScreen(
                 this.alpha = alpha
             }
         ) {
-            Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(AppColors.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.logo_icon),
-                    contentDescription = null,
-                    // dark mark asset, tinted for the primary-colored box (works in light+dark themes)
-                    colorFilter = ColorFilter.tint(AppColors.textOnPrimary, BlendMode.SrcIn),
-                    modifier = Modifier.size(56.dp)
-                )
-            }
+            Image(
+                painter = painterResource(R.drawable.ic_mavo_logo),
+                contentDescription = null,
+                modifier = Modifier.size(72.dp)
+            )
             Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = "Mavo",
