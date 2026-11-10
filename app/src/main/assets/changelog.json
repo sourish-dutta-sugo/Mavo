@@ -2,47 +2,10 @@
   "show_once": true,
   "history": [
     {
-      "version": "2.2.3",
+      "version": "0.0.01",
       "changes": [
-        "ADDED: Income vouchers now work as a full voucher type, mirroring Expense workflows for posting and reporting.",
-        "ADDED: Debit Note and Credit Note entries now post to ledger accounts with dedicated handling.",
-        "IMPROVED: Party-related ledger entries now consistently populate partyId from the start.",
-        "FIXED: Financial-year lock checks now protect Expense and Income entries more reliably.",
-        "FIXED: Voucher reference handling now uses a dedicated column instead of fragile narration-based matching.",
-        "FIXED: Balance Sheet no longer force-balances itself, and the Trial Balance issue is corrected.",
-        "FIXED: Crashes when opening Journal, Credit Note, Debit Note, and Income are resolved."
-      ]
-    },
-    {
-      "version": "1.0.0-rc1",
-      "changes": [
-        "PRE-RELEASE: Introduced a unified premium motion system for screen transitions, tap feedback, FABs, and key interactive surfaces ahead of v1.0.",
-        "FIXED: Back button and back gesture now follow the real in-app screen history one step at a time instead of collapsing nested settings flows back to Dashboard.",
-        "IMPROVED: Root tab switching now preserves expected navigation state while still allowing intentional flow resets where designed.",
-        "POLISH: Refined press feedback across cards, action buttons, and primary controls for a smoother, more consistent premium feel."
-      ]
-    },
-    {
-      "version": "2.2.2",
-      "changes": [
-        "ADDED: Setup now blocks save only when Business Name, Address, or PIN Code is empty, with red field errors and automatic focus on the first missing field.",
-        "CONFIRMED: Phone Number, Email Address, GSTIN, PAN, and all bank details remain optional in both Setup and Settings.",
-        "ADDED: GST state code can now be auto-detected from device location during Setup, with manual detection available from Settings.",
-        "ADDED: A live English pending-fields summary now appears at the bottom of Setup and Business Profile editing whenever required fields are incomplete."
-      ]
-    },
-    {
-      "version": "2.2.1",
-      "changes": [
-        "IMPROVED: Back gesture shows screen preview.",
-        "IMPROVED: Voucher type list preserved on back.",
-        "IMPROVED: Smooth slide animations on navigation.",
-        "FIXED: Build warnings removed for clean build.",
-        "FIXED: Deprecated APIs replaced with stable ones.",
-        "FIXED: Unused imports and variables cleaned up.",
-        "FIXED: Predictive back gesture support added.",
-        "FIXED: Navigation back stack behaves correctly.",
-        "PERFORMANCE: Cleaner build output, zero warnings."
+        "ADDED: Initial release of Mavo.",
+        "ADDED: Core accounting, ledger, voucher, and inventory management features."
       ]
     }
   ]

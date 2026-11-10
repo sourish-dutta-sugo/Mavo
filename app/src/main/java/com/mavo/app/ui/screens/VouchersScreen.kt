@@ -1188,7 +1188,7 @@ fun VouchersScreen(
         Row(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.width(360.dp).fillMaxHeight()) {
                 Scaffold(
-                    modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+                    modifier = Modifier.fillMaxSize(),
                     containerColor = Color.Transparent,
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                     topBar = {
@@ -2667,13 +2667,6 @@ fun NewVoucherScreen(
                     if (selectedType in setOf("SALE", "PURCHASE", "RECEIPT", "PAYMENT", "PROFORMA", "SALES_ORDER", "PURCHASE_ORDER")) {
                         viewModel.syncSaleVoucherReferenceFields(finalId, saleReferenceNo, saleOtherReferences)
                     }
-                    if (
-                        selectedType == "SALE" &&
-                        paymentMode in listOf("CREDIT", "PART PAYMENT") &&
-                        creditDueDateText.isNotBlank()
-                    ) {
-                        viewModel.scheduleDueReminder(finalId, creditDueDateText)
-                    }
                     if (selectedType == "RECEIPT" || selectedType == "PAYMENT") {
                         var remainingAllocation = netAmount.value
                         pendingInvoices
@@ -2771,7 +2764,7 @@ fun NewVoucherScreen(
         val typeTiles = voucherTypeTabs().flatMap { it.types }
 
         Scaffold(
-            modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+            modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
             topBar = {
                 Surface(color = MaterialTheme.colorScheme.surface) {
@@ -2854,7 +2847,7 @@ fun NewVoucherScreen(
         if (selectedType == "BILLS_RECEIVABLE") {
             val billsReceivable by viewModel.billsReceivable.collectAsState()
             Scaffold(
-                modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+                modifier = Modifier.fillMaxSize(),
                 containerColor = Color.Transparent,
                 topBar = {
                     TopAppBar(
@@ -2880,7 +2873,7 @@ fun NewVoucherScreen(
         }
         if (selectedType == "BILLS_PAYABLE") {
             Scaffold(
-                modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+                modifier = Modifier.fillMaxSize(),
                 containerColor = Color.Transparent,
                 topBar = {
                     TopAppBar(
@@ -2906,7 +2899,7 @@ fun NewVoucherScreen(
         }
         if (selectedType == "JOURNAL" && isEditMode) {
             Scaffold(
-                modifier = Modifier.fillMaxSize().graphPaperCanvas(),
+                modifier = Modifier.fillMaxSize(),
                 containerColor = Color.Transparent,
                 topBar = {
                     TopAppBar(
@@ -3256,7 +3249,7 @@ fun NewVoucherScreen(
                     }
                 }
             },
-            modifier = Modifier.fillMaxSize().graphPaperCanvas()
+            modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
             @Composable
             fun FormContent(showStickyBar: Boolean, forcedStep: Int? = null) {

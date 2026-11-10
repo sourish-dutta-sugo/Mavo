@@ -172,7 +172,6 @@ fun VoucherItemEntrySheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .graphPaperCanvas()
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .imePadding()

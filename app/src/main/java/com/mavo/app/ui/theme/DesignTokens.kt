@@ -17,104 +17,97 @@ object LayoutTokens {
     val compactPaneGap = 12.dp
 }
 
-// 60:30:10 Mavo Loop Color Scheme
-// 60% Peach Paper: #F6E0CF
-// 30% Aubergine Ink: #3A263A
-// 10% Mango Punch: #F2A83B
 object BrandColors {
     val peachPaper = Color(0xFFF6E0CF)
-    val peachSurface = Color(0xFFFAF0E6)
-    val peachDarker = Color(0xFFEED6C2)
     val aubergineInk = Color(0xFF3A263A)
+    val aubergineBorder = Color(0xFF3A263A).copy(alpha = 0.25f)
+    val aubergineCard = Color(0xFFFAF3EC)
     val mangoPunch = Color(0xFFF2A83B)
 }
 
 // Accounting status colors remain separate utility tokens paired with text/icons
 object Semantic {
-    val success = Color(0xFF386641)
-    val successBg = Color(0xFFE4EFE2)
-    val error = Color(0xFF9E2A2B)
-    val errorBg = Color(0xFFF9E8E8)
-    val warning = Color(0xFFB5651D)
-    val warningBg = Color(0xFFF9EFE6)
-    val info = Color(0xFF5A485A)
-    val infoBg = Color(0xFFECE3EC)
+    val success = Color(0xFF16A34A)
+    val successBg = Color(0xFFD8EBDD)
+    val error = Color(0xFFDC2626)
+    val errorBg = Color(0xFFF4D8D4)
+    val warning = Color(0xFFD97706)
+    val warningBg = Color(0xFFF8E4B7)
+    val info = Color(0xFF2563EB)
+    val infoBg = Color(0xFFE1E5F3)
 
-    val debit = Color(0xFF9E2A2B)
-    val debitBg = Color(0xFFF9E8E8)
-    val credit = Color(0xFF386641)
-    val creditBg = Color(0xFFE4EFE2)
+    val debit = error
+    val debitBg = errorBg
+    val credit = success
+    val creditBg = successBg
 
-    val balancePositive = Color(0xFF386641)
-    val balanceNegative = Color(0xFF9E2A2B)
-    val balanceNeutral = Color(0xFF3A263A)
+    val balancePositive = success
+    val balanceNegative = error
+    val balanceNeutral = BrandColors.aubergineInk
 
-    val chartIncome = Color(0xFF386641)
-    val chartExpense = Color(0xFF9E2A2B)
-    val chartPending = Color(0xFFB5651D)
-    val chartNeutral = Color(0xFF705B70)
+    val chartIncome = success
+    val chartExpense = error
+    val chartPending = warning
+    val chartNeutral = Color(0xFF8C7360)
 }
 
 object Surface {
-    // 60% Soft Peach Surfaces
     val background = Color(0xFFF6E0CF)
     val paperBackground = Color(0xFFF6E0CF)
-    val card = Color(0xFFFAF0E6)
-    val cardBorder = Color(0xFFE5CCA8)
-    val input = Color(0xFFFAF0E6)
-    val inputBorder = Color(0xFFDEC3B1)
+    val card = Color(0xFFFAF3EC)
+    val cardBorder = Color(0xFF3A263A).copy(alpha = 0.2f)
+    val input = Color(0xFFEDE0D4)
+    val inputBorder = Color(0xFF3A263A).copy(alpha = 0.3f)
     val inputBorderFocus = Color(0xFFF2A83B)
-    val divider = Color(0xFFE6CCA8)
-    val border = Color(0xFFDFC4AF)
-    val borderLight = Color(0xFFEED6C2)
-    val shimmer = Color(0xFFE8D2C1)
+    val divider = Color(0x333A263A)
+    val border = Color(0xFF3A263A).copy(alpha = 0.2f)
+    val borderLight = Color(0xFF3A263A).copy(alpha = 0.1f)
+    val shimmer = Color(0xFFE8DACD)
 
-    val sectionHeaderBg = Color(0xFFEED6C2)
-    val sectionHeaderText = Color(0xFF3A263A)
-    val tableHeaderText = Color(0xFF5E455E)
-    val tableRowEven = Color(0xFFFAF0E6)
-    val tableRowOdd = Color(0xFFF4DDD0)
+    val sectionHeaderBg = Color(0xFF3A263A)
+    val sectionHeaderText = Color(0xFF3E2B1E)
+    val tableHeaderText = Color(0xFF6B5344)
+    val tableRowEven = Color(0xFFF6E0CF)
+    val tableRowOdd = Color(0xFFEFE2D4)
 }
 
 object TextColors {
-    // 30% Aubergine Ink Hierarchy
-    val primary = Color(0xFF3A263A)      // Aubergine Ink (10.8:1 contrast on Peach)
-    val secondary = Color(0xFF5E455E)    // Medium Aubergine
-    val tertiary = Color(0xFF8A718A)     // Soft Aubergine
-    val onPrimary = Color(0xFF3A263A)    // Never white on Mango! Aubergine on Mango 6.9:1
-    val onDark = Color(0xFFFFFFFF)
-    val disabled = Color(0xFFA693A6)
-    val label = Color(0xFF5E455E)
+    val primary = Color(0xFF3E2B1E)
+    val secondary = Color(0xFF6B5344)
+    val tertiary = Color(0xFF8C7360)
+    val onPrimary = Color(0xFFF6E0CF)
+    val onDark = Color(0xFFF6E0CF)
+    val disabled = Color(0xFFAD9886)
+    val label = Color(0xFF6B5344)
 }
 
-// Retain CafePalette for backwards compat with components transitioning to BrandColors
 object CafePalette {
     val creamBase = Color(0xFFF6E0CF)
-    val cardSurface = Color(0xFFFAF0E6)
+    val cardSurface = Color(0xFFFAF3EC)
     val coffeeStructure = Color(0xFF3A263A)
-    val espressoDeep = Color(0xFF3A263A)
+    val espressoDeep = Color(0xFF1C1B1F)
     val caramelAccent = Color(0xFFF2A83B)
     val caramelGlow = Color(0xFFF2A83B)
-    val latteParchment = Color(0xFFEED6C2)
+    val latteParchment = Color(0xFFEDE0D4)
 }
 
 object Badge {
-    val saleBg = Color(0xFFE4EFE2)
-    val saleText = Color(0xFF386641)
-    val purchaseBg = Color(0xFFF9E8E8)
-    val purchaseText = Color(0xFF9E2A2B)
-    val receiptBg = Color(0xFFF9EFE6)
-    val receiptText = Color(0xFFB5651D)
-    val paymentBg = Color(0xFFECE3EC)
-    val paymentText = Color(0xFF5E455E)
-    val returnBg = Color(0xFFF9E8E8)
-    val returnText = Color(0xFF9E2A2B)
-    val overdueBg = Color(0xFFF9E8E8)
-    val overdueText = Color(0xFF9E2A2B)
-    val partialBg = Color(0xFFF9EFE6)
-    val partialText = Color(0xFFB5651D)
-    val paidBg = Color(0xFFE4EFE2)
-    val paidText = Color(0xFF386641)
+    val saleBg = Semantic.successBg
+    val saleText = Semantic.success
+    val purchaseBg = Semantic.errorBg
+    val purchaseText = Semantic.error
+    val receiptBg = Semantic.warningBg
+    val receiptText = Semantic.warning
+    val paymentBg = Semantic.infoBg
+    val paymentText = Semantic.info
+    val returnBg = Semantic.errorBg
+    val returnText = Semantic.error
+    val overdueBg = Semantic.errorBg
+    val overdueText = Semantic.error
+    val partialBg = Semantic.warningBg
+    val partialText = Semantic.warning
+    val paidBg = Semantic.successBg
+    val paidText = Semantic.success
 }
 
 object ThemeNames {

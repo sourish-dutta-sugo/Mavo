@@ -60,8 +60,7 @@ fun SplashScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(AppColors.screenBg)
-            .graphPaperCanvas(),
+            .background(AppColors.screenBg),
         contentAlignment = Alignment.Center
     ) {
         Column(

@@ -23,7 +23,6 @@ import com.mavo.app.data.ReceiptAllocation
 import com.mavo.app.data.Voucher
 import com.mavo.app.data.VoucherItem
 import com.mavo.app.data.VoucherSaveExtras
-import com.mavo.app.data.EmailReminderScheduler
 import com.mavo.app.data.Income
 import com.mavo.app.services.ExportStorageManager
 import com.mavo.app.services.ExportTarget
@@ -328,15 +327,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             repository.updateParty(party, financialYear.value)
             onSuccess()
         }
-    }
-
-    fun scheduleDueReminder(voucherId: String, creditDueDate: String) {
-        EmailReminderScheduler.scheduleDueReminder(
-            context = getApplication(),
-            voucherId = voucherId,
-            partyEmail = "",
-            creditDueDate = creditDueDate
-        )
     }
 
     fun getPartyById(partyId: String): Party? = parties.value.find { it.id == partyId }

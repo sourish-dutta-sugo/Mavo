@@ -1,7 +1,6 @@
 package com.mavo.app.ui.screens.tablet
 
 import com.mavo.app.ui.screens.BusinessProfileSettingsSection
-import com.mavo.app.ui.screens.EmailAutomationSection
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -635,8 +634,6 @@ fun TabletSettingsScreen(
                 }
             )
         }
-    } else if (activeSubMode == "EMAIL") {
-        EmailAutomationSection(viewModel = viewModel)
     }
 }
 

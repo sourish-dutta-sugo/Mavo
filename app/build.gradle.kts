@@ -15,8 +15,8 @@ android {
     applicationId = "com.mavo.app"
     minSdk = 24
     targetSdk = 35
-    versionCode = 4
-    versionName = "2.2.1"
+    versionCode = 1
+    versionName = "0.0.01"
     vectorDrawables.useSupportLibrary = true
 
     resourceConfigurations += listOf("en")

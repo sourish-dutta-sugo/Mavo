@@ -43,9 +43,11 @@ fun missingFieldsFor(
 ): List<RequiredBusinessField> = when (step) {
     SetupStep.Basic -> buildList {
         if (businessName.isBlank()) add(RequiredBusinessField.BusinessName)
-        if (address.isBlank()) add(RequiredBusinessField.Address)
     }
-    SetupStep.Location -> if (pinCode.isBlank()) listOf(RequiredBusinessField.PinCode) else emptyList()
+    SetupStep.Location -> buildList {
+        if (address.isBlank()) add(RequiredBusinessField.Address)
+        if (pinCode.isBlank()) add(RequiredBusinessField.PinCode)
+    }
     else -> emptyList()
 }
 
@@ -120,6 +122,8 @@ private suspend fun getLastKnownLocation(context: Context): Location? {
     }
 }
 
+
+
 data class DetectedLocation(
     val state: String,
     val stateCode: String,
@@ -139,8 +143,6 @@ private suspend fun reverseGeocodeStateInfo(
             .getFromLocation(latitude, longitude, 5)
             .orEmpty()
 
-        // ponytail: geocoder postalCode is town-level approximate (may be a neighbouring town's pin);
-        // upgrade path = cross-check via fetchPinLookup, which already runs on the prefilled pin in SetupLocationScreen
         addresses.firstNotNullOfOrNull { address ->
             val stateInfo = sequenceOf(
                 address.adminArea,

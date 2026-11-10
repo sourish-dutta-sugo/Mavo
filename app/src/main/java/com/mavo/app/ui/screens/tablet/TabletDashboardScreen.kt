@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -384,7 +385,7 @@ fun TabletDashboardScreen(
                         onRetry = viewModel::retryFailedReads
                     )
                 } else {
-                    TabletDashboardKpiRow(
+                    DashboardKpiHorizontalGrid(
                         cards = cardList,
                         onCardClick = { selectedAnalyticsCard = it }
                     )
@@ -404,9 +405,7 @@ fun TabletDashboardScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
                             colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                            border = BorderStroke(1.dp, AppColors.border),
-                            shape = RoundedCornerShape(16.dp),
-                            elevation = CardDefaults.cardElevation(4.dp)
+                            shape = RoundedCornerShape(16.dp)
                         ) {
                             Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (foundVouchers.isNotEmpty()) {
@@ -578,8 +577,7 @@ private fun TabletProgressTrackerCard(
             .fillMaxWidth()
             .premiumClickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, AppColors.border)
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
@@ -631,8 +629,7 @@ private fun TabletQuickAccessCard(onQuickAction: (String) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = AppColors.primary),
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, AppColors.border)
+        shape = RoundedCornerShape(24.dp)
     ) {
         Row(
             modifier = Modifier
@@ -862,7 +859,7 @@ private fun RowScope.TabletHomeQuickAction(
 }
 
 @Composable
-private fun TabletDashboardKpiRow(
+private fun DashboardKpiHorizontalGrid(
     cards: List<KpiDetails>,
     onCardClick: (KpiDetails) -> Unit,
     modifier: Modifier = Modifier
@@ -871,11 +868,11 @@ private fun TabletDashboardKpiRow(
     LazyRow(
         state = listState,
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 0.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 0.dp)
     ) {
-        itemsIndexed(cards) { _, card ->
-            TabletCompactKpiCard(
+        items(cards) { card ->
+            CompactKpiCard(
                 details = card,
                 onClick = { onCardClick(card) }
             )
@@ -884,30 +881,30 @@ private fun TabletDashboardKpiRow(
 }
 
 @Composable
-private fun TabletCompactKpiCard(
+private fun CompactKpiCard(
+    modifier: Modifier = Modifier,
     details: KpiDetails,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .width(180.dp)
-            .height(96.dp)
+        modifier = modifier
+            .width(165.dp)
+            .height(82.dp)
             .premiumClickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-        border = BorderStroke(1.dp, AppColors.border),
-        elevation = CardDefaults.cardElevation(0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(14.dp),
+                .padding(12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = details.title,
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = AppColors.textSecondary,
                     maxLines = 1,
@@ -933,7 +930,7 @@ private fun TabletCompactKpiCard(
             }
             Text(
                 text = details.amount,
-                fontSize = 20.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.textPrimary,
                 maxLines = 1,
@@ -994,8 +991,7 @@ private fun TabletKpiAnalyticsPopup(
                 .pointerInput(Unit) { detectTapGestures { } }
                 .zIndex(101f),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = AppColors.screenBg),
-            border = BorderStroke(1.dp, AppColors.border)
+            colors = CardDefaults.cardColors(containerColor = AppColors.screenBg)
         ) {
             Column(
                 modifier = Modifier

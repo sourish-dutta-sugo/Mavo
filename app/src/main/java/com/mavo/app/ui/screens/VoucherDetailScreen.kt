@@ -86,7 +86,6 @@ fun VoucherDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .graphPaperCanvas()
         ) {
             DetailHeader(title = "", onBack = onBack, showMenu = false, onDelete = {})
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -103,7 +102,7 @@ fun VoucherDetailScreen(
     val party = voucher.partyId?.let { pid -> parties.firstOrNull { it.id == pid } }
 
     Scaffold(
-        modifier = Modifier.graphPaperCanvas(),
+        modifier = Modifier,
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             DetailHeader(

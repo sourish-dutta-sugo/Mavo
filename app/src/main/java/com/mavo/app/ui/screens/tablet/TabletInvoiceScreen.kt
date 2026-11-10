@@ -36,7 +36,6 @@ import com.mavo.app.services.printInvoice
 import com.mavo.app.services.shareInvoicePdf
 import com.mavo.app.services.shareInvoicePdfToWhatsApp
 import com.mavo.app.ui.AppViewModel
-import com.mavo.app.ui.screens.graphPaperCanvas
 import com.mavo.app.ui.theme.AppColors
 import kotlinx.coroutines.launch
 
@@ -137,7 +136,7 @@ fun TabletInvoiceScreen(
     }
 
     Scaffold(
-        modifier = modifier.graphPaperCanvas(),
+        modifier = modifier,
         containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {

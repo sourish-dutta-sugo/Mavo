@@ -135,10 +135,8 @@ fun MobileBankCashScreen(
                         modifier = Modifier
                             .weight(1f)
                             .premiumClickable { activeTab = "CASH" }
-                            .border(
-                                width = if (activeTab == "CASH") 2.dp else 1.dp,
-                                color = if (activeTab == "CASH") AppColors.primary else AppColors.border,
-                                shape = RoundedCornerShape(12.dp)
+                            .then(
+                                if (activeTab == "CASH") Modifier.border(2.dp, AppColors.primary, RoundedCornerShape(12.dp)) else Modifier
                             ),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
                         shape = RoundedCornerShape(12.dp)
@@ -159,10 +157,8 @@ fun MobileBankCashScreen(
                         modifier = Modifier
                             .weight(1f)
                             .premiumClickable { activeTab = "BANK" }
-                            .border(
-                                width = if (activeTab == "BANK") 2.dp else 1.dp,
-                                color = if (activeTab == "BANK") AppColors.primary else AppColors.border,
-                                shape = RoundedCornerShape(12.dp)
+                            .then(
+                                if (activeTab == "BANK") Modifier.border(2.dp, AppColors.primary, RoundedCornerShape(12.dp)) else Modifier
                             ),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
                         shape = RoundedCornerShape(12.dp)
@@ -214,8 +210,7 @@ fun MobileBankCashScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                                shape = RoundedCornerShape(8.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border)
+                                shape = RoundedCornerShape(8.dp)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -333,8 +328,8 @@ private fun MobileAddTransactionForm(
                         containerColor = if (type == "PAYMENT") AppColors.error.copy(alpha = 0.1f) else Color.Transparent
                     ),
                     border = androidx.compose.foundation.BorderStroke(
-                        width = if (type == "PAYMENT") 2.dp else 1.dp,
-                        color = if (type == "PAYMENT") AppColors.error else AppColors.border
+                        width = if (type == "PAYMENT") 2.dp else 0.dp,
+                        color = if (type == "PAYMENT") AppColors.error else Color.Transparent
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -348,8 +343,8 @@ private fun MobileAddTransactionForm(
                         containerColor = if (type == "RECEIPT") AppColors.success.copy(alpha = 0.1f) else Color.Transparent
                     ),
                     border = androidx.compose.foundation.BorderStroke(
-                        width = if (type == "RECEIPT") 2.dp else 1.dp,
-                        color = if (type == "RECEIPT") AppColors.success else AppColors.border
+                        width = if (type == "RECEIPT") 2.dp else 0.dp,
+                        color = if (type == "RECEIPT") AppColors.success else Color.Transparent
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {

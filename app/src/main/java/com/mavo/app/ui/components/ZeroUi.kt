@@ -33,8 +33,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilledTonalIconButton
@@ -67,7 +65,7 @@ import com.mavo.app.ui.theme.AppColors
 import com.mavo.app.ui.theme.Surface
 import com.mavo.app.ui.theme.mavoInputColors
 
-val ScreenBorder: Color = Surface.cardBorder
+val ScreenBorder: Color = Color.Transparent
 val FieldBorder: Color = Surface.inputBorder
 
 @Composable
@@ -218,7 +216,7 @@ fun SecondaryButton(
         onClick = onClick,
         modifier = modifier.fillMaxWidth().height(52.dp),
         enabled = enabled,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        border = BorderStroke(1.dp, AppColors.primary.copy(alpha = 0.4f))
     ) {
         Text(text = label, style = MaterialTheme.typography.labelLarge)
     }
@@ -301,8 +299,8 @@ fun SearchField(
             textStyle = TextStyle(color = AppColors.inputText, fontSize = 15.sp),
             shape = shape,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = FieldBorder,
-                unfocusedBorderColor = FieldBorder,
+                focusedBorderColor = AppColors.primary,
+                unfocusedBorderColor = Color.Transparent,
                 focusedContainerColor = AppColors.cardBg,
                 unfocusedContainerColor = AppColors.cardBg,
                 disabledContainerColor = AppColors.cardBg
@@ -328,19 +326,13 @@ fun ZbCard(
     contentPadding: Int = 16,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .then(onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Column(
-            modifier = Modifier.padding(contentPadding.dp),
-            content = content
-        )
-    }
+            .then(onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier)
+            .padding(contentPadding.dp),
+        content = content
+    )
 }
 
 @Composable

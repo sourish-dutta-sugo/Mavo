@@ -37,6 +37,7 @@
 | [design/COMPONENTS.md](design/COMPONENTS.md) | Shared UI composables catalog, properties, states, and usage locations |
 | [design/design.md](design/design.md) | Responsive Compose design direction, layout contract, token rules, and visual QA checklist |
 | [../Newlook.md](../Newlook.md) | Proposed Mavo brand direction, palette, typography, pattern, spacing, and research |
+| [../NativeCS.md](../NativeCS.md) | Native semantic color system for light, dark, contrast, adaptive, foldable, and desktop contexts |
 
 ---
 

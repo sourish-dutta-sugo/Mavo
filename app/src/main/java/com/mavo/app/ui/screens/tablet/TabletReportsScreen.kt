@@ -3,7 +3,9 @@ package com.mavo.app.ui.screens.tablet
 import com.mavo.app.ui.screens.StockReportScreen
 
 import android.app.DatePickerDialog
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
@@ -44,7 +46,6 @@ import com.mavo.app.ui.UiLoadState
 import com.mavo.app.ui.components.UiLoadStateNotice
 import com.mavo.app.ui.components.blocksContent
 import com.mavo.app.ui.components.valueOrEmpty
-import com.mavo.app.services.EmailComposer
 import com.mavo.app.ui.theme.AppColors
 import com.mavo.app.ui.theme.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -1750,15 +1751,17 @@ $bName
 Phone: ${profile?.phone ?: ""}
 """.trimIndent()
 
-    EmailComposer.compose(
-        context = context,
-        draft = EmailComposer.Draft(
-            recipients = listOf(party.email),
-            subject = subject,
-            body = emailText
-        ),
-        chooserTitle = "Send Reminder Email"
-    )
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "message/rfc822"
+        putExtra(Intent.EXTRA_EMAIL, party.email.takeIf { it.isNotBlank() }?.let { arrayOf(it) } ?: emptyArray<String>())
+        putExtra(Intent.EXTRA_SUBJECT, subject)
+        putExtra(Intent.EXTRA_TEXT, emailText)
+    }
+    try {
+        context.startActivity(Intent.createChooser(intent, "Send Reminder Email").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, "No email application found on this device.", Toast.LENGTH_LONG).show()
+    }
 }
 
 // System Constant for simple retail accounts structure balancing

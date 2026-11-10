@@ -109,7 +109,6 @@ fun CreatePartyInlineSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .graphPaperCanvas()
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .imePadding()

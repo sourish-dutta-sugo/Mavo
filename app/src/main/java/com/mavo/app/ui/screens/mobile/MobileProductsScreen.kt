@@ -279,7 +279,6 @@ fun MobileProductsScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, AppColors.warning.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
                         .clickable { onNavigateToLowStock() },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = AppColors.warningBg)
@@ -461,10 +460,10 @@ private fun ProductRow(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .border(
-                1.dp,
-                if (isSelected) AppColors.primary.copy(alpha = 0.45f) else AppColors.border,
-                RoundedCornerShape(16.dp)
+            .then(
+                if (isSelected) {
+                    Modifier.border(1.5.dp, AppColors.primary, RoundedCornerShape(16.dp))
+                } else Modifier
             )
             .premiumCombinedClickable(
                 onClick = onOpenDetail,

@@ -7,29 +7,30 @@ import org.junit.Test
 class SetupStepValidationTest {
 
     @Test
-    fun basicStep_requiresBusinessNameAndAddressButIgnoresPin() {
+    fun basicStep_requiresBusinessNameOnly() {
         assertEquals(
-            listOf(RequiredBusinessField.BusinessName, RequiredBusinessField.Address),
+            listOf(RequiredBusinessField.BusinessName),
             missingFieldsFor(SetupStep.Basic, businessName = "", address = "", pinCode = "")
         )
-        assertEquals(
-            listOf(RequiredBusinessField.Address),
-            missingFieldsFor(SetupStep.Basic, businessName = "Mavo Traders", address = "", pinCode = "")
-        )
         assertTrue(
-            missingFieldsFor(SetupStep.Basic, businessName = "Mavo Traders", address = "1 Main St", pinCode = "")
+            missingFieldsFor(SetupStep.Basic, businessName = "Mavo Traders", address = "", pinCode = "")
                 .isEmpty()
         )
     }
 
     @Test
-    fun locationStep_requiresPinOnly() {
+    fun locationStep_requiresPinAndAddress() {
         assertEquals(
-            listOf(RequiredBusinessField.PinCode),
+            listOf(RequiredBusinessField.Address, RequiredBusinessField.PinCode),
             missingFieldsFor(SetupStep.Location, businessName = "", address = "", pinCode = "")
         )
+        assertEquals(
+            listOf(RequiredBusinessField.Address),
+            missingFieldsFor(SetupStep.Location, businessName = "", address = "", pinCode = "400001")
+        )
         assertTrue(
-            missingFieldsFor(SetupStep.Location, businessName = "", address = "", pinCode = "400001").isEmpty()
+            missingFieldsFor(SetupStep.Location, businessName = "", address = "1 Main St", pinCode = "400001")
+                .isEmpty()
         )
     }
 

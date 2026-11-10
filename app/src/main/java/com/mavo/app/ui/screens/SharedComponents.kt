@@ -234,6 +234,7 @@ fun WizardScaffold(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (onBack != null) {
@@ -246,7 +247,6 @@ fun WizardScaffold(
                     Spacer(modifier = Modifier.width(44.dp))
                 }
                 if (stepLabel != null) {
-                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = stepLabel,
                         fontSize = 15.sp,
@@ -265,10 +265,6 @@ fun WizardScaffold(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(modifier = Modifier.height(4.dp))
-            if (stepProgress != null) {
-                StepProgress(step = stepProgress)
-                Spacer(modifier = Modifier.height(24.dp))
-            }
             WizardTitle(text = title, subtitle = subtitle)
             content()
             Spacer(modifier = Modifier.height(24.dp))

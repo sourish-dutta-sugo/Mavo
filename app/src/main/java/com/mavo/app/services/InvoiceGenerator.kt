@@ -1042,16 +1042,19 @@ object InvoiceGenerator {
         body: String
     ) {
         val uri = FileProvider.getUriForFile(context, context.packageName + ".provider", pdfFile)
-        EmailComposer.compose(
-            context = context,
-            draft = EmailComposer.Draft(
-                recipients = recipient?.takeIf { it.isNotBlank() }?.let(::listOf).orEmpty(),
-                subject = subject,
-                body = body,
-                attachments = listOf(uri)
-            ),
-            chooserTitle = "Send Invoice Email"
-        )
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "message/rfc822"
+            putExtra(Intent.EXTRA_EMAIL, recipient?.takeIf { it.isNotBlank() }?.let { arrayOf(it) } ?: emptyArray<String>())
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            putExtra(Intent.EXTRA_TEXT, body)
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        try {
+            context.startActivity(Intent.createChooser(intent, "Send Invoice Email").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: ActivityNotFoundException) {
+            android.widget.Toast.makeText(context, "No email application found on this device.", android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     fun amountInWords(amount: Double): String {

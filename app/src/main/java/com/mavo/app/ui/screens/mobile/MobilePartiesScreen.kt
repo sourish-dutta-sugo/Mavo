@@ -181,7 +181,6 @@ fun MobilePartiesScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
                             colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                         ) {
                             Column(
@@ -249,7 +248,6 @@ fun MobilePartiesScreen(
                             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                                 Card(
                                     shape = RoundedCornerShape(16.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
                                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                                 ) {
                                     Text(
@@ -276,10 +274,10 @@ fun MobilePartiesScreen(
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .border(
-                                                1.dp,
-                                                if (isSelected || selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.35f) else AppColors.border,
-                                                RoundedCornerShape(16.dp)
+                                            .then(
+                                                if (isSelected || selectionController.isSelected(party.id)) {
+                                                    Modifier.border(1.5.dp, AppColors.primary, RoundedCornerShape(16.dp))
+                                                } else Modifier
                                             )
                                             .premiumCombinedClickable(
                                                 onClick = {
@@ -485,7 +483,6 @@ fun MobilePartiesScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                     ) {
                     Column(
@@ -582,7 +579,6 @@ fun MobilePartiesScreen(
                             Card(
                                 modifier = Modifier.padding(16.dp),
                                 shape = RoundedCornerShape(16.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
                                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                             ) {
                                 Column(
@@ -610,7 +606,6 @@ fun MobilePartiesScreen(
                         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                             Card(
                                 shape = RoundedCornerShape(16.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
                                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                             ) {
                                 Text(
@@ -636,10 +631,10 @@ fun MobilePartiesScreen(
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .border(
-                                            1.dp,
-                                            if (selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.35f) else AppColors.border,
-                                            RoundedCornerShape(16.dp)
+                                        .then(
+                                            if (selectionController.isSelected(party.id)) {
+                                                Modifier.border(1.5.dp, AppColors.primary, RoundedCornerShape(16.dp))
+                                            } else Modifier
                                         )
                                         .premiumCombinedClickable(
                                             onClick = {
@@ -1300,9 +1295,7 @@ fun PartyDetailScreen(
             ) {
                 // Party Details Box
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                 ) {
@@ -1406,7 +1399,6 @@ fun PartyDetailScreen(
                         .fillMaxWidth()
                         .weight(1f),
                     shape = RoundedCornerShape(16.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
@@ -1481,9 +1473,7 @@ private fun PartyDetailSkeleton(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         LoadingCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, AppColors.border, RoundedCornerShape(8.dp))
+            modifier = Modifier.fillMaxWidth()
         ) {
             repeat(3) {
                 LoadingListItem(

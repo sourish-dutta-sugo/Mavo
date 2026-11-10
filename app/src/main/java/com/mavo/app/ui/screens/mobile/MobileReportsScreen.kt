@@ -3,7 +3,9 @@ package com.mavo.app.ui.screens.mobile
 import com.mavo.app.ui.screens.StockReportScreen
 
 import android.app.DatePickerDialog
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
@@ -44,7 +46,6 @@ import com.mavo.app.ui.UiLoadState
 import com.mavo.app.ui.components.UiLoadStateNotice
 import com.mavo.app.ui.components.blocksContent
 import com.mavo.app.ui.components.valueOrEmpty
-import com.mavo.app.services.EmailComposer
 import com.mavo.app.ui.theme.AppColors
 import com.mavo.app.ui.theme.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -718,8 +719,7 @@ fun PayablesBillsListView(
                 val outstanding = bill.outstandingAmount.coerceAtLeast(0.0)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    border = BorderStroke(1.dp, AppColors.border)
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(
@@ -1178,8 +1178,7 @@ fun TradingAndPLView(
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
@@ -1263,8 +1262,7 @@ fun TradingAndPLView(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
@@ -1574,8 +1572,7 @@ fun GSTSummaryView(
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("OUTWARD SUPPLY LIABILITIES (OUTPUT TAX)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.primary)
@@ -1594,8 +1591,7 @@ fun GSTSummaryView(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("INWARD SUPPLY CREDIT offsets (INPUT TAX CREDIT)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.primary)
@@ -1614,8 +1610,7 @@ fun GSTSummaryView(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("GST PAYABLE POSITION (NET TO FILE)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = AppColors.primary)
@@ -1679,8 +1674,7 @@ fun DebtorsRemindersView(
             items(debtors) { (party, balance) ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    border = BorderStroke(1.dp, AppColors.border)
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -1750,15 +1744,17 @@ $bName
 Phone: ${profile?.phone ?: ""}
 """.trimIndent()
 
-    EmailComposer.compose(
-        context = context,
-        draft = EmailComposer.Draft(
-            recipients = listOf(party.email),
-            subject = subject,
-            body = emailText
-        ),
-        chooserTitle = "Send Reminder Email"
-    )
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "message/rfc822"
+        putExtra(Intent.EXTRA_EMAIL, party.email.takeIf { it.isNotBlank() }?.let { arrayOf(it) } ?: emptyArray<String>())
+        putExtra(Intent.EXTRA_SUBJECT, subject)
+        putExtra(Intent.EXTRA_TEXT, emailText)
+    }
+    try {
+        context.startActivity(Intent.createChooser(intent, "Send Reminder Email").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, "No email application found on this device.", Toast.LENGTH_LONG).show()
+    }
 }
 
 // System Constant for simple retail accounts structure balancing
@@ -1777,17 +1773,14 @@ fun ReportMenuCard(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 110.dp)
-            .border(
-                1.dp,
-                if (isSelected) AppColors.primary else AppColors.border,
-                RoundedCornerShape(12.dp)
+            .then(
+                if (isSelected) Modifier.border(1.5.dp, AppColors.primary, RoundedCornerShape(12.dp)) else Modifier
             )
             .premiumClickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        )
     ) {
         Column(
             modifier = Modifier
@@ -1876,8 +1869,7 @@ fun AgedBillsListView(
             items(activeBills) { bill ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    border = BorderStroke(1.dp, AppColors.border)
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(

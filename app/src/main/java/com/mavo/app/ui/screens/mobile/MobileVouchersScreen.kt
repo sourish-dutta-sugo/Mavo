@@ -333,7 +333,6 @@ fun MobileVouchersScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, AppColors.border),
                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
             ) {
                 Row(
@@ -364,7 +363,6 @@ fun MobileVouchersScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, AppColors.border),
                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
             ) {
                 Column(
@@ -541,7 +539,6 @@ fun MobileVouchersScreen(
                 ) {
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, AppColors.border),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
                     ) {
                         Column(
@@ -587,7 +584,6 @@ fun MobileVouchersScreen(
                         .padding(horizontal = 16.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .background(AppColors.cardBg)
-                        .border(1.dp, ScreenBorder, RoundedCornerShape(16.dp))
                 ) {
                     LazyColumn(
                         state = mobileVoucherListState,

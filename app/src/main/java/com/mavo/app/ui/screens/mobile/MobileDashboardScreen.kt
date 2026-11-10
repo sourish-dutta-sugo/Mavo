@@ -9,7 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -373,7 +373,7 @@ fun MobileDashboardScreen(
                         onRetry = viewModel::retryFailedReads
                     )
                 } else {
-                    MobileDashboardKpiHorizontalRow(
+                    DashboardKpiHorizontalGrid(
                         cards = cardList,
                         onCardClick = { selectedAnalyticsCard = it }
                     )
@@ -393,9 +393,7 @@ fun MobileDashboardScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
                             colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                            border = BorderStroke(1.dp, AppColors.border),
-                            shape = RoundedCornerShape(16.dp),
-                            elevation = CardDefaults.cardElevation(4.dp)
+                            shape = RoundedCornerShape(16.dp)
                         ) {
                             Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (foundVouchers.isNotEmpty()) {
@@ -458,8 +456,7 @@ fun MobileDashboardScreen(
                                 .fillMaxWidth()
                                 .premiumClickable { showProgressDetails = true },
                             colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, AppColors.border)
+                            shape = RoundedCornerShape(12.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -510,8 +507,7 @@ fun MobileDashboardScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = AppColors.primary),
-                        shape = RoundedCornerShape(24.dp),
-                        border = BorderStroke(1.dp, AppColors.border)
+                        shape = RoundedCornerShape(24.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -776,7 +772,7 @@ private fun RowScope.MobileHomeQuickAction(
 }
 
 @Composable
-private fun MobileDashboardKpiHorizontalRow(
+private fun DashboardKpiHorizontalGrid(
     cards: List<KpiDetails>,
     onCardClick: (KpiDetails) -> Unit,
     modifier: Modifier = Modifier
@@ -785,11 +781,11 @@ private fun MobileDashboardKpiHorizontalRow(
     LazyRow(
         state = listState,
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 0.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 0.dp)
     ) {
-        itemsIndexed(cards) { _, card ->
-            MobileCompactKpiCard(
+        items(cards) { card ->
+            CompactKpiCard(
                 details = card,
                 onClick = { onCardClick(card) }
             )
@@ -798,19 +794,19 @@ private fun MobileDashboardKpiHorizontalRow(
 }
 
 @Composable
-private fun MobileCompactKpiCard(
+private fun CompactKpiCard(
+    modifier: Modifier = Modifier,
     details: KpiDetails,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .width(156.dp)
-            .height(86.dp)
+        modifier = modifier
+            .width(165.dp)
+            .height(82.dp)
             .premiumClickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-        border = BorderStroke(1.dp, AppColors.border),
-        elevation = CardDefaults.cardElevation(0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
@@ -821,7 +817,7 @@ private fun MobileCompactKpiCard(
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = details.title,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = AppColors.textSecondary,
                     maxLines = 1,
@@ -847,7 +843,7 @@ private fun MobileCompactKpiCard(
             }
             Text(
                 text = details.amount,
-                fontSize = 18.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.textPrimary,
                 maxLines = 1,

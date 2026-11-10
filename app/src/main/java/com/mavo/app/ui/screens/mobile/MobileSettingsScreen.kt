@@ -1,7 +1,6 @@
 package com.mavo.app.ui.screens.mobile
 
 import com.mavo.app.ui.screens.BusinessProfileSettingsSection
-import com.mavo.app.ui.screens.EmailAutomationSection
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -350,7 +349,6 @@ fun MobileSettingsScreen(
                         .fillMaxWidth()
                         .clickable { showChangelogDialog = true },
                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                    border = BorderStroke(1.dp, AppColors.border),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
@@ -406,7 +404,6 @@ fun MobileSettingsScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                        border = BorderStroke(1.dp, AppColors.border),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Column(
@@ -635,8 +632,6 @@ fun MobileSettingsScreen(
                 }
             )
         }
-    } else if (activeSubMode == "EMAIL") {
-        EmailAutomationSection(viewModel = viewModel)
     }
 }
 
@@ -759,7 +754,6 @@ fun SettingsMenuSection(
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp),
             colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-            border = BorderStroke(1.dp, AppColors.border),
             shape = RoundedCornerShape(16.dp)
         ) {
             Row(
@@ -1261,7 +1255,7 @@ fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(
-                modifier = Modifier.fillMaxWidth().border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

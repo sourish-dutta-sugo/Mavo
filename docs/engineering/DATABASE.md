@@ -2,14 +2,14 @@
 
 > Last updated: 2026-10-05
 > DB file: `Mavo.db` (SQLite via Room)
-> Current schema version: **16** (in `AppDatabase.kt`)
+> Current schema version: **1** (in `AppDatabase.kt`)
 
 ## Version tracking
 
 | Concept | Where | Current |
 |---------|-------|---------|
-| App version | `app/build.gradle.kts` → `versionName` | `2.2.1` |
-| DB schema version | `AppDatabase.kt` → `@Database(version = N)` | `16` |
+| App version | `app/build.gradle.kts` → `versionName` | `0.0.01` |
+| DB schema version | `AppDatabase.kt` → `@Database(version = N)` | `1` |
 
 **These are independent.** An app version bump does NOT require a schema bump, and vice versa.
 

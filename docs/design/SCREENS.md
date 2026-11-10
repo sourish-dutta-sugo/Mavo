@@ -2,9 +2,10 @@
 
 > Last updated: 2026-11-02
 
-All screens share the graph-paper canvas. Content surfaces stay opaque for
-readability. Theme selection offers four light accents (Zero, Saffron, Slate,
-Ledger); saved Night and legacy Ink preferences resolve to Zero.
+All screens share the graph-paper canvas. Ordinary content sits directly on it;
+only controls and surfaces that need a clear boundary use fill or outline.
+Theme selection offers four light accents (Zero, Saffron, Slate, Ledger);
+saved Night and legacy Ink preferences resolve to Zero.
 
 ## Navigation structure
 
@@ -129,4 +130,3 @@ A premium Material 3 Expressive redesign of all 36 retail POS/accounting screens
 **Shared chrome on every screen:** status bar, header (eyebrow + title + optional back/action icons), content area, floating dock (Home / Vouchers / Parties / More + New Sale FAB), thin home indicator. Helpers live in `lib2.js` (Penpot plugin context): `status`, `header`, `section`, `card`, `btn`, `chip`, `field`, `avatar`, `divider`, `metric`, `listRow`, `dock`, `segmented`, `searchbar`, `tabs`, `sheet`, `logo`, `grid`, `bars`, `empty`.
 
 **Home board id:** `6e51fff9-1717-80b9-8008-df7cd5b2b9d8` (01 · Home / Dashboard).
-

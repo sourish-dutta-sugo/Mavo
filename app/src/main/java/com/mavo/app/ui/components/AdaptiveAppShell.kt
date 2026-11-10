@@ -2,7 +2,6 @@ package com.mavo.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -39,9 +38,7 @@ import com.mavo.app.ui.theme.Surface
 
 /**
  * Clean Mavo Navigation Bar.
- * Follows 60:30:10 rule:
- * 60% Peach Paper base, 30% Aubergine Ink structure & text, 10% Mango Punch accent.
- * Never white text on Mango Punch (Aubergine on Mango 6.9:1).
+ * Keeps navigation on the shared canvas. Only the new-voucher action gets a filled accent.
  */
 @Composable
 fun AdaptiveNavigationBar(
@@ -60,9 +57,6 @@ fun AdaptiveNavigationBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(Surface.card)
-                .border(1.dp, Surface.cardBorder, RoundedCornerShape(16.dp))
                 .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround
@@ -70,12 +64,8 @@ fun AdaptiveNavigationBar(
             destinations.forEach { destination ->
                 val selected = currentRoute == destination.route
                 val pillBg by animateColorAsState(
-                    targetValue = if (selected) BrandColors.peachDarker else Color.Transparent,
+                    targetValue = if (selected) Color(0xFF3A263A).copy(alpha = 0.08f) else Color.Transparent,
                     label = "nav_pill_bg"
-                )
-                val iconColor by animateColorAsState(
-                    targetValue = if (selected) BrandColors.mangoPunch else AppColors.textSecondary,
-                    label = "nav_icon_color"
                 )
 
                 Box(
@@ -98,7 +88,7 @@ fun AdaptiveNavigationBar(
                         Icon(
                             imageVector = destination.icon,
                             contentDescription = destination.label,
-                            tint = iconColor,
+                            tint = if (selected) AppColors.textPrimary else AppColors.textSecondary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.height(3.dp))
@@ -112,7 +102,7 @@ fun AdaptiveNavigationBar(
                 }
             }
 
-            // Quick Add Floating Button with 10% Mango Punch accent & Aubergine Ink text/icon
+            // Quick Add Floating Button with 10% Mango Punch decision accent
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(14.dp))
@@ -128,7 +118,7 @@ fun AdaptiveNavigationBar(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "New Voucher",
-                        tint = BrandColors.aubergineInk,
+                        tint = Color(0xFF1C1B1F),
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.height(3.dp))
@@ -136,7 +126,7 @@ fun AdaptiveNavigationBar(
                         text = "Bill",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BrandColors.aubergineInk
+                        color = Color(0xFF1C1B1F)
                     )
                 }
             }
@@ -156,8 +146,6 @@ fun AdaptiveNavigationRail(
         modifier = modifier
             .fillMaxHeight()
             .width(88.dp)
-            .background(Surface.card)
-            .border(width = 1.dp, color = Surface.cardBorder)
             .padding(vertical = 16.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -165,11 +153,11 @@ fun AdaptiveNavigationRail(
         FloatingActionButton(
             onClick = onNewSale,
             containerColor = BrandColors.mangoPunch,
-            contentColor = BrandColors.aubergineInk,
+            contentColor = Color(0xFF1C1B1F),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.size(52.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = "New Voucher", tint = BrandColors.aubergineInk)
+            Icon(Icons.Default.Add, contentDescription = "New Voucher", tint = Color(0xFF1C1B1F))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -177,7 +165,7 @@ fun AdaptiveNavigationRail(
         destinations.forEach { destination ->
             val selected = currentRoute == destination.route
             val pillBg by animateColorAsState(
-                targetValue = if (selected) BrandColors.peachDarker else Color.Transparent,
+                targetValue = if (selected) Color(0xFF3A263A).copy(alpha = 0.08f) else Color.Transparent,
                 label = "rail_pill_bg"
             )
             Box(
@@ -193,7 +181,7 @@ fun AdaptiveNavigationRail(
                     Icon(
                         imageVector = destination.icon,
                         contentDescription = destination.label,
-                        tint = if (selected) BrandColors.mangoPunch else AppColors.textSecondary,
+                        tint = if (selected) AppColors.textPrimary else AppColors.textSecondary,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.height(4.dp))

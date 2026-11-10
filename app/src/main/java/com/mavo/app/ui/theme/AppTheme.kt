@@ -6,6 +6,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
@@ -33,22 +35,33 @@ data class AppTheme(
     val isDark: Boolean = false
 ) {
     companion object {
-        // Mavo Loop 60:30:10 Single Canonical Theme
-        // 60% Peach Paper canvas (#F6E0CF)
-        // 30% Aubergine Ink structure & text (#3A263A)
-        // 10% Mango Punch accent (#F2A83B)
         val MAVO = AppTheme(
             name = ThemeNames.MAVO,
-            backgroundPrimary = Color(0xFFF6E0CF), // 60% Peach Paper
-            backgroundSecondary = Color(0xFFFAF0E6), // Light Peach card surface
-            backgroundTertiary = Color(0xFFEED6C2),  // Grouped surface
-            accentPrimary = Color(0xFFF2A83B),       // 10% Mango Punch
-            accentLight = Color(0xFFFADAA8),
-            textPrimary = Color(0xFF3A263A),         // 30% Aubergine Ink
-            textSecondary = Color(0xFF5E455E),
-            textTertiary = Color(0xFF8A718A),
+            backgroundPrimary = Color(0xFFF6E0CF),
+            backgroundSecondary = Color(0xFFFAF3EC),
+            backgroundTertiary = Color(0xFFEDE0D4),
+            accentPrimary = Color(0xFFF2A83B),
+            accentLight = Color(0xFFFBEAD8),
+            textPrimary = Color(0xFF3E2B1E),
+            textSecondary = Color(0xFF6B5344),
+            textTertiary = Color(0xFF8C7360),
             statusBarColor = Color(0xFFF6E0CF),
             statusBarDarkIcons = true
+        )
+
+        val DARK = AppTheme(
+            name = ThemeNames.MAVO,
+            backgroundPrimary = Color(0xFF1C1B1F),
+            backgroundSecondary = Color(0xFF2B2624),
+            backgroundTertiary = Color(0xFF3A322E),
+            accentPrimary = Color(0xFFF2A83B),
+            accentLight = Color(0xFF3A263A),
+            textPrimary = Color(0xFFF6E0CF),
+            textSecondary = Color(0xFFEDE0D4),
+            textTertiary = Color(0xFFAD9886),
+            statusBarColor = Color(0xFF1C1B1F),
+            statusBarDarkIcons = false,
+            isDark = true
         )
 
         val ZERO = MAVO
@@ -94,26 +107,51 @@ class ThemeViewModel(application: Application) : AndroidViewModel(application) {
 @Composable
 fun MavoTheme(
     appTheme: AppTheme = LocalAppTheme.current,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    increasedContrast: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = lightColorScheme(
-        primary = appTheme.accentPrimary,
-        onPrimary = appTheme.textPrimary, // Never white on Mango! Aubergine on Mango 6.9:1
-        primaryContainer = appTheme.accentLight,
-        onPrimaryContainer = appTheme.textPrimary,
-        secondary = appTheme.textSecondary,
-        onSecondary = Color(0xFFF6E0CF),
-        background = appTheme.backgroundPrimary,
-        onBackground = appTheme.textPrimary,
-        surface = appTheme.backgroundSecondary,
-        onSurface = appTheme.textPrimary,
-        surfaceVariant = appTheme.backgroundTertiary,
-        onSurfaceVariant = appTheme.textSecondary,
-        outline = Surface.border
-    )
+    val resolvedTheme = if (darkTheme) AppTheme.DARK else appTheme
+    val colorScheme = if (darkTheme) {
+        darkColorScheme(
+            primary = Color(0xFFF2A83B),
+            onPrimary = Color(0xFF3A263A),
+            primaryContainer = Color(0xFF3A263A),
+            onPrimaryContainer = Color(0xFFF6E0CF),
+            secondary = Color(0xFFEDE0D4),
+            onSecondary = Color(0xFF1C1B1F),
+            background = Color(0xFF1C1B1F),
+            onBackground = Color(0xFFF6E0CF),
+            surface = Color(0xFF2B2624),
+            onSurface = Color(0xFFF6E0CF),
+            surfaceVariant = Color(0xFF3A322E),
+            onSurfaceVariant = Color(0xFFEDE0D4),
+            outline = Color(0xFF8C7360)
+        )
+    } else {
+        lightColorScheme(
+            primary = Color(0xFFF2A83B),
+            onPrimary = Color(0xFF3A263A),
+            primaryContainer = Color(0xFF3A263A),
+            onPrimaryContainer = Color(0xFFF6E0CF),
+            secondary = Color(0xFF6B5344),
+            onSecondary = Color(0xFFF6E0CF),
+            background = Color(0xFFF6E0CF),
+            onBackground = Color(0xFF3E2B1E),
+            surface = Color(0xFFFAF3EC),
+            onSurface = Color(0xFF3E2B1E),
+            surfaceVariant = Color(0xFFEDE0D4),
+            onSurfaceVariant = Color(0xFF6B5344),
+            outline = if (increasedContrast) Color(0xFF3E2B1E) else Color(0xFF3A263A).copy(alpha = 0.25f)
+        )
+    }
+
+    androidx.compose.runtime.SideEffect {
+        ThemeRuntime.currentTheme.value = resolvedTheme
+    }
 
     CompositionLocalProvider(
-        LocalAppTheme provides appTheme
+        LocalAppTheme provides resolvedTheme
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -126,18 +164,18 @@ fun MavoTheme(
 object MavoTextFieldDefaults {
     @Composable
     fun colors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = AppColors.textPrimary,
-        unfocusedTextColor = AppColors.textPrimary,
-        focusedContainerColor = Surface.input,
-        unfocusedContainerColor = Surface.input,
-        disabledContainerColor = Surface.input,
-        focusedBorderColor = Surface.inputBorderFocus,
-        unfocusedBorderColor = Surface.inputBorder,
-        focusedLabelColor = AppColors.primary,
-        unfocusedLabelColor = AppColors.textSecondary,
-        focusedPlaceholderColor = AppColors.textTertiary,
-        unfocusedPlaceholderColor = AppColors.textTertiary,
-        cursorColor = AppColors.primary
+        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+        focusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = Color.Transparent,
+        focusedLabelColor = MaterialTheme.colorScheme.primary,
+        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        cursorColor = MaterialTheme.colorScheme.primary
     )
 }
 

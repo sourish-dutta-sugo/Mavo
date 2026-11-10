@@ -84,7 +84,6 @@ import com.mavo.app.ui.animation.m3SpringPress
 import com.mavo.app.ui.animation.premiumClickable
 import com.mavo.app.ui.theme.LocalAppTheme
 import com.mavo.app.ui.theme.NumericFontFamily
-import com.mavo.app.ui.screens.graphPaperCanvas
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -120,7 +119,7 @@ fun BillingScreen(
     val total = cart.sumOf { it.totalAmount }
 
     Scaffold(
-        modifier = modifier.graphPaperCanvas(),
+        modifier = modifier,
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(

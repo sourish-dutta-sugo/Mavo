@@ -131,7 +131,7 @@ Screens render explicit read states and expose retry for failures.
 - **File:** `ui/components/ZeroUi.kt`
 - **Purpose:** Shared Material 3 controls — `CircleIconButton`, `StepProgress`, `WizardHeader`, `WizardTitle`, `ZbField`, `PrimaryButton` / `SecondaryButton`, filter chips, segmented tabs, `ZbCard`, `SearchField`, `SectionLabel`, `EmptyState`
 - **States:** Material 3 enabled, disabled, selected, and focus feedback
-- **Conventions:** 16 dp card radius, 8 dp field radius, 1 dp hairline borders, sentence-case labels (no tracked uppercase)
+- **Conventions:** `ZbCard` is flat and borderless; use filled or outlined surfaces only for dialogs, inputs, selected controls, status badges, and primary actions. Sentence-case labels (no tracked uppercase).
 - **Accessibility:** Icon actions have at least 48 dp touch targets
 - **Where used:** Voucher wizard and every Zero-restyled screen
 
@@ -202,4 +202,3 @@ Custom components implemented as Penpot helper functions (in `lib2.js`, executed
 | Graph-paper background | Subtle grid overlay on board background | Step, color, opacity |
 
 Motion helpers: press scale `0.97` @ `120 ms` ease-out; page/sheet transitions `220–280 ms`; transform/opacity animation only; reduced-motion respected.
-

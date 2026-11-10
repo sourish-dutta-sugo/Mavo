@@ -98,7 +98,6 @@ import com.mavo.app.ui.AppNavigationDestination
 import com.mavo.app.ui.LocalAppWindowSizeClass
 import com.mavo.app.ui.components.AdaptiveNavigationBar
 import com.mavo.app.ui.components.AdaptiveNavigationRail
-import com.mavo.app.ui.components.GraphPaperBackground
 import com.mavo.app.ui.usesTwoPaneLayout
 import com.mavo.app.ui.AppViewModel
 import com.mavo.app.ui.components.ScreenBorder
@@ -202,7 +201,6 @@ class MainActivity : ComponentActivity() {
             ) {
                 MavoTheme(appTheme = currentTheme) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        GraphPaperBackground()
                         MainAppEntry(viewModel, themeViewModel, dashboardViewModel)
                     }
                 }
