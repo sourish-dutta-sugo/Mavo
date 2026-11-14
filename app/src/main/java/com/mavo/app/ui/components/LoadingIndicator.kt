@@ -33,7 +33,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mavo.app.ui.theme.AppColors
+import com.mavo.app.ui.theme.DimensionTokens
+import com.mavo.app.ui.theme.LayoutTokens
 import com.mavo.app.ui.theme.MavoTheme
+import com.mavo.app.ui.theme.ShapeTokens
 
 object LoadingDefaults {
     val placeholderColor: Color
@@ -42,13 +45,13 @@ object LoadingDefaults {
     val highlightColor: Color
         @Composable get() = AppColors.shimmerBg.copy(alpha = 0.75f)
 
-    val shape: Shape = RoundedCornerShape(12.dp)
+    val shape: Shape = ShapeTokens.input
     val avatarShape: Shape = CircleShape
-    val lineHeight: Dp = 16.dp
-    val textSpacing: Dp = 12.dp
-    val tileSpacing: Dp = 12.dp
-    val tileCornerRadius: Dp = 16.dp
-    val cardCornerRadius: Dp = 16.dp
+    val lineHeight: Dp = LayoutTokens.large
+    val textSpacing: Dp = LayoutTokens.medium
+    val tileSpacing: Dp = LayoutTokens.medium
+    val tileCornerRadius: Dp = ShapeTokens.cardRadius
+    val cardCornerRadius: Dp = ShapeTokens.cardRadius
 }
 
 @Composable
@@ -99,7 +102,7 @@ fun LoadingText(
     modifier: Modifier = Modifier,
     width: Dp = Dp.Unspecified,
     height: Dp = LoadingDefaults.lineHeight,
-    shape: Shape = RoundedCornerShape(8.dp),
+    shape: Shape = ShapeTokens.chip,
     animate: Boolean = true
 ) {
     LoadingPlaceholder(
@@ -118,7 +121,7 @@ fun LoadingText(
 @Composable
 fun LoadingAvatar(
     modifier: Modifier = Modifier,
-    size: Dp = 40.dp,
+    size: Dp = DimensionTokens.avatarMedium,
     animate: Boolean = true
 ) {
     LoadingPlaceholder(
@@ -132,8 +135,8 @@ fun LoadingAvatar(
 fun LoadingRoundedPlaceholder(
     modifier: Modifier = Modifier,
     width: Dp = Dp.Unspecified,
-    height: Dp = 16.dp,
-    cornerRadius: Dp = 24.dp,
+    height: Dp = LayoutTokens.large,
+    cornerRadius: Dp = ShapeTokens.xl,
     animate: Boolean = true
 ) {
     LoadingPlaceholder(
@@ -156,14 +159,11 @@ fun LoadingCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(LoadingDefaults.cardCornerRadius),
+        shape = ShapeTokens.card,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant
-        )
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp), content = content)
+        Column(modifier = Modifier.padding(LayoutTokens.cardPadding), content = content)
     }
 }
 
@@ -176,11 +176,11 @@ fun LoadingListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = LayoutTokens.small),
         verticalAlignment = Alignment.CenterVertically
     ) {
         LoadingAvatar(animate = animate)
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(LayoutTokens.medium))
         Column(modifier = Modifier.fillMaxWidth()) {
             repeat(lineCount) { index ->
                 LoadingText(
@@ -188,7 +188,7 @@ fun LoadingListItem(
                     animate = animate
                 )
                 if (index < lineCount - 1) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(LayoutTokens.small))
                 }
             }
         }
@@ -201,9 +201,9 @@ fun LoadingTile(
     animate: Boolean = true
 ) {
     LoadingCard(modifier = modifier) {
-        LoadingText(height = 16.dp, animate = animate)
-        Spacer(modifier = Modifier.height(12.dp))
-        LoadingText(width = 120.dp, height = 16.dp, animate = animate)
+        LoadingText(height = LayoutTokens.large, animate = animate)
+        Spacer(modifier = Modifier.height(LayoutTokens.medium))
+        LoadingText(width = 120.dp, height = LayoutTokens.large, animate = animate)
     }
 }
 
@@ -211,11 +211,11 @@ fun LoadingTile(
 @Composable
 private fun LoadingPreview() {
     MavoTheme {
-        Column(modifier = Modifier.padding(16.dp)) {
-            LoadingText(height = 24.dp, animate = false)
-            Spacer(modifier = Modifier.height(16.dp))
+        Column(modifier = Modifier.padding(LayoutTokens.large)) {
+            LoadingText(height = LayoutTokens.xl, animate = false)
+            Spacer(modifier = Modifier.height(LayoutTokens.large))
             LoadingListItem(animate = false)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(LayoutTokens.large))
             LoadingTile(animate = false)
         }
     }

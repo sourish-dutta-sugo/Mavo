@@ -1,68 +1,69 @@
 package com.mavo.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.mavo.app.ui.animation.cardExpandClickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.mavo.app.ui.animation.pressScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.mavo.app.ui.animation.premiumClickable
 import com.mavo.app.ui.theme.AppColors
+import com.mavo.app.ui.theme.DimensionTokens
+import com.mavo.app.ui.theme.IconTokens
+import com.mavo.app.ui.theme.LayoutTokens
+import com.mavo.app.ui.theme.ShapeTokens
 import com.mavo.app.ui.theme.Surface
+import com.mavo.app.ui.theme.TextSizeTokens
 import com.mavo.app.ui.theme.mavoInputColors
 
 val ScreenBorder: Color = Color.Transparent
@@ -79,7 +80,7 @@ fun CircleIconButton(
 ) {
     FilledTonalIconButton(
         onClick = onClick,
-        modifier = modifier.size(size.coerceAtLeast(48).dp),
+        modifier = modifier.size(size.coerceAtLeast(DimensionTokens.minTouchTarget.value.toInt()).dp),
         colors = androidx.compose.material3.IconButtonDefaults.filledTonalIconButtonColors(
             containerColor = AppColors.cardBg,
             contentColor = tint
@@ -88,7 +89,7 @@ fun CircleIconButton(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(IconTokens.medium)
         )
     }
 }
@@ -101,15 +102,14 @@ fun StepProgress(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        // Mockup 27: 4dp tall bars, 4dp gaps.
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(LayoutTokens.micro)
     ) {
         repeat(total) { index ->
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
+                    .height(LayoutTokens.micro)
+                    .clip(ShapeTokens.badge)
                     .background(if (index < step) AppColors.primary else FieldBorder)
             )
         }
@@ -127,7 +127,7 @@ fun WizardHeader(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = LayoutTokens.large, vertical = LayoutTokens.medium),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (onBack != null) {
@@ -142,9 +142,8 @@ fun WizardHeader(
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = stepLabel,
-            fontSize = 11.sp,
+            fontSize = TextSizeTokens.caption,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.sp,
             color = AppColors.textSecondary,
             textAlign = TextAlign.Center
         )
@@ -174,12 +173,12 @@ fun WizardTitle(
             color = AppColors.textPrimary,
         )
         if (subtitle != null) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(LayoutTokens.small))
             Text(
                 text = subtitle,
-                fontSize = 15.sp,
-                color = AppColors.textSecondary,
-                lineHeight = 22.sp
+                fontSize = TextSizeTokens.bodyLarge,
+                lineHeight = TextSizeTokens.bodyLargeLineHeight,
+                color = AppColors.textSecondary
             )
         }
     }
@@ -194,8 +193,9 @@ fun PrimaryButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().height(52.dp),
+        modifier = modifier.fillMaxWidth().height(DimensionTokens.buttonHeightLarge),
         enabled = enabled,
+        shape = ShapeTokens.button,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -214,9 +214,10 @@ fun SecondaryButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().height(52.dp),
+        modifier = modifier.fillMaxWidth().height(DimensionTokens.buttonHeightLarge),
         enabled = enabled,
-        border = BorderStroke(1.dp, AppColors.primary.copy(alpha = 0.4f))
+        shape = ShapeTokens.button,
+        border = BorderStroke(DimensionTokens.borderThin, AppColors.primary.copy(alpha = 0.4f))
     ) {
         Text(text = label, style = MaterialTheme.typography.labelLarge)
     }
@@ -241,26 +242,25 @@ fun ZbField(
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = TextSizeTokens.caption,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.sp,
             color = AppColors.textSecondary
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LayoutTokens.small))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = fieldModifier.fillMaxWidth(),
             placeholder = placeholder?.let {
-                { Text(text = it, fontSize = 15.sp, color = AppColors.inputPlaceholder) }
+                { Text(text = it, fontSize = TextSizeTokens.bodyLarge, color = AppColors.inputPlaceholder) }
             },
             readOnly = readOnly,
             singleLine = singleLine,
-            textStyle = TextStyle(color = AppColors.inputText, fontSize = 15.sp),
+            textStyle = TextStyle(color = AppColors.inputText, fontSize = TextSizeTokens.bodyLarge),
             trailingIcon = trailingIcon,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
-            shape = RoundedCornerShape(12.dp),
+            shape = ShapeTokens.input,
             isError = isError,
             supportingText = supportingText,
             colors = mavoInputColors()
@@ -275,7 +275,7 @@ fun SearchField(
     modifier: Modifier = Modifier,
     placeholder: String = "Search",
     readOnly: Boolean = false,
-    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(12.dp),
+    shape: Shape = ShapeTokens.input,
     onClick: (() -> Unit)? = null
 ) {
     val field: @Composable () -> Unit = {
@@ -284,19 +284,20 @@ fun SearchField(
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth().then(modifier),
             placeholder = {
-                Text(text = placeholder, fontSize = 15.sp, color = AppColors.inputPlaceholder)
+                Text(text = placeholder, fontSize = TextSizeTokens.bodyLarge, color = AppColors.inputPlaceholder)
             },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = "Search",
-                    tint = AppColors.textTertiary
+                    tint = AppColors.textTertiary,
+                    modifier = Modifier.size(IconTokens.standard)
                 )
             },
             readOnly = readOnly,
             singleLine = true,
             enabled = onClick == null,
-            textStyle = TextStyle(color = AppColors.inputText, fontSize = 15.sp),
+            textStyle = TextStyle(color = AppColors.inputText, fontSize = TextSizeTokens.bodyLarge),
             shape = shape,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = AppColors.primary,
@@ -323,13 +324,16 @@ fun SearchField(
 fun ZbCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    contentPadding: Int = 16,
+    contentPadding: Int = LayoutTokens.cardPadding.value.toInt(),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .then(onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier)
+            .clip(ShapeTokens.card)
+            .background(Surface.card)
+            .border(DimensionTokens.borderThin, Surface.cardBorder, ShapeTokens.card)
+            .then(onClick?.let { Modifier.cardExpandClickable(onClick = it) } ?: Modifier)
             .padding(contentPadding.dp),
         content = content
     )
@@ -347,9 +351,8 @@ fun SectionLabel(
     ) {
         Text(
             text = text,
-            fontSize = 11.sp,
+            fontSize = TextSizeTokens.caption,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.sp,
             color = AppColors.textTertiary
         )
         Spacer(modifier = Modifier.weight(1f))
@@ -366,7 +369,7 @@ fun ChoiceChipRow(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(LayoutTokens.small)
     ) {
         options.forEachIndexed { index, option ->
             FilterChip(
@@ -392,8 +395,8 @@ fun ChipRow(
 ) {
     androidx.compose.foundation.lazy.LazyRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(horizontal = 20.dp)
+        horizontalArrangement = Arrangement.spacedBy(LayoutTokens.small),
+        contentPadding = PaddingValues(horizontal = LayoutTokens.large)
     ) {
         items(options.size) { index ->
             FilterChip(
@@ -437,12 +440,12 @@ fun EmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 40.dp),
+            .padding(horizontal = LayoutTokens.xxl, vertical = LayoutTokens.xxxl),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .size(IconTokens.hero)
                 .clip(CircleShape)
                 .background(AppColors.sectionHeaderBg),
             contentAlignment = Alignment.Center
@@ -451,26 +454,26 @@ fun EmptyState(
                 imageVector = icon,
                 contentDescription = null,
                 tint = AppColors.textSecondary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(IconTokens.standard)
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(LayoutTokens.large))
         Text(
             text = title,
-            fontSize = 17.sp,
+            fontSize = TextSizeTokens.titleLarge,
             fontWeight = FontWeight.SemiBold,
             color = AppColors.textPrimary
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(LayoutTokens.small))
         Text(
             text = message,
-            fontSize = 14.sp,
+            fontSize = TextSizeTokens.bodyMedium,
+            lineHeight = TextSizeTokens.bodyMediumLineHeight,
             color = AppColors.textSecondary,
-            textAlign = TextAlign.Center,
-            lineHeight = 20.sp
+            textAlign = TextAlign.Center
         )
         if (actionLabel != null && onAction != null) {
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(LayoutTokens.large))
             TextButton(onClick = onAction) {
                 Text(actionLabel)
             }

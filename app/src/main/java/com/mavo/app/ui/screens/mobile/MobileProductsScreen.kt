@@ -167,6 +167,13 @@ fun MobileProductsScreen(
     var searchQuery by remember { mutableStateOf("") }
     var sheetMode by remember { mutableStateOf<ProductSheetMode?>(null) }
     var editingProductId by remember { mutableStateOf<String?>(null) }
+    val openCreateProduct by viewModel.openCreateProduct.collectAsState()
+    LaunchedEffect(openCreateProduct) {
+        if (openCreateProduct) {
+            sheetMode = ProductSheetMode.ADD
+            viewModel.setOpenCreateProduct(false)
+        }
+    }
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var actionProduct by remember { mutableStateOf<Product?>(null) }
     val selectionController = remember { UniversalSelectionController() }

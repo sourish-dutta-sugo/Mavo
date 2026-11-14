@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "Mavo"
 
 include(":app")
+include(":shared")

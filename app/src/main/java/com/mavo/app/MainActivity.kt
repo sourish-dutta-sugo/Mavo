@@ -12,6 +12,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.filled.AccountBalance
+import com.mavo.app.ui.animation.premiumCombinedClickable
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -50,6 +59,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -127,6 +137,7 @@ import com.mavo.app.ui.screens.SplashScreen
 import com.mavo.app.ui.screens.VoucherDetailScreen
 import com.mavo.app.ui.screens.VouchersScreen
 import com.mavo.app.ui.theme.AppColors
+import com.mavo.app.ui.theme.BrandColors
 import com.mavo.app.ui.theme.LocalAppTheme
 import com.mavo.app.ui.theme.MavoTheme
 import com.mavo.app.ui.theme.ThemeViewModel
@@ -320,22 +331,12 @@ private fun AppContent(
         if (isSplash) {
             SplashScreen(onTimeout = { showSplash = false })
         } else {
-            val sharedPreferences = remember(context) {
-                context.getSharedPreferences("mavo_pref", Context.MODE_PRIVATE)
-            }
-            var pinRequired by remember {
-                mutableStateOf(sharedPreferences.getBoolean("pin_enabled", false))
-            }
-            val correctPin = remember(sharedPreferences) {
-                sharedPreferences.getString("lock_pin", "1234") ?: "1234"
-            }
-            var pinAuthed by remember { mutableStateOf(false) }
             var changelogData by remember { mutableStateOf<ChangelogData?>(null) }
             var showChangelog by remember { mutableStateOf(false) }
             val uiScope = rememberCoroutineScope()
 
-            LaunchedEffect(isSetupCompleted, pinRequired, pinAuthed) {
-                if (isSetupCompleted && (!pinRequired || pinAuthed)) {
+            LaunchedEffect(isSetupCompleted) {
+                if (isSetupCompleted) {
                     viewModel.autoAdvanceFinancialYearIfNeeded(context)?.let { updatedFy ->
                         Toast.makeText(context, "Financial year updated to FY $updatedFy", Toast.LENGTH_LONG).show()
                     }
@@ -345,7 +346,6 @@ private fun AppContent(
                         changelogData = loadedChangelog
                         showChangelog = true
                     }
-                    pinRequired = sharedPreferences.getBoolean("pin_enabled", false)
                 }
             }
 
@@ -389,13 +389,6 @@ private fun AppContent(
                     FirstRunFlow(viewModel = viewModel)
                 }
 
-                pinRequired && !pinAuthed -> {
-                    PinLockScreen(
-                        correctPin = correctPin,
-                        onAuthentic = { pinAuthed = true }
-                    )
-                }
-
                 else -> {
                     val navController = rememberNavController()
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -413,12 +406,90 @@ private fun AppContent(
                         containerColor = AppColors.screenBg,
                         bottomBar = {
                             if (isTopLevel && windowWidthSizeClass == WindowWidthSizeClass.Compact) {
-                                AdaptiveNavigationBar(
-                                    destinations = topLevelDestinations,
-                                    currentRoute = currentDestination?.route,
-                                    onNavigate = { navController.navigateToTopLevel(it) },
-                                    onNewSale = { navController.navigate(newVoucherRoute()) }
-                                )
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .navigationBarsPadding(),
+                                    horizontalAlignment = Alignment.End
+                                ) {
+                                    if (currentDestination?.route == Routes.Dashboard) {
+                                        var showQuickMenu by remember { mutableStateOf(false) }
+                                        Box(
+                                            modifier = Modifier.padding(end = 16.dp, bottom = 12.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(52.dp)
+                                                    .clip(CircleShape)
+                                                    .background(BrandColors.mangoPunch)
+                                                    .border(1.dp, BrandColors.aubergineInk.copy(alpha = 0.2f), CircleShape)
+                                                    .premiumCombinedClickable(
+                                                        onClick = { navController.navigate(newVoucherRoute()) },
+                                                        onLongClick = { showQuickMenu = true }
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Add,
+                                                    contentDescription = "New Voucher",
+                                                    tint = BrandColors.aubergineInk,
+                                                    modifier = Modifier.size(26.dp)
+                                                )
+                                            }
+
+                                            if (showQuickMenu) {
+                                                Column(
+                                                    modifier = Modifier
+                                                        .align(Alignment.BottomEnd)
+                                                        .padding(end = 0.dp, bottom = 60.dp),
+                                                    horizontalAlignment = Alignment.End,
+                                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                                ) {
+                                                    DashboardQuickCircularOption(
+                                                        icon = Icons.Outlined.Description,
+                                                        label = "Create Vouchers",
+                                                        onClick = {
+                                                            showQuickMenu = false
+                                                            navController.navigate(newVoucherRoute())
+                                                        }
+                                                    )
+                                                    DashboardQuickCircularOption(
+                                                        icon = Icons.Outlined.People,
+                                                        label = "Create Parties",
+                                                        onClick = {
+                                                            showQuickMenu = false
+                                                            viewModel.setOpenCreateParty(true)
+                                                            navController.navigateToTopLevel(Routes.Parties)
+                                                        }
+                                                    )
+                                                    DashboardQuickCircularOption(
+                                                        icon = Icons.Outlined.Inventory2,
+                                                        label = "Create Product",
+                                                        onClick = {
+                                                            showQuickMenu = false
+                                                            viewModel.setOpenCreateProduct(true)
+                                                            navController.navigate(Routes.Products)
+                                                        }
+                                                    )
+                                                    DashboardQuickCircularOption(
+                                                        icon = Icons.Default.AccountBalance,
+                                                        label = "Create Chart of Accounts",
+                                                        onClick = {
+                                                            showQuickMenu = false
+                                                            viewModel.setOpenCreateLedger(true)
+                                                            navController.navigate(Routes.LedgerBooks)
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                    AdaptiveNavigationBar(
+                                        destinations = topLevelDestinations,
+                                        currentRoute = currentDestination?.route,
+                                        onNavigate = { navController.navigateToTopLevel(it) }
+                                    )
+                                }
                             }
                         }
                     ) { innerPadding ->
@@ -551,7 +622,8 @@ private fun MavoNavHost(
                 viewModel = viewModel,
                 isDesktop = useTwoPaneContent,
                 navigateToNewVoucher = { id -> navController.navigate(newVoucherRoute(id)) },
-                navigateToVoucherDetail = { id -> navController.navigate(voucherDetailRoute(id)) }
+                navigateToVoucherDetail = { id -> navController.navigate(voucherDetailRoute(id)) },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -559,7 +631,8 @@ private fun MavoNavHost(
             PartiesScreen(
                 viewModel = viewModel,
                 isDesktop = useTwoPaneContent,
-                onPartySelected = { id -> navController.navigate(partyDetailRoute(id)) }
+                onPartySelected = { id -> navController.navigate(partyDetailRoute(id)) },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -627,7 +700,7 @@ private fun MavoNavHost(
         composable(Routes.CounterSale) {
             BillingScreen(
                 viewModel = viewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.navigate(Routes.Dashboard) { popUpTo(0) } }
             )
         }
 
@@ -645,7 +718,7 @@ private fun MavoNavHost(
                 viewModel = viewModel,
                 voucherId = entry.arguments?.getString("voucherId"),
                 isDesktop = false,
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.navigate(Routes.Dashboard) { popUpTo(0) } },
                 onNavigateToInvoice = { voucherId ->
                     navController.popBackStack()
                     navController.navigate(invoiceRoute(voucherId))
@@ -662,7 +735,7 @@ private fun MavoNavHost(
             InvoiceScreen(
                 viewModel = viewModel,
                 voucherId = voucherId,
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.navigate(Routes.Dashboard) { popUpTo(0) } },
                 onEditVoucher = { id -> navController.navigate(newVoucherRoute(id)) },
                 onCreateSaleFromVoucher = { sourceVoucherId ->
                     val sourceVoucher = viewModel.getVoucherById(sourceVoucherId)
@@ -689,7 +762,7 @@ private fun MavoNavHost(
             VoucherDetailScreen(
                 viewModel = viewModel,
                 voucherId = voucherId,
-                onBack = { navController.popBackStack() },
+                onBack = { navController.navigate(Routes.Dashboard) { popUpTo(0) } },
                 onEdit = { navController.navigate(newVoucherRoute(voucherId)) },
                 onOpenInvoice = { navController.navigate(invoiceRoute(voucherId)) }
             )
@@ -709,7 +782,7 @@ private fun MavoNavHost(
             PartyDetailScreen(
                 viewModel = viewModel,
                 partyId = entry.arguments?.getString("partyId").orEmpty(),
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.navigate(Routes.Dashboard) { popUpTo(0) } }
             )
         }
     }
@@ -726,117 +799,25 @@ private fun NavHostController.navigateToTopLevel(route: String) {
 }
 
 @Composable
-fun PinLockScreen(
-    correctPin: String,
-    onAuthentic: () -> Unit,
-    modifier: Modifier = Modifier
+private fun DashboardQuickCircularOption(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
 ) {
-    var enteredText by remember { mutableStateOf("") }
-    var hasError by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFF1A5C4B))
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier
+            .size(46.dp)
+            .clip(CircleShape)
+            .background(com.mavo.app.ui.theme.Surface.card)
+            .border(1.dp, com.mavo.app.ui.theme.Surface.cardBorder, CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "Set your access PIN",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = AppColors.primary,
+            modifier = Modifier.size(22.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Keep your books secure",
-            fontSize = 13.sp,
-            color = Color.White.copy(alpha = 0.72f),
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            repeat(4) { index ->
-                val active = index < enteredText.length
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .background(
-                            color = if (active) Color.White else Color(0xFF3AAA87),
-                            shape = RoundedCornerShape(50)
-                        )
-                )
-            }
-        }
-
-        if (hasError) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("Incorrect PIN. Try again.", color = Color(0xFFE24B4A), fontSize = 12.sp)
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth(0.65f)
-        ) {
-            val keys = listOf(
-                listOf("1", "2", "3"),
-                listOf("4", "5", "6"),
-                listOf("7", "8", "9"),
-                listOf("CLR", "0", "OK")
-            )
-            keys.forEach { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    row.forEach { key ->
-                        val isAction = key == "CLR" || key == "OK"
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .background(
-                                    if (isAction) Color(0x0AFFFFFF) else Color(0x1AFFFFFF),
-                                    RoundedCornerShape(50)
-                                )
-                                .clickableScale {
-                                    hasError = false
-                                    when (key) {
-                                        "CLR" -> enteredText = ""
-                                        "OK" -> {
-                                            if (enteredText == correctPin) {
-                                                onAuthentic()
-                                            } else {
-                                                hasError = true
-                                                enteredText = ""
-                                            }
-                                        }
-                                        else -> {
-                                            if (enteredText.length < 4) {
-                                                enteredText += key
-                                                if (enteredText.length == 4 && enteredText == correctPin) {
-                                                    onAuthentic()
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = key,
-                                fontSize = if (isAction) 14.sp else 22.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-            }
-        }
     }
 }

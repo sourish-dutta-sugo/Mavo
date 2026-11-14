@@ -205,7 +205,7 @@ private fun OnboardingNotesScreen(
                     .padding(top = 8.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(0.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -332,7 +332,7 @@ private fun OnboardingNotesScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = if (allAccepted) AppColors.gold else AppColors.border
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = if (allAccepted) 4.dp else 0.dp)
+                    elevation = CardDefaults.cardElevation(0.dp)
                 ) {
                     Box(
                         modifier = Modifier

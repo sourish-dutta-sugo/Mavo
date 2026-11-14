@@ -14,6 +14,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import com.mavo.app.ui.animation.premiumFabEntrance
+import com.mavo.app.ui.animation.pressScale
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Check
@@ -321,6 +324,19 @@ fun MobileVouchersScreen(
                 )
             }
         },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navigateToNewVoucher(null) },
+                containerColor = AppColors.primary,
+                contentColor = AppColors.textOnPrimary,
+                modifier = Modifier
+                    .premiumFabEntrance()
+                    .pressScale()
+                    .testTag("add_voucher_fab")
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Voucher")
+            }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier

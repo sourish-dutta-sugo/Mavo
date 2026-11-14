@@ -26,7 +26,8 @@ fun PartiesScreen(
     viewModel: AppViewModel,
     isDesktop: Boolean = false,
     modifier: Modifier = Modifier,
-    onPartySelected: (String) -> Unit
+    onPartySelected: (String) -> Unit,
+    onNavigateBack: () -> Unit = {}
 ) {
     val windowSizeClass = LocalAppWindowSizeClass.current
     val isTablet = windowSizeClass.usesNavigationRail() || isDesktop
@@ -36,14 +37,16 @@ fun PartiesScreen(
             viewModel = viewModel,
             isDesktop = isDesktop,
             modifier = modifier,
-            onPartySelected = onPartySelected
+            onPartySelected = onPartySelected,
+            onNavigateBack = onNavigateBack
         )
     } else {
         MobilePartiesScreen(
             viewModel = viewModel,
             isDesktop = isDesktop,
             modifier = modifier,
-            onPartySelected = onPartySelected
+            onPartySelected = onPartySelected,
+            onNavigateBack = onNavigateBack
         )
     }
 }

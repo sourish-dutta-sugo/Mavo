@@ -424,7 +424,7 @@ fun BusinessImageUploadSection(
     Card(
         modifier = modifier.fillMaxWidth().padding(vertical = 8.dp),
         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-        border = BorderStroke(1.dp, AppColors.border),
+        elevation = CardDefaults.cardElevation(0.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

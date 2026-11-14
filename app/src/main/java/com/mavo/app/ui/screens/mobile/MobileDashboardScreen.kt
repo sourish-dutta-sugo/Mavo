@@ -27,6 +27,9 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -110,6 +113,8 @@ fun MobileDashboardScreen(
         is UiLoadState.Error -> state.cachedValue
         UiLoadState.Loading -> null
     }
+    val parties by viewModel.parties.collectAsState(initial = emptyList())
+    val partyNameMap = remember(parties) { parties.associate { it.id to it.name } }
     val readStates = listOf(
         vouchersReadState,
         ledgerEntriesReadState,
@@ -130,12 +135,17 @@ fun MobileDashboardScreen(
     }
     val headerState by dashboardViewModel.headerState.collectAsState()
 
+    var currentDateText by remember {
+        mutableStateOf(SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date()))
+    }
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentDateText = SimpleDateFormat("dd MMM", Locale.getDefault()).format(Date())
+            delay(60_000L)
+        }
+    }
+
     var searchQuery by remember { mutableStateOf("") }
-    var showProgressTracker by remember { mutableStateOf(false) }
-    var progressMetric by remember { mutableStateOf("Sales") }
-    var progressPeriod by remember { mutableStateOf("Monthly") }
-    var progressTarget by remember { mutableStateOf(200000.0) }
-    var showProgressDetails by remember { mutableStateOf(false) }
     var selectedAnalyticsCard by remember { mutableStateOf<KpiDetails?>(null) }
     var analyticsFilterByCard by remember { mutableStateOf(mapOf<String, AnalyticsFilter>()) }
     var analyticsChartTypeByCard by remember { mutableStateOf(mapOf<String, ChartType>()) }
@@ -215,15 +225,10 @@ fun MobileDashboardScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        showProgressTracker = AppPreferences.isProgressTrackerEnabled(context)
-        progressMetric = AppPreferences.getProgressTrackerMetric(context)
-        progressPeriod = AppPreferences.getProgressTrackerPeriod(context)
-        progressTarget = AppPreferences.getProgressTrackerTarget(context).toDoubleOrNull() ?: 200000.0
-    }
+
 
     val recentTransactions by remember(vouchers) {
-        derivedStateOf { vouchers.sortedByDescending { it.date }.take(8) }
+        derivedStateOf { vouchers.sortedByDescending { it.date }.take(25) }
     }
 
     val searchResults by remember(searchQuery, vouchers, ledgerEntries, products) {
@@ -296,8 +301,8 @@ fun MobileDashboardScreen(
                             color = AppColors.textPrimary
                         )
                         Text(
-                            text = profile?.gstin?.takeIf { it.isNotBlank() }?.let { "GSTIN: $it" } ?: "Non-GST",
-                            fontSize = 18.sp,
+                            text = currentDateText,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = AppColors.textSecondary
                         )
@@ -402,7 +407,7 @@ fun MobileDashboardScreen(
                                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text("${v.voucherNo} . ${v.type}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = AppColors.textPrimary)
-                                                Text("${v.partyId ?: "Cash"} . ${Utils.formatDate(v.date)}", fontSize = 10.sp, color = AppColors.textTertiary)
+                                                Text("${getVoucherDisplayName(v, partyNameMap)} · ${Utils.formatDate(v.date)}", fontSize = 10.sp, color = AppColors.textTertiary)
                                             }
                                             Text(Utils.formatIndianCurrency(v.netAmount), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
                                         }
@@ -444,65 +449,6 @@ fun MobileDashboardScreen(
                 }
 
                 if (searchQuery.isBlank()) {
-                    // Progress Tracker
-                    if (showProgressTracker) {
-                        val progressPercent by remember(voucherSummary.netProfit, progressTarget) {
-                            derivedStateOf {
-                                ((voucherSummary.netProfit / progressTarget.coerceAtLeast(1.0)) * 100.0).coerceIn(0.0, 100.0)
-                            }
-                        }
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .premiumClickable { showProgressDetails = true },
-                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            "$progressMetric Progress",
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = AppColors.textPrimary,
-                                            fontSize = 13.sp
-                                        )
-                                        Text(
-                                            "${String.format(Locale.US, "%.1f", progressPercent)}%",
-                                            fontWeight = FontWeight.Bold,
-                                            color = AppColors.primary,
-                                            fontSize = 13.sp
-                                        )
-                                    }
-                                    LinearProgressIndicator(
-                                        progress = { (progressPercent / 100f).toFloat() },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(8.dp)
-                                            .clip(RoundedCornerShape(2.dp)),
-                                        color = AppColors.primary,
-                                        trackColor = AppColors.primary.copy(alpha = 0.12f)
-                                    )
-                                    Text(
-                                        "$progressPeriod target",
-                                        fontSize = 11.sp,
-                                        color = AppColors.textTertiary
-                                    )
-                                }
-                            }
-                        }
-                    }
-
                     // Quick Access Panel
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -565,41 +511,51 @@ fun MobileDashboardScreen(
                             }
                         }
                     } else {
-                        ZbCard(contentPadding = 0) {
-                            recentTransactions.forEachIndexed { index, voucher ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 472.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            recentTransactions.forEach { voucher ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                                    elevation = CardDefaults.cardElevation(0.dp),
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = getVoucherDisplayName(voucher, partyNameMap),
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = AppColors.textPrimary
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = "${mobileDashboardTypeLabel(voucher.type)} · " +
+                                                    "${voucher.voucherNo.ifBlank { "\u2014" }} · " +
+                                                    Utils.formatDate(voucher.date),
+                                                fontSize = 13.sp,
+                                                color = AppColors.textSecondary
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
                                         Text(
-                                            text = voucher.partyId ?: "Cash",
-                                            fontSize = 17.sp,
-                                            fontWeight = FontWeight.SemiBold,
+                                            text = "${mobileDashboardAmountSign(voucher.type)}${Utils.formatIndianCurrency(voucher.netAmount)}",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
                                             color = AppColors.textPrimary
                                         )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "${mobileDashboardTypeLabel(voucher.type)} · " +
-                                                "${voucher.voucherNo.ifBlank { "\u2014" }} · " +
-                                                Utils.formatDate(voucher.date),
-                                            fontSize = 14.sp,
-                                            color = AppColors.textSecondary
-                                        )
                                     }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = "${mobileDashboardAmountSign(voucher.type)}${Utils.formatIndianCurrency(voucher.netAmount)}",
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = AppColors.textPrimary
-                                    )
-                                }
-                                if (index < recentTransactions.lastIndex) {
-                                    HorizontalDivider(color = ScreenBorder, thickness = 1.dp)
                                 }
                             }
                         }
@@ -620,32 +576,6 @@ fun MobileDashboardScreen(
                 onFilterChange = { analyticsFilterByCard = analyticsFilterByCard + (selectedAnalyticsCard?.title.orEmpty() to it) },
                 onChartTypeChange = { analyticsChartTypeByCard = analyticsChartTypeByCard + (selectedAnalyticsCard?.title.orEmpty() to it) },
                 onDismiss = { selectedAnalyticsCard = null }
-            )
-        }
-
-        // Progress Details Dialog
-        if (showProgressDetails) {
-            AlertDialog(
-                onDismissRequest = { showProgressDetails = false },
-                confirmButton = {
-                    TextButton(onClick = { showProgressDetails = false }) {
-                        Text("Close", color = AppColors.primary)
-                    }
-                },
-                title = { Text("Progress Analytics", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Metric: $progressMetric", color = AppColors.textPrimary)
-                        Text("Period: $progressPeriod", color = AppColors.textPrimary)
-                        Text("Target: ${Utils.formatIndianCurrency(progressTarget)}", color = AppColors.textPrimary)
-                        Text("Current: ${Utils.formatIndianCurrency(voucherSummary.netProfit)}", color = AppColors.textPrimary, fontWeight = FontWeight.Bold)
-                        val percent = ((voucherSummary.netProfit / progressTarget.coerceAtLeast(1.0)) * 100.0).coerceIn(0.0, 100.0)
-                        Text("Progress: ${String.format(Locale.US, "%.2f", percent)}%", color = AppColors.primary, fontWeight = FontWeight.Bold)
-                    }
-                },
-                containerColor = AppColors.cardBg,
-                textContentColor = AppColors.textPrimary,
-                titleContentColor = AppColors.textPrimary
             )
         }
     }
@@ -1208,5 +1138,19 @@ private fun MobileAnalyticsStat(
     ) {
         Text(label, fontSize = 12.sp, color = AppColors.textSecondary)
         Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = AppColors.textPrimary)
+    }
+}
+
+private fun getVoucherDisplayName(voucher: Voucher, partyNameMap: Map<String, String>): String {
+    val partyName = voucher.partyId?.let { partyNameMap[it] }?.ifBlank { null }
+    if (partyName != null) return partyName
+    if (voucher.narration.isNotBlank()) return voucher.narration.trim()
+    return when (voucher.type.uppercase(Locale.getDefault())) {
+        "SALE" -> "Cash Sale"
+        "PURCHASE" -> "Cash Purchase"
+        "PAYMENT" -> "Cash Payment"
+        "RECEIPT" -> "Cash Receipt"
+        "JOURNAL" -> "Journal Entry"
+        else -> "Cash Transaction"
     }
 }

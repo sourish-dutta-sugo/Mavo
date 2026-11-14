@@ -10,7 +10,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.platform.testTag
+import com.mavo.app.ui.animation.premiumFabEntrance
+import com.mavo.app.ui.animation.pressScale
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -48,6 +52,21 @@ fun LedgerListScreen(
     val contentBlocked = ledgerAccountsReadState.blocksContent() || ledgerEntriesReadState.blocksContent()
     var viewingLedger by remember { mutableStateOf<LedgerAccount?>(null) }
     var editingLedger by remember { mutableStateOf<LedgerAccount?>(null) }
+    val openCreateLedger by viewModel.openCreateLedger.collectAsState()
+    LaunchedEffect(openCreateLedger) {
+        if (openCreateLedger) {
+            editingLedger = LedgerAccount(
+                id = java.util.UUID.randomUUID().toString(),
+                name = "",
+                groupName = "Current Assets",
+                openingBalance = 0.0,
+                balanceType = "DR",
+                isSystem = 0,
+                isParty = 0
+            )
+            viewModel.setOpenCreateLedger(false)
+        }
+    }
 
     val balanceMap = remember(ledgerEntries) {
         ledgerEntries.groupingBy { it.accountHead }
@@ -62,6 +81,29 @@ fun LedgerListScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = AppColors.screenBg,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    editingLedger = LedgerAccount(
+                        id = java.util.UUID.randomUUID().toString(),
+                        name = "",
+                        groupName = "Current Assets",
+                        openingBalance = 0.0,
+                        balanceType = "DR",
+                        isSystem = 0,
+                        isParty = 0
+                    )
+                },
+                containerColor = AppColors.primary,
+                contentColor = AppColors.textOnPrimary,
+                modifier = Modifier
+                    .premiumFabEntrance()
+                    .pressScale()
+                    .testTag("add_ledger_fab")
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Ledger Account")
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text("Ledger Books", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },

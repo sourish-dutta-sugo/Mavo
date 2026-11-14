@@ -6,6 +6,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.snap
@@ -136,12 +137,21 @@ fun enterTransition(navigatingBack: Boolean): AnimatedContentTransitionScope<*>.
     val prefs = rememberPremiumMotionPrefs()
     return {
         slideInHorizontally(
-            animationSpec = tween(durationMillis = premiumDuration(100, prefs), easing = FastOutSlowInEasing),
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium
+            ),
             initialOffsetX = { fullWidth ->
-                if (navigatingBack) -(fullWidth / 12) else fullWidth / 12
+                if (navigatingBack) -(fullWidth / 4) else fullWidth / 4
             }
         ) +
-            fadeIn(animationSpec = premiumFadeSpec(prefs), initialAlpha = 0.02f)
+            fadeIn(
+                animationSpec = tween(
+                    durationMillis = premiumDuration(120, prefs),
+                    easing = FastOutSlowInEasing
+                ),
+                initialAlpha = 0f
+            )
     }
 }
 
@@ -150,13 +160,61 @@ fun exitTransition(navigatingBack: Boolean): AnimatedContentTransitionScope<*>.(
     val prefs = rememberPremiumMotionPrefs()
     return {
         slideOutHorizontally(
-            animationSpec = tween(durationMillis = premiumDuration(100, prefs), easing = FastOutSlowInEasing),
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium
+            ),
             targetOffsetX = { fullWidth ->
-                if (navigatingBack) fullWidth / 12 else -(fullWidth / 12)
+                if (navigatingBack) fullWidth / 4 else -(fullWidth / 4)
             }
         ) +
-            fadeOut(animationSpec = premiumFadeSpec(prefs), targetAlpha = 1f)
+            fadeOut(
+                animationSpec = tween(
+                    durationMillis = premiumDuration(120, prefs),
+                    easing = FastOutSlowInEasing
+                ),
+                targetAlpha = 0f
+            )
     }
+}
+
+@Composable
+fun Modifier.cardExpandPress(
+    enabled: Boolean = true,
+    expandScale: Float = 1.03f,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+): Modifier {
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (enabled && isPressed) expandScale else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "card_expand_scale"
+    )
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun Modifier.cardExpandClickable(
+    enabled: Boolean = true,
+    role: Role? = null,
+    onClick: () -> Unit
+): Modifier {
+    val interactionSource = remember { MutableInteractionSource() }
+    return cardExpandPress(enabled = enabled, interactionSource = interactionSource)
+        .combinedClickable(
+            enabled = enabled,
+            role = role,
+            interactionSource = interactionSource,
+            indication = ripple(),
+            onClick = onClick
+        )
 }
 
 @Composable

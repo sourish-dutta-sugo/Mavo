@@ -260,7 +260,7 @@ fun VoucherItemEntrySheet(
                             .fillMaxWidth()
                             .padding(top = 8.dp),
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                        border = BorderStroke(1.dp, AppColors.border)
+                        elevation = CardDefaults.cardElevation(0.dp)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -448,6 +448,7 @@ fun VoucherItemEntrySheet(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                elevation = CardDefaults.cardElevation(0.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {

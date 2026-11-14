@@ -1,6 +1,7 @@
 package com.mavo.app.ui.screens.tablet
 
 import com.mavo.app.ui.screens.BusinessProfileSettingsSection
+import com.mavo.app.ui.screens.BankAndTaxSettingsSection
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -9,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.text.format.DateUtils
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -148,6 +150,13 @@ fun TabletSettingsScreen(
     }
 
     var activeSubMode by remember { mutableStateOf(if (isDesktop) "BUSINESS" else "MENU") }
+    BackHandler(enabled = !isDesktop && activeSubMode != "MENU") {
+        if (activeSubMode == "AUDIT") {
+            activeSubMode = "DATA"
+        } else {
+            activeSubMode = "MENU"
+        }
+    }
     var changelogData by remember { mutableStateOf<ChangelogData?>(null) }
     var showChangelogDialog by remember { mutableStateOf(false) }
 
@@ -184,15 +193,14 @@ fun TabletSettingsScreen(
                 isDesktop = isDesktop,
                 onBackToMenu = { activeSubMode = "MENU" }
             )
-            return
-        }
-        if (activeSubMode == "CUSTOMIZE") {
-            ProgressTrackerSettingsScreen(
+        } else if (activeSubMode == "BANK_TAX") {
+            BankAndTaxSettingsSection(
+                viewModel = viewModel,
+                profile = origProfile,
+                isDesktop = isDesktop,
                 onBackToMenu = { activeSubMode = "MENU" }
             )
-            return
-        }
-        if (activeSubMode == "DATA") {
+        } else if (activeSubMode == "DATA") {
             DataManagementContent(
                 viewModel = viewModel,
                 exportCsv = exportCsv,
@@ -202,95 +210,12 @@ fun TabletSettingsScreen(
                 onBack = { activeSubMode = "MENU" },
                 onAuditLog = { activeSubMode = "AUDIT" }
             )
-            return
-        }
-        if (activeSubMode == "AUDIT") {
+        } else if (activeSubMode == "AUDIT") {
             AuditLogContent(
                 viewModel = viewModel,
                 onBack = { activeSubMode = "DATA" }
             )
-            return
-        }
-        if (activeSubMode == "LOCK") {
-        // App security control
-        val sp = context.getSharedPreferences("mavo_pref", Context.MODE_PRIVATE)
-        var pinEnabled by remember { mutableStateOf(sp.getBoolean("pin_enabled", false)) }
-        var enteredPin by remember { mutableStateOf(sp.getString("lock_pin", "") ?: "") }
-
-        Scaffold(
-            containerColor = Color.Transparent,
-            topBar = {
-                TopAppBar(
-                    title = { Text("App Pin Protection Lock", fontWeight = FontWeight.Bold) },
-                    navigationIcon = {
-                        if (!isDesktop) {
-                            IconButton(onClick = { activeSubMode = "MENU" }) {
-                                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
-                )
-            }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Transparent)
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("PIN Code Protection Toggle", fontWeight = FontWeight.Bold)
-                        Text("Enable security verification on launching Mavo", fontSize = 11.sp, color = Color.Gray)
-                    }
-                    Switch(
-                        checked = pinEnabled,
-                        onCheckedChange = {
-                            pinEnabled = it
-                            sp.edit().putBoolean("pin_enabled", it).apply()
-                        }
-                    )
-                }
-
-                if (pinEnabled) {
-                    OutlinedTextField(
-                        value = enteredPin,
-                        onValueChange = {
-                            if (it.length <= 4) {
-                                enteredPin = it
-                                sp.edit().putString("lock_pin", it).apply()
-                            }
-                        },
-                        label = { Text("Initialize 4-digit security PIN") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.fillMaxWidth().testTag("app_pin_setup"),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    Text("Current stored code will be prompted next time you trigger the app.", fontSize = 11.sp, color = Color.Gray)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = {
-                        activeSubMode = "MENU"
-                        Toast.makeText(context, "Security configurations recorded", Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                    Text("Apply Parameters")
-                }
-            }
-        }
-    } else if (activeSubMode == "ABOUT") {
+        } else if (activeSubMode == "ABOUT") {
         // About & compliance view
         Scaffold(
             containerColor = Color.Transparent,
@@ -377,61 +302,6 @@ fun TabletSettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
-    } else if (activeSubMode == "THEME") {
-            Scaffold(
-                containerColor = AppColors.screenBg,
-                topBar = {
-                    TopAppBar(
-                        title = { Text("Theme & Colors", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
-                        navigationIcon = {
-                            if (!isDesktop) {
-                                IconButton(onClick = { activeSubMode = "MENU" }) {
-                                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AppColors.textPrimary)
-                                }
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
-                    )
-                }
-            ) { innerPadding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(AppColors.screenBg)
-                        .padding(innerPadding)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                        border = BorderStroke(1.dp, AppColors.border),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "Mavo Brand Palette",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = AppColors.textPrimary
-                            )
-                            Text(
-                                text = "Mavo Loop 60:30:10 — Peach Paper, Aubergine Ink & Mango Punch.",
-                                fontSize = 12.sp,
-                                color = AppColors.textSecondary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            ThemePickerRow(
-                                selectedThemeName = currentTheme.name,
-                                onThemeSelected = themeViewModel::setTheme
-                            )
-                        }
-                    }
-                }
-            }
     } else if (activeSubMode == "FY") {
         val context = LocalContext.current
         val profile = origProfile ?: BusinessProfile(
@@ -440,15 +310,13 @@ fun TabletSettingsScreen(
             logoPath = null, signaturePath = null
         )
         val currentFyLabel = viewModel.financialYear.collectAsState().value
-        var fyStartYearText by remember(currentFyLabel) {
-            mutableStateOf(currentFyLabel.substringBefore("-"))
+        var showSwitchPopup by remember { mutableStateOf(false) }
+        var selectedFyToSwitch by remember { mutableStateOf(currentFyLabel) }
+        val availableFys = remember {
+            (1900..2150).map { yr ->
+                String.format(Locale.getDefault(), "%04d-%02d", yr, (yr + 1) % 100)
+            }.sortedDescending()
         }
-        val parsedStartYear = fyStartYearText.toIntOrNull()
-        val calculatedFyLabel = remember(parsedStartYear) {
-            parsedStartYear?.let { String.format("%04d-%02d", it, (it + 1) % 100) }.orEmpty()
-        }
-        var showSwitchEditor by remember { mutableStateOf(false) }
-        var showCloseConfirm by remember { mutableStateOf(false) }
         val fyRangeText = remember(currentFyLabel) {
             runCatching {
                 val fmt = DateTimeFormatter.ofPattern("dd MMM yyyy")
@@ -457,15 +325,19 @@ fun TabletSettingsScreen(
                 "${s.format(fmt)} – ${e.format(fmt)}"
             }.getOrDefault("")
         }
-        val saveChanges: () -> Unit = {
-            if (parsedStartYear == null || fyStartYearText.length != 4) {
-                Toast.makeText(context, "Enter a valid 4-digit financial year start", Toast.LENGTH_SHORT).show()
-            } else {
-                viewModel.switchFinancialYear(calculatedFyLabel) {
-                    viewModel.updateProfile(profile.copy(fyLabel = calculatedFyLabel)) {}
-                    Toast.makeText(context, "Active financial year switched to $calculatedFyLabel", Toast.LENGTH_SHORT).show()
-                }
-            }
+
+        val previousFyLabel = remember(currentFyLabel) {
+            val startYear = currentFyLabel.substringBefore("-").toIntOrNull() ?: 2026
+            val prevStart = startYear - 1
+            String.format(Locale.getDefault(), "%04d-%02d", prevStart, (prevStart + 1) % 100)
+        }
+        val prevFyRangeText = remember(previousFyLabel) {
+            runCatching {
+                val fmt = DateTimeFormatter.ofPattern("dd MMM yyyy")
+                val s = FinancialYearUtils.startDateFor(previousFyLabel)
+                val e = FinancialYearUtils.endDateFor(previousFyLabel)
+                "${s.format(fmt)} – ${e.format(fmt)}"
+            }.getOrDefault("")
         }
 
         Column(
@@ -473,163 +345,226 @@ fun TabletSettingsScreen(
                 .fillMaxSize()
                 .background(AppColors.screenBg)
         ) {
-            WizardHeader(
-                stepLabel = "",
-                onBack = { activeSubMode = "MENU" },
-                onClose = { activeSubMode = "MENU" }
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircleIconButton(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    onClick = { activeSubMode = "MENU" }
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "Financial",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.textPrimary
+                )
+            }
+            HorizontalDivider(color = ScreenBorder)
+
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = 20.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                WizardTitle(
-                    text = "Financial Year",
-                    subtitle = "Set period, close books, carry forward",
-                    modifier = Modifier.padding(top = 12.dp)
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                HorizontalDivider(color = ScreenBorder)
-                Spacer(modifier = Modifier.height(20.dp))
-
-                ZbCard {
-                    SectionLabel(text = "Active FY")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                // Current Financial Year Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                    border = BorderStroke(1.dp, AppColors.border),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = "FY ${currentFyLabel.replace('-', '–')}",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AppColors.textPrimary
-                            )
-                            if (fyRangeText.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(
-                                    text = fyRangeText,
+                                    text = "Current Financial Year",
+                                    fontSize = 13.sp,
+                                    color = AppColors.textSecondary
+                                )
+                                Text(
+                                    text = currentFyLabel.replace('-', '–'),
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.textPrimary
+                                )
+                                if (fyRangeText.isNotBlank()) {
+                                    Text(
+                                        text = fyRangeText,
+                                        fontSize = 14.sp,
+                                        color = AppColors.textSecondary
+                                    )
+                                }
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    selectedFyToSwitch = currentFyLabel
+                                    showSwitchPopup = true
+                                },
+                                shape = RoundedCornerShape(24.dp),
+                                border = BorderStroke(1.dp, AppColors.border),
+                                colors = ButtonDefaults.outlinedButtonColors(containerColor = AppColors.cardBg)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DateRange,
+                                    contentDescription = null,
+                                    tint = AppColors.textPrimary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Switch Year", fontSize = 13.sp, color = AppColors.textPrimary, fontWeight = FontWeight.Medium)
+                            }
+                        }
+                    }
+                }
+
+                // Financial History Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                    border = BorderStroke(1.dp, AppColors.border),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.History,
+                                    contentDescription = null,
+                                    tint = AppColors.textSecondary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Text(
+                                    text = "Financial History",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.textPrimary
+                                )
+                            }
+                            Text(
+                                text = "View All >",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = AppColors.primary
+                            )
+                        }
+
+                        HorizontalDivider(color = AppColors.divider)
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(AppColors.primary)
+                            )
+                            Column {
+                                Text(
+                                    text = "Books Closed",
                                     fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.textPrimary
+                                )
+                                Text(
+                                    text = prevFyRangeText,
+                                    fontSize = 12.sp,
                                     color = AppColors.textSecondary
                                 )
                             }
                         }
-                        Icon(
-                            imageVector = Icons.Outlined.CalendarMonth,
-                            contentDescription = null,
-                            tint = AppColors.textSecondary,
-                            modifier = Modifier.size(24.dp)
-                        )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                ZbCard(contentPadding = 0) {
-                    SettingsRow(
-                        title = "Switch financial year",
-                        subtitle = "Set the start year for your books",
-                        onClick = { showSwitchEditor = !showSwitchEditor }
-                    )
-                    if (showSwitchEditor) {
-                        Column(
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                        ) {
-                            ZbField(
-                                value = fyStartYearText,
-                                onValueChange = { input ->
-                                    fyStartYearText = input.filter(Char::isDigit).take(4)
-                                },
-                                label = "Start year",
-                                placeholder = "e.g. 2025",
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                            )
-                        }
-                    }
-                    HorizontalDivider(color = ScreenBorder)
-                    SettingsRow(
-                        title = "Close current books",
-                        subtitle = "Freeze postings & carry forward balances",
-                        onClick = { showCloseConfirm = true }
-                    )
-                    // ponytail: the mockup's "Books beginning date" and "Cutoff for edits"
-                    // rows are omitted — neither value exists in the schema. Upgrade path:
-                    // persist them in AppPreferences when a books-lock feature is built.
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(AppColors.cardBg)
-            ) {
-                HorizontalDivider(color = ScreenBorder)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    SecondaryButton(
-                        label = "Cancel",
-                        onClick = { activeSubMode = "MENU" },
-                        modifier = Modifier.weight(1f)
-                    )
-                    PrimaryButton(
-                        label = "Save changes",
-                        onClick = saveChanges,
-                        modifier = Modifier.weight(2f)
-                    )
                 }
             }
         }
 
-        if (showCloseConfirm) {
+        if (showSwitchPopup) {
             AlertDialog(
-                onDismissRequest = { showCloseConfirm = false },
-                title = { Text("Close current books?") },
+                onDismissRequest = { showSwitchPopup = false },
+                title = { Text("Select Financial Year", fontWeight = FontWeight.Bold) },
                 text = {
-                    Text(
-                        "Freeze FY ${currentFyLabel.replace('-', '–')} and carry balances forward to " +
-                            "FY ${FinancialYearUtils.nextFinancialYear(currentFyLabel).replace('-', '–')}? " +
-                            "Postings for this year will be locked."
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 300.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        availableFys.forEach { fy ->
+                            val isSelected = fy == selectedFyToSwitch
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) AppColors.primary.copy(alpha = 0.1f) else Color.Transparent)
+                                    .clickable { selectedFyToSwitch = fy }
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = fy.replace('-', '–'),
+                                    fontSize = 16.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) AppColors.primary else AppColors.textPrimary
+                                )
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = AppColors.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 },
                 confirmButton = {
-                    Button(onClick = {
-                        showCloseConfirm = false
-                        viewModel.closeFinancialYear(
-                            sourceFinancialYearCode = currentFyLabel,
-                            lockSourceYear = true,
-                            onSuccess = { result ->
-                                val target = result.targetFinancialYearCode
-                                viewModel.switchFinancialYear(target) {
-                                    viewModel.updateProfile(profile.copy(fyLabel = target)) {}
-                                }
-                                Toast.makeText(
-                                    context,
-                                    "FY ${result.sourceFinancialYearCode} closed — " +
-                                        "${result.ledgerBalancesCarried} ledger balances carried forward",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            },
-                            onError = { e ->
-                                Toast.makeText(context, "Close failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Button(
+                        onClick = {
+                            showSwitchPopup = false
+                            viewModel.switchFinancialYear(selectedFyToSwitch) {
+                                viewModel.updateProfile(profile.copy(fyLabel = selectedFyToSwitch)) {}
+                                Toast.makeText(context, "Active financial year switched to $selectedFyToSwitch", Toast.LENGTH_SHORT).show()
                             }
-                        )
-                    }) {
-                        Text("Close books")
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary)
+                    ) {
+                        Text("Save", color = Color.White)
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showCloseConfirm = false }) {
-                        Text("Cancel")
+                    TextButton(onClick = { showSwitchPopup = false }) {
+                        Text("Cancel", color = AppColors.textSecondary)
                     }
                 }
             )
@@ -655,7 +590,7 @@ fun TabletSettingsScreen(
                             currentThemeLabel = currentTheme.name.lowercase()
                                 .replaceFirstChar { it.uppercase(Locale.getDefault()) },
                             onSelect = { activeSubMode = it },
-                            openChangeLog = { showChangelogDialog = true }
+                            onNavigateBack = onNavigateBack
                         )
                     }
                 }
@@ -674,7 +609,7 @@ fun TabletSettingsScreen(
                 currentThemeLabel = currentTheme.name.lowercase()
                     .replaceFirstChar { it.uppercase(Locale.getDefault()) },
                 onSelect = { activeSubMode = it },
-                openChangeLog = { showChangelogDialog = true }
+                onNavigateBack = onNavigateBack
             )
         } else {
             DetailContent()
@@ -727,7 +662,7 @@ fun SettingsMenuSection(
     viewModel: AppViewModel,
     currentThemeLabel: String,
     onSelect: (String) -> Unit,
-    openChangeLog: () -> Unit
+    onNavigateBack: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val profile by viewModel.profile.collectAsState()
@@ -743,13 +678,27 @@ fun SettingsMenuSection(
             .padding(bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        // Keep the business identity on an opaque surface above the shared canvas.
-        WizardTitle(
-            text = "Settings",
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircleIconButton(
+                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                onClick = onNavigateBack
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = "Settings",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.textPrimary
+            )
+        }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Card(
             modifier = Modifier
@@ -822,22 +771,11 @@ fun SettingsMenuSection(
                     subtitle = profile?.businessName?.ifBlank { null },
                     onClick = { onSelect("BUSINESS") }
                 )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            SettingsGroup(label = "Appearance") {
                 SettingsRow(
-                    icon = Icons.Outlined.Palette,
-                    title = "Theme & Colors",
-                    subtitle = currentThemeLabel,
-                    onClick = { onSelect("THEME") }
-                )
-                HorizontalDivider(color = ScreenBorder)
-                SettingsRow(
-                    icon = Icons.Outlined.Tune,
-                    title = "Dashboard Options",
-                    onClick = { onSelect("CUSTOMIZE") }
+                    icon = Icons.Default.AccountBalance,
+                    title = "Bank & Tax",
+                    subtitle = profile?.bankName?.ifBlank { null },
+                    onClick = { onSelect("BANK_TAX") }
                 )
             }
 
@@ -850,14 +788,6 @@ fun SettingsMenuSection(
                     subtitle = "FY ${currentFy.replace('-', '–')}",
                     onClick = { onSelect("FY") }
                 )
-                HorizontalDivider(color = ScreenBorder)
-                // ponytail: no dedicated GST screen exists — GSTIN/PAN/state code live
-                // in Business Profile. Upgrade path: a standalone GST & tax setup screen.
-                SettingsRow(
-                    icon = Icons.Outlined.Receipt,
-                    title = "GST & Tax Setup",
-                    onClick = { onSelect("BUSINESS") }
-                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -868,13 +798,6 @@ fun SettingsMenuSection(
                     title = "Data Management",
                     onClick = { onSelect("DATA") }
                 )
-                HorizontalDivider(color = ScreenBorder)
-                SettingsRow(
-                    icon = Icons.Outlined.History,
-                    title = "Change Log",
-                    onClick = openChangeLog
-                )
-                HorizontalDivider(color = ScreenBorder)
                 SettingsRow(
                     icon = Icons.Default.Info,
                     title = "About Mavo",
@@ -891,10 +814,13 @@ private fun SettingsGroup(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         SectionLabel(text = label)
-        Spacer(modifier = Modifier.height(12.dp))
-        ZbCard(contentPadding = 0, content = content)
+        Spacer(modifier = Modifier.height(8.dp))
+        content()
     }
 }
 
@@ -905,48 +831,57 @@ private fun SettingsRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     subtitle: String? = null
 ) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .heightIn(min = 64.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = AppColors.textSecondary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = AppColors.textPrimary
-            )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    fontSize = 14.sp,
-                    color = AppColors.textSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = AppColors.textSecondary,
+                    modifier = Modifier.size(24.dp)
                 )
             }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = AppColors.textPrimary
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        fontSize = 14.sp,
+                        color = AppColors.textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = AppColors.textTertiary,
+                modifier = Modifier.size(20.dp)
+            )
         }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = AppColors.textTertiary,
-            modifier = Modifier.size(20.dp)
-        )
     }
 }
 
@@ -1213,169 +1148,6 @@ private fun AuditLogContent(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ProgressTrackerSettingsScreen(onBackToMenu: () -> Unit) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var enabled by remember { mutableStateOf(true) }
-    var metric by remember { mutableStateOf("Sales") }
-    var period by remember { mutableStateOf("Monthly") }
-    var target by remember { mutableStateOf("200000") }
-
-    LaunchedEffect(Unit) {
-        enabled = AppPreferences.isProgressTrackerEnabled(context)
-        metric = AppPreferences.getProgressTrackerMetric(context)
-        period = AppPreferences.getProgressTrackerPeriod(context)
-        target = AppPreferences.getProgressTrackerTarget(context)
-    }
-
-    Scaffold(
-        containerColor = Color.Transparent,
-        topBar = {
-            TopAppBar(
-                title = { Text("Customize", fontWeight = FontWeight.Bold, color = AppColors.textPrimary) },
-                navigationIcon = {
-                    IconButton(onClick = onBackToMenu) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = AppColors.textPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Transparent)
-                .verticalScroll(rememberScrollState())
-                .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth().border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Dashboard", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AppColors.textPrimary)
-                    Text("Configure dashboard appearance and progress tracker settings.", fontSize = 12.sp, color = AppColors.textSecondary)
-
-                    HorizontalDivider()
-
-                    Text("Progress Tracker", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = AppColors.textPrimary)
-                    Text("Show a progress tracker on the dashboard connected to live accounting data.", fontSize = 12.sp, color = AppColors.textSecondary)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Show Progress Tracker", fontWeight = FontWeight.Medium, color = AppColors.textPrimary)
-                        Switch(
-                            checked = enabled,
-                            onCheckedChange = {
-                                enabled = it
-                                scope.launch { AppPreferences.setProgressTrackerEnabled(context, it) }
-                            }
-                        )
-                    }
-                    OutlinedTextField(
-                        value = metric,
-                        onValueChange = { metric = it },
-                        label = { Text("Metric") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = period,
-                        onValueChange = { period = it },
-                        label = { Text("Time") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = target,
-                        onValueChange = { target = it.filter(Char::isDigit) },
-                        label = { Text("Target Amount") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                AppPreferences.setProgressTrackerEnabled(context, enabled)
-                                AppPreferences.setProgressTrackerMetric(context, metric.ifBlank { "Sales" })
-                                AppPreferences.setProgressTrackerPeriod(context, period.ifBlank { "Monthly" })
-                                AppPreferences.setProgressTrackerTarget(context, target.ifBlank { "200000" })
-                                Toast.makeText(context, "Dashboard settings saved", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary, contentColor = AppColors.textOnPrimary)
-                    ) {
-                        Text("Save")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ThemePickerRow(
-    selectedThemeName: String,
-    onThemeSelected: (String) -> Unit
-) {
-    val themeOptions = listOf(
-        Triple("Peach Paper", "Peach Paper (60%)", BrandColors.peachPaper),
-        Triple("Aubergine Ink", "Aubergine Ink (30%)", BrandColors.aubergineInk),
-        Triple("Mango Punch", "Mango Punch (10%)", BrandColors.mangoPunch)
-    )
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
-    ) {
-        themeOptions.forEach { (_, label, swatch) ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .weight(1f)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(swatch)
-                        .border(
-                            width = 1.dp,
-                            color = AppColors.border,
-                            shape = RoundedCornerShape(20.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (swatch == BrandColors.mangoPunch) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = label,
-                            tint = BrandColors.aubergineInk,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-                Text(
-                    text = label,
-                    fontSize = 11.sp,
-                    color = AppColors.textSecondary
-                )
-            }
         }
     }
 }

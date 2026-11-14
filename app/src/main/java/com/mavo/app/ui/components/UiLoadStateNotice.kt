@@ -49,7 +49,8 @@ fun UiLoadStateNotice(
                 cached -> MaterialTheme.colorScheme.secondaryContainer
                 else -> MaterialTheme.colorScheme.errorContainer
             }
-        )
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
             modifier = Modifier

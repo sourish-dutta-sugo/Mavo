@@ -150,13 +150,9 @@ fun TabletBankCashScreen(
                         Card(
                             modifier = Modifier
                                 .weight(1f)
-                                .premiumClickable { activeTab = "CASH" }
-                                .border(
-                                    width = if (activeTab == "CASH") 2.dp else 1.dp,
-                                    color = if (activeTab == "CASH") AppColors.primary else AppColors.border,
-                                    shape = RoundedCornerShape(12.dp)
-                                ),
+                                .premiumClickable { activeTab = "CASH" },
                             colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                            elevation = CardDefaults.cardElevation(0.dp),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Column(modifier = Modifier.padding(18.dp)) {
@@ -174,13 +170,9 @@ fun TabletBankCashScreen(
                         Card(
                             modifier = Modifier
                                 .weight(1f)
-                                .premiumClickable { activeTab = "BANK" }
-                                .border(
-                                    width = if (activeTab == "BANK") 2.dp else 1.dp,
-                                    color = if (activeTab == "BANK") AppColors.primary else AppColors.border,
-                                    shape = RoundedCornerShape(12.dp)
-                                ),
+                                .premiumClickable { activeTab = "BANK" },
                             colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                            elevation = CardDefaults.cardElevation(0.dp),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Column(modifier = Modifier.padding(18.dp)) {
@@ -230,8 +222,8 @@ fun TabletBankCashScreen(
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                                    shape = RoundedCornerShape(10.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border)
+                                    elevation = CardDefaults.cardElevation(0.dp),
+                                    shape = RoundedCornerShape(10.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier

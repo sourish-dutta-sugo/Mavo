@@ -7,6 +7,7 @@ import com.mavo.app.ui.screens.StateDropdownMenu
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,16 +31,23 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import com.mavo.app.ui.screens.common.resolveIndianStateInfo
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import com.mavo.app.ui.screens.common.resolveIndianStateInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mavo.app.data.*
@@ -72,7 +80,8 @@ fun TabletPartiesScreen(
     viewModel: AppViewModel,
     isDesktop: Boolean = false,
     modifier: Modifier = Modifier,
-    onPartySelected: (String) -> Unit
+    onPartySelected: (String) -> Unit,
+    onNavigateBack: () -> Unit = {}
 ) {
     val partiesReadState by viewModel.partiesUiState.collectAsState()
     val ledgerEntriesReadState by viewModel.ledgerEntriesUiState.collectAsState()
@@ -87,6 +96,13 @@ fun TabletPartiesScreen(
     var selectedTypeFilter by remember { mutableStateOf("ALL") } // "ALL", "CUSTOMER", "SUPPLIER"
     var showAddPartyForm by remember { mutableStateOf(false) }
     var editingPartyId by remember { mutableStateOf<String?>(null) }
+    val openCreateParty by viewModel.openCreateParty.collectAsState()
+    LaunchedEffect(openCreateParty) {
+        if (openCreateParty) {
+            showAddPartyForm = true
+            viewModel.setOpenCreateParty(false)
+        }
+    }
     val selectionController = remember { UniversalSelectionController() }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -147,7 +163,48 @@ fun TabletPartiesScreen(
                                 visibleItemCount = filteredParties.size,
                                 onClose = { selectionController.exitSelection() },
                                 onSelectAll = { selectionController.toggleSelectAll(filteredParties.map { it.id }) },
-                                onDelete = { deleteConfirmPartyIds = selectionController.selectedIdsSnapshot().toList() }
+                                onDelete = { deleteConfirmPartyIds = selectionController.selectedIdsSnapshot().toList() },
+                                onEdit = {
+                                    val selectedId = selectionController.selectedIdsSnapshot().firstOrNull()
+                                    if (selectedId != null) {
+                                        editingPartyId = selectedId
+                                        selectionController.exitSelection()
+                                    }
+                                }
+                            )
+                        } else {
+                            TopAppBar(
+                                title = {},
+                                navigationIcon = {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(start = 8.dp)
+                                            .size(40.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(AppColors.cardBg)
+                                            .border(1.dp, AppColors.border, RoundedCornerShape(12.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        IconButton(onClick = onNavigateBack) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                contentDescription = "Back",
+                                                tint = AppColors.textPrimary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                },
+                                actions = {
+                                    Text(
+                                        text = "Parties",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AppColors.textPrimary,
+                                        modifier = Modifier.padding(end = 16.dp)
+                                    )
+                                },
+                                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                             )
                         }
                     },
@@ -178,35 +235,28 @@ fun TabletPartiesScreen(
                             .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 100.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Card(
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
-                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Parties",
-                                        fontSize = 22.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = AppColors.textPrimary
-                                    )
-                                    Text(
-                                        text = if (parties.size == 1) "1 ledger" else "${parties.size} ledgers",
-                                        fontSize = 15.sp,
-                                        color = AppColors.textSecondary
-                                    )
-                                }
+                            Text(
+                                text = "Parties",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.textPrimary
+                            )
+                            Text(
+                                text = if (parties.size == 1) "1 ledger" else "${parties.size} ledgers",
+                                fontSize = 15.sp,
+                                color = AppColors.textSecondary
+                            )
+                        }
 
                         // Search Box using RetailTextField
                         RetailTextField(
@@ -238,10 +288,11 @@ fun TabletPartiesScreen(
                                 )
                             }
                         }
-                            }
-                        }
+                    }
 
-                        UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
                         UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
                         if (partyContentBlocked) {
                             Spacer(modifier = Modifier.weight(1f))
@@ -339,15 +390,6 @@ fun TabletPartiesScreen(
                                                 horizontalAlignment = Alignment.End,
                                                 modifier = Modifier.weight(0.8f)
                                             ) {
-                                                IconButton(
-                                                    onClick = {
-                                                        selectedPartyId = party.id
-                                                        editingPartyId = party.id
-                                                        showAddPartyForm = false
-                                                    }
-                                                ) {
-                                                    Icon(Icons.Default.Edit, contentDescription = "Edit Party", tint = AppColors.primary)
-                                                }
                                                 val displayBal = Utils.formatIndianCurrency(Math.abs(currentBal))
                                                 val balLabel = if (currentBal >= 0) "DR" else "CR"
                                                 val balColor = if (currentBal >= 0) AppColors.debit else AppColors.credit
@@ -435,6 +477,40 @@ fun TabletPartiesScreen(
                             onSelectAll = { selectionController.toggleSelectAll(filteredParties.map { it.id }) },
                             onDelete = { deleteConfirmPartyIds = selectionController.selectedIdsSnapshot().toList() }
                         )
+                    } else {
+                        TopAppBar(
+                            title = {},
+                            navigationIcon = {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(start = 8.dp)
+                                        .size(40.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(AppColors.cardBg)
+                                        .border(1.dp, AppColors.border, RoundedCornerShape(12.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    IconButton(onClick = onNavigateBack) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                            contentDescription = "Back",
+                                            tint = AppColors.textPrimary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            },
+                            actions = {
+                                Text(
+                                    text = "Parties",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.textPrimary,
+                                    modifier = Modifier.padding(end = 16.dp)
+                                )
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                        )
                     }
                 },
                 floatingActionButton = {
@@ -461,114 +537,144 @@ fun TabletPartiesScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 100.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Parties",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AppColors.textPrimary
-                        )
-                        Text(
-                            text = if (parties.size == 1) "1 ledger" else "${parties.size} ledgers",
-                            fontSize = 15.sp,
-                            color = AppColors.textSecondary
-                        )
-                    }
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.border),
-                        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
-                    ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                    SearchField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = "Search parties",
-                        modifier = Modifier.fillMaxWidth().testTag("party_search_bar")
-                    )
-
-                    // Filter Buttons Row
-                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        val filters = listOf(
-                            "ALL" to "All",
-                            "CUSTOMER" to "Customers",
-                            "SUPPLIER" to "Suppliers",
-                            "OVERDUE" to "Overdue"
+                        SearchField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = "Search parties",
+                            modifier = Modifier.fillMaxWidth().testTag("party_search_bar")
                         )
-                        filters.forEach { (filter, label) ->
-                            FilterChip(
-                                selected = selectedTypeFilter == filter,
-                                onClick = { selectedTypeFilter = filter },
-                                label = { Text(label, fontSize = 13.sp) },
-                                shape = RoundedCornerShape(999.dp),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = AppColors.primary,
-                                    selectedLabelColor = AppColors.textOnPrimary
-                                ),
-                                modifier = Modifier.m3SpringPress()
+
+                        // Filter Buttons Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val filters = listOf(
+                                "ALL" to "All",
+                                "CUSTOMER" to "Customers",
+                                "SUPPLIER" to "Suppliers",
+                                "OVERDUE" to "Overdue"
                             )
+                            filters.forEach { (filter, label) ->
+                                FilterChip(
+                                    selected = selectedTypeFilter == filter,
+                                    onClick = { selectedTypeFilter = filter },
+                                    label = { Text(label, fontSize = 13.sp) },
+                                    shape = RoundedCornerShape(999.dp),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = AppColors.primary,
+                                        selectedLabelColor = AppColors.textOnPrimary
+                                    ),
+                                    modifier = Modifier.m3SpringPress()
+                                )
+                            }
                         }
                     }
-                    }
-                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     val totalReceivables = partyBalances.values.filter { it > 0.005 }.sum()
                     val totalPayables = partyBalances.values.filter { it < -0.005 }.sumOf { -it }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ZbCard(modifier = Modifier.weight(1f), contentPadding = 14) {
-                            Text(
-                                "RECEIVABLES",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = AppColors.textTertiary,
-                                letterSpacing = 0.5.sp
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                Utils.formatIndianCurrency(totalReceivables),
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AppColors.textPrimary
-                            )
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Receivables",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = AppColors.textTertiary,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Canvas(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(2.dp)
+                                ) {
+                                    val strokeWidth = 1.dp.toPx()
+                                    val dashLength = 4.dp.toPx()
+                                    val gapLength = 3.dp.toPx()
+                                    val pathEffect = PathEffect.dashPathEffect(floatArrayOf(dashLength, gapLength), 0f)
+                                    drawLine(
+                                        color = AppColors.border,
+                                        start = Offset(0f, size.height / 2),
+                                        end = Offset(size.width, size.height / 2),
+                                        strokeWidth = strokeWidth,
+                                        pathEffect = pathEffect
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    Utils.formatIndianCurrency(totalReceivables),
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.textPrimary
+                                )
+                            }
                         }
-                        ZbCard(modifier = Modifier.weight(1f), contentPadding = 14) {
-                            Text(
-                                "PAYABLES",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = AppColors.textTertiary,
-                                letterSpacing = 0.5.sp
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                Utils.formatIndianCurrency(totalPayables),
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AppColors.textPrimary
-                            )
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Payables",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = AppColors.textTertiary,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Canvas(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(2.dp)
+                                ) {
+                                    val strokeWidth = 1.dp.toPx()
+                                    val dashLength = 4.dp.toPx()
+                                    val gapLength = 3.dp.toPx()
+                                    val pathEffect = PathEffect.dashPathEffect(floatArrayOf(dashLength, gapLength), 0f)
+                                    drawLine(
+                                        color = AppColors.border,
+                                        start = Offset(0f, size.height / 2),
+                                        end = Offset(size.width, size.height / 2),
+                                        strokeWidth = strokeWidth,
+                                        pathEffect = pathEffect
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    Utils.formatIndianCurrency(totalPayables),
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.textPrimary
+                                )
+                            }
                         }
                     }
-                    HorizontalDivider(color = ScreenBorder)
 
                     UiLoadStateNotice(partiesReadState, viewModel::retryFailedReads)
                     UiLoadStateNotice(ledgerEntriesReadState, viewModel::retryFailedReads)
@@ -622,6 +728,27 @@ fun TabletPartiesScreen(
                             }
                         }
                     } else {
+                        if (selectionController.isSelectionActive) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { selectionController.toggleSelectAll(filteredParties.map { it.id }) }
+                                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                UniversalSelectionIndicator(
+                                    isSelected = selectionController.isAllSelected(filteredParties.size)
+                                )
+                                Text(
+                                    text = if (selectionController.isAllSelected(filteredParties.size)) "Deselect all" else "Select all",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = AppColors.textPrimary
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier
@@ -633,80 +760,83 @@ fun TabletPartiesScreen(
                             items(filteredParties, key = { it.id }) { party ->
                                 val currentBal = partyBalances[party.id] ?: 0.0
 
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .border(
-                                            1.dp,
-                                            if (selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.35f) else AppColors.border,
-                                            RoundedCornerShape(16.dp)
-                                        )
-                                        .premiumCombinedClickable(
-                                            onClick = {
-                                                if (selectionController.isSelectionActive) {
-                                                    selectionController.toggleSelection(party.id)
-                                                } else {
-                                                    onPartySelected(party.id)
-                                                }
-                                            },
-                                            onLongClick = { selectionController.enterSelection(party.id) }
-                                        ),
-                                    colors = CardDefaults.cardColors(containerColor = if (selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                    if (selectionController.isSelectionActive) {
+                                        UniversalSelectionIndicator(
+                                            isSelected = selectionController.isSelected(party.id),
+                                            modifier = Modifier.clickable { selectionController.toggleSelection(party.id) }
+                                        )
+                                    }
+                                    Card(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .border(
+                                                1.dp,
+                                                if (selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.35f) else AppColors.border,
+                                                RoundedCornerShape(16.dp)
+                                            )
+                                            .premiumCombinedClickable(
+                                                onClick = {
+                                                    if (selectionController.isSelectionActive) {
+                                                        selectionController.toggleSelection(party.id)
+                                                    } else {
+                                                        onPartySelected(party.id)
+                                                    }
+                                                },
+                                                onLongClick = { selectionController.enterSelection(party.id) }
+                                            ),
+                                        colors = CardDefaults.cardColors(containerColor = if (selectionController.isSelected(party.id)) AppColors.primary.copy(alpha = 0.08f) else AppColors.cardBg)
                                     ) {
-                                        if (selectionController.isSelectionActive) {
-                                            UniversalSelectionIndicator(isSelected = selectionController.isSelected(party.id))
-                                        }
-                                        Box(
-                                            modifier = Modifier
-                                                .size(40.dp)
-                                                .clip(CircleShape)
-                                                .background(AppColors.screenBg),
-                                            contentAlignment = Alignment.Center
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                text = party.name.first().uppercase(),
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = AppColors.textPrimary
-                                            )
-                                        }
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = party.name,
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = AppColors.textPrimary,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            Text(
-                                                text = party.type.lowercase().replaceFirstChar { it.uppercase() },
-                                                fontSize = 14.sp,
-                                                color = AppColors.textSecondary
-                                            )
-                                        }
-                                        Column(horizontalAlignment = Alignment.End) {
-                                            val settled = Math.abs(currentBal) < 0.005
-                                            val displayBal = Utils.formatIndianCurrency(Math.abs(currentBal))
-                                            val balLabel = if (currentBal >= 0) "Dr" else "Cr"
-                                            Text(
-                                                text = if (settled) "Settled" else "$displayBal $balLabel",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = AppColors.textPrimary
-                                            )
-                                        }
-                                        IconButton(
-                                            onClick = { editingPartyId = party.id },
-                                            modifier = Modifier.size(36.dp)
-                                        ) {
-                                            Icon(Icons.Default.Edit, contentDescription = "Edit Party", tint = AppColors.textTertiary)
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .clip(CircleShape)
+                                                    .background(AppColors.screenBg),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = party.name.first().uppercase(),
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = AppColors.textPrimary
+                                                )
+                                            }
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = party.name,
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = AppColors.textPrimary,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Text(
+                                                    text = party.type.lowercase().replaceFirstChar { it.uppercase() },
+                                                    fontSize = 14.sp,
+                                                    color = AppColors.textSecondary
+                                                )
+                                            }
+                                            Column(horizontalAlignment = Alignment.End) {
+                                                val settled = Math.abs(currentBal) < 0.005
+                                                val displayBal = Utils.formatIndianCurrency(Math.abs(currentBal))
+                                                val balLabel = if (currentBal >= 0) "Dr" else "Cr"
+                                                Text(
+                                                    text = if (settled) "Settled" else "$displayBal $balLabel",
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = AppColors.textPrimary
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -760,7 +890,8 @@ fun AddPartyForm(
     var address by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
     var city by remember { mutableStateOf("") }
-    var selectedStateInfo by remember { mutableStateOf(Utils.INDIAN_STATES[18]) } // WB fallback
+    var stateInput by remember { mutableStateOf("") }
+    var stateCode by remember { mutableStateOf("") }
     var gstin by remember { mutableStateOf("") }
     var gstinValid by remember { mutableStateOf<Boolean?>(null) }
     var pan by remember { mutableStateOf("") }
@@ -776,6 +907,7 @@ fun AddPartyForm(
     var pinLookupSuccess by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
+    val isScrolled by remember { derivedStateOf { scrollState.value > 10 } }
 
     PinAutoFillEffect(
         pin = pin,
@@ -785,8 +917,9 @@ fun AddPartyForm(
         },
         onResolved = { result ->
             city = result.city
-            selectedStateInfo = Utils.INDIAN_STATES.firstOrNull { it.first.equals(result.state, ignoreCase = true) }
-                ?: (result.state to result.stateCode.ifBlank { selectedStateInfo.second })
+            val matched = resolveIndianStateInfo(result.state)
+            stateInput = matched?.first ?: result.state
+            stateCode = matched?.second ?: ""
             pinLookupMessage = "Auto-filled city and state from PIN"
             pinLookupSuccess = true
         },
@@ -795,6 +928,35 @@ fun AddPartyForm(
             pinLookupSuccess = false
         }
     )
+
+    val saveAction = {
+        if (name.isBlank()) {
+            showError = true
+        } else {
+            val partyObj = Party(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                type = type,
+                phone = phone,
+                email = email,
+                address = address,
+                city = city,
+                state = stateInput,
+                stateCode = stateCode,
+                pin = pin,
+                gstin = if (gstin.isBlank()) null else gstin,
+                pan = if (pan.isBlank()) null else pan,
+                openingBalance = openingBalStr.toDoubleOrNull() ?: 0.0,
+                balanceType = balanceType,
+                creditLimit = creditLimitStr.toDoubleOrNull() ?: 0.0,
+                creditDays = creditDaysStr.toIntOrNull() ?: 0,
+                notes = notes
+            )
+            viewModel.saveParty(partyObj) {
+                onDismiss()
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -805,6 +967,29 @@ fun AddPartyForm(
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (!isScrolled) {
+                        Card(
+                            modifier = Modifier
+                                .clickable(onClick = saveAction)
+                                .padding(end = 8.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(containerColor = AppColors.primary)
+                        ) {
+                            Box(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Save",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppColors.textOnPrimary
+                                )
+                            }
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.cardBg)
@@ -826,16 +1011,7 @@ fun AddPartyForm(
                 .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Party Name *") },
-                modifier = Modifier.fillMaxWidth().testTag("party_name_input"),
-                singleLine = true,
-                shape = RoundedCornerShape(8.dp)
-            )
-
-            // Select Type Segmented Chips
+            // 1st line: Type selection
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Type:", fontSize = 12.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(12.dp))
@@ -850,41 +1026,57 @@ fun AddPartyForm(
                 }
             }
 
+            // 2nd line: Party name
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Party Name *") },
+                modifier = Modifier.fillMaxWidth().testTag("party_name_input"),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            // 3rd line: Phone number
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
                 label = { Text("Phone Number") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
                 shape = RoundedCornerShape(8.dp)
             )
 
+            // 4th line: Email address
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                 shape = RoundedCornerShape(8.dp)
             )
 
+            // 5th line: Address
             OutlinedTextField(
                 value = address,
                 onValueChange = { address = it },
                 label = { Text("Address") },
                 modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 shape = RoundedCornerShape(8.dp)
             )
 
+            // 6th line: Pincode & City
             OutlinedTextField(
                 value = pin,
                 onValueChange = { pin = it.filter(Char::isDigit).take(6) },
                 label = { Text("PIN Code") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                 shape = RoundedCornerShape(8.dp)
             )
             if (pinLookupMessage.isNotBlank()) {
@@ -897,81 +1089,85 @@ fun AddPartyForm(
 
             OutlinedTextField(
                 value = city,
-                onValueChange = { city = it },
+                onValueChange = { newCity ->
+                    city = newCity
+                    val matched = resolveIndianStateInfo(newCity)
+                    if (matched != null) {
+                        stateInput = matched.first
+                        stateCode = matched.second
+                    }
+                },
                 label = { Text("City") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 shape = RoundedCornerShape(8.dp)
             )
 
-            // State selection dropdown
+            val focusManager = LocalFocusManager.current
+            val stateSuggestions = remember(stateInput) {
+                if (stateInput.isBlank() || Utils.INDIAN_STATES.any { it.first.equals(stateInput, ignoreCase = true) }) {
+                    emptyList()
+                } else {
+                    Utils.INDIAN_STATES.filter { it.first.contains(stateInput, ignoreCase = true) }.take(5)
+                }
+            }
+
+            // 7th line: State
             Box(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
-                    value = "${selectedStateInfo.first} (${selectedStateInfo.second})",
-                    onValueChange = {},
+                    value = stateInput,
+                    onValueChange = { input ->
+                        val matched = resolveIndianStateInfo(input)
+                        stateInput = input
+                        stateCode = matched?.second ?: ""
+                    },
                     label = { Text("State") },
-                    readOnly = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                            modifier = Modifier.clickable { dropdownExpanded = true }
+                            contentDescription = "Browse States",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable { dropdownExpanded = true }
                         )
                     }
                 )
+                if (stateSuggestions.isNotEmpty()) {
+                    DropdownMenu(
+                        expanded = true,
+                        onDismissRequest = {},
+                        properties = androidx.compose.ui.window.PopupProperties(focusable = false),
+                        modifier = Modifier.fillMaxWidth(0.92f)
+                    ) {
+                        stateSuggestions.forEach { suggestion ->
+                            DropdownMenuItem(
+                                text = { Text(suggestion.first, color = AppColors.textPrimary) },
+                                onClick = {
+                                    stateInput = suggestion.first
+                                    stateCode = suggestion.second
+                                    focusManager.clearFocus()
+                                }
+                            )
+                        }
+                    }
+                }
                 StateDropdownMenu(
                     expanded = dropdownExpanded,
                     onDismissRequest = { dropdownExpanded = false },
-                    onStateSelected = {
-                        selectedStateInfo = it
+                    onStateSelected = { pair ->
+                        stateInput = pair.first
+                        stateCode = pair.second
                         dropdownExpanded = false
+                        focusManager.clearFocus()
                     }
                 )
             }
 
-            Text(
-                "GSTIN (Optional)",
-                color = AppColors.labelText,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
-            OutlinedTextField(
-                value = gstin,
-                onValueChange = { value ->
-                    val result = parseGstinInput(
-                        value, pan, selectedStateInfo.first, selectedStateInfo.second
-                    )
-                    gstin = result.gstin
-                    gstinValid = result.valid
-                    if (result.valid == true) {
-                        pan = result.pan
-                        result.stateName?.let { name ->
-                            Utils.INDIAN_STATES.find { it.first == name }
-                                ?.let { selectedStateInfo = it }
-                        }
-                    }
-                },
-                placeholder = { Text("15-digit GSTIN", color = AppColors.inputPlaceholder) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(8.dp),
-                colors = mavoInputColors()
-            )
-            GstinValidationFeedback(
-                gstin, gstinValid, pan, selectedStateInfo.first, selectedStateInfo.second
-            )
-
-            OutlinedTextField(
-                value = pan,
-                onValueChange = { pan = it.uppercase() },
-                label = { Text("PAN Number (Optional)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(8.dp)
-            )
-
+            // 8th line: Opening balance
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = openingBalStr,
@@ -1001,24 +1197,28 @@ fun AddPartyForm(
                 }
             }
 
-            OutlinedTextField(
-                value = creditLimitStr,
-                onValueChange = { creditLimitStr = filterDecimalInput(it) },
-                label = { Text("Credit Limit") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                shape = RoundedCornerShape(8.dp)
-            )
+            // 9th line: Credit limit and credit days
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = creditLimitStr,
+                    onValueChange = { creditLimitStr = filterDecimalInput(it) },
+                    label = { Text("Credit Limit") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(8.dp)
+                )
 
-            OutlinedTextField(
-                value = creditDaysStr,
-                onValueChange = { creditDaysStr = it.filter(Char::isDigit) },
-                label = { Text("Credit Days") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                shape = RoundedCornerShape(8.dp)
-            )
+                OutlinedTextField(
+                    value = creditDaysStr,
+                    onValueChange = { creditDaysStr = it.filter(Char::isDigit) },
+                    label = { Text("Credit Days") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = RoundedCornerShape(8.dp)
+                )
+            }
 
+            // 10th line: Notes
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
@@ -1028,44 +1228,79 @@ fun AddPartyForm(
                 shape = RoundedCornerShape(8.dp)
             )
 
+            // 11th & 12th lines: GSTIN & PAN no.
+            Text(
+                "GSTIN (Optional)",
+                color = AppColors.labelText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+            OutlinedTextField(
+                value = gstin,
+                onValueChange = { value ->
+                    val result = parseGstinInput(
+                        value, pan, stateInput, stateCode
+                    )
+                    gstin = result.gstin
+                    gstinValid = result.valid
+                    if (result.valid == true) {
+                        pan = result.pan
+                        result.stateName?.let { name ->
+                            val matched = resolveIndianStateInfo(name)
+                            if (matched != null) {
+                                stateInput = matched.first
+                                stateCode = matched.second
+                            }
+                        }
+                    }
+                },
+                placeholder = { Text("15-digit GSTIN", color = AppColors.inputPlaceholder) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp)
+            )
+            GstinValidationFeedback(
+                gstin, gstinValid, pan, stateInput, stateCode
+            )
+
+            OutlinedTextField(
+                value = pan,
+                onValueChange = { pan = it.uppercase() },
+                label = { Text("PAN Number (Optional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp)
+            )
+
             if (showError) {
                 Text("Please fill in all mandatory (*) fields correctly.", color = Color.Red, fontSize = 12.sp)
             }
 
-            Button(
-                onClick = {
-                    if (name.isBlank()) {
-                        showError = true
-                    } else {
-                        val partyObj = Party(
-                            id = UUID.randomUUID().toString(),
-                            name = name,
-                            type = type,
-                            phone = phone,
-                            email = email,
-                            address = address,
-                            city = city,
-                            state = selectedStateInfo.first,
-                            stateCode = selectedStateInfo.second,
-                            pin = pin,
-                            gstin = if (gstin.isBlank()) null else gstin,
-                            pan = if (pan.isBlank()) null else pan,
-                            openingBalance = openingBalStr.toDoubleOrNull() ?: 0.0,
-                            balanceType = balanceType,
-                            creditLimit = creditLimitStr.toDoubleOrNull() ?: 0.0,
-                            creditDays = creditDaysStr.toIntOrNull() ?: 0,
-                            notes = notes.trim()
+            if (isScrolled) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = saveAction)
+                        .testTag("save_party_button"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = AppColors.primary)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Save",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AppColors.textOnPrimary
                         )
-                        viewModel.saveParty(partyObj) {
-                            onDismiss()
-                        }
                     }
-                },
-                modifier = Modifier.fillMaxWidth().height(48.dp).testTag("save_party_button"),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                Text("Save Party", fontWeight = FontWeight.Bold)
+                }
             }
         }
         }

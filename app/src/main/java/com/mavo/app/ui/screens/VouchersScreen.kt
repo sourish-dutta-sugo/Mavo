@@ -900,60 +900,62 @@ private fun VoucherListRow(
     selected: Boolean,
     selectionActive: Boolean = false,
     onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    isLast: Boolean
+    onLongClick: () -> Unit
 ) {
-    Column(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (selected) AppColors.primary.copy(alpha = 0.06f) else Color.Transparent)
-            .premiumCombinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .premiumCombinedClickable(onClick = onClick, onLongClick = onLongClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(if (selected) AppColors.primary.copy(alpha = 0.06f) else Color.Transparent)
+                .padding(16.dp)
         ) {
             Row(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (selectionActive) {
-                    UniversalSelectionIndicator(isSelected = selected)
-                    Spacer(modifier = Modifier.width(12.dp))
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (selectionActive) {
+                        UniversalSelectionIndicator(isSelected = selected)
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
+                    Text(
+                        text = partyName,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppColors.textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (voucher.status == "DRAFT") {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        DashedBadge(text = "DRAFT")
+                    }
                 }
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = partyName,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = AppColors.textPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
+                    text = Utils.formatIndianCurrency(voucher.netAmount),
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.textPrimary
                 )
-                if (voucher.status == "DRAFT") {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    DashedBadge(text = "DRAFT")
-                }
             }
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = Utils.formatIndianCurrency(voucher.netAmount),
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = AppColors.textPrimary
+                text = "${voucherTypeLabel(voucher.type)} \u00B7 ${voucher.voucherNo} \u00B7 ${voucherShortDate(voucher.date)}",
+                fontSize = 14.sp,
+                color = AppColors.textSecondary
             )
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "${voucherTypeLabel(voucher.type)} \u00B7 ${voucher.voucherNo} \u00B7 ${voucherShortDate(voucher.date)}",
-            fontSize = 14.sp,
-            color = AppColors.textSecondary
-        )
-        if (!isLast) {
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = ScreenBorder, thickness = 1.dp)
         }
     }
 }
@@ -964,7 +966,8 @@ fun VouchersScreen(
     viewModel: AppViewModel,
     isDesktop: Boolean = false,
     navigateToNewVoucher: (String?) -> Unit,
-    navigateToVoucherDetail: (String) -> Unit
+    navigateToVoucherDetail: (String) -> Unit,
+    onNavigateBack: () -> Unit = {}
 ) {
     val vouchersReadState by viewModel.vouchersUiState.collectAsState()
     val partiesReadState by viewModel.partiesUiState.collectAsState()
@@ -981,6 +984,7 @@ fun VouchersScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showFilterSheet by remember { mutableStateOf(false) }
     var showSortSheet by remember { mutableStateOf(false) }
+    var showAllVoucherTypes by remember { mutableStateOf(false) }
     var appliedFilterState by remember { mutableStateOf(VoucherFilterState()) }
     var pendingFilterState by remember { mutableStateOf(VoucherFilterState()) }
     var appliedSortOption by remember { mutableStateOf(SORT_DEFAULT) }
@@ -1032,8 +1036,10 @@ fun VouchersScreen(
     }
 
     if (showFilterSheet) {
-        ModalBottomSheet(onDismissRequest = { showFilterSheet = false }) {
-            Column(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        AlertDialog(
+            onDismissRequest = { showFilterSheet = false },
+            containerColor = AppColors.cardBg,
+            title = {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("Filter vouchers", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                     TextButton(onClick = {
@@ -1042,123 +1048,168 @@ fun VouchersScreen(
                         showFilterSheet = false
                     }) { Text("Clear All") }
                 }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Voucher Type", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
+                        TextButton(
+                            onClick = { showAllVoucherTypes = !showAllVoucherTypes },
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Text(if (showAllVoucherTypes) "Show less" else "More (${voucherTypeFilterOptions.size})", fontSize = 12.sp)
+                        }
+                    }
 
-                Text("Voucher Type", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    voucherTypeFilterOptions.forEach { type ->
-                        FilterChip(
-                            selected = pendingFilterState.type == type || (pendingFilterState.type == null && type == "ALL"),
-                            onClick = {
-                                pendingFilterState = pendingFilterState.copy(type = if (type == "ALL") null else type)
-                            },
-                            label = { Text(voucherTypeLabel(type)) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = AppColors.primary,
-                                selectedLabelColor = AppColors.textOnPrimary
+                    val typesToDisplay = if (showAllVoucherTypes) voucherTypeFilterOptions else voucherTypeFilterOptions.take(6)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        typesToDisplay.chunked(2).forEach { rowTypes ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                rowTypes.forEach { type ->
+                                    val isSelected = pendingFilterState.type == type || (pendingFilterState.type == null && type == "ALL")
+                                    Card(
+                                        onClick = {
+                                            pendingFilterState = pendingFilterState.copy(type = if (type == "ALL") null else type)
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(12.dp),
+                                        border = BorderStroke(1.dp, if (isSelected) AppColors.primary else AppColors.border),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = if (isSelected) AppColors.primary.copy(alpha = 0.12f) else AppColors.cardBg
+                                        )
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = voucherTypeLabel(type),
+                                                fontSize = 12.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isSelected) AppColors.primary else AppColors.textPrimary,
+                                                textAlign = TextAlign.Center,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
+                                if (rowTypes.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+
+                    Text("Date", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { activeDatePicker = "start" }) {
+                            Text(pendingFilterState.startDate?.let { Utils.formatDate(it) } ?: "Start date")
+                        }
+                        OutlinedButton(onClick = { activeDatePicker = "end" }) {
+                            Text(pendingFilterState.endDate?.let { Utils.formatDate(it) } ?: "End date")
+                        }
+                    }
+
+                    Text("Party", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
+                    OutlinedTextField(
+                        value = pendingFilterState.partyName.orEmpty(),
+                        onValueChange = { pendingFilterState = pendingFilterState.copy(partyName = it) },
+                        label = { Text("Party name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Text("Payment Status", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        voucherPaymentStatusOptions.forEach { (value, label) ->
+                            FilterChip(
+                                selected = pendingFilterState.paymentStatus == value,
+                                onClick = { pendingFilterState = pendingFilterState.copy(paymentStatus = if (pendingFilterState.paymentStatus == value) null else value) },
+                                label = { Text(label) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = AppColors.primary,
+                                    selectedLabelColor = AppColors.textOnPrimary
+                                )
                             )
+                        }
+                    }
+
+                    Text("Amount", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = pendingFilterState.minAmount?.toString().orEmpty(),
+                            onValueChange = { value -> pendingFilterState = pendingFilterState.copy(minAmount = value.toDoubleOrNull()) },
+                            label = { Text("Min") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = pendingFilterState.maxAmount?.toString().orEmpty(),
+                            onValueChange = { value -> pendingFilterState = pendingFilterState.copy(maxAmount = value.toDoubleOrNull()) },
+                            label = { Text("Max") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
                         )
                     }
+
+
                 }
-
-                Text("Date", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { activeDatePicker = "start" }) {
-                        Text(pendingFilterState.startDate?.let { Utils.formatDate(it) } ?: "Start date")
-                    }
-                    OutlinedButton(onClick = { activeDatePicker = "end" }) {
-                        Text(pendingFilterState.endDate?.let { Utils.formatDate(it) } ?: "End date")
-                    }
-                }
-
-                Text("Party", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
-                OutlinedTextField(
-                    value = pendingFilterState.partyName.orEmpty(),
-                    onValueChange = { pendingFilterState = pendingFilterState.copy(partyName = it) },
-                    label = { Text("Party name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Text("Payment Status", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    voucherPaymentStatusOptions.forEach { (value, label) ->
-                        FilterChip(
-                            selected = pendingFilterState.paymentStatus == value,
-                            onClick = { pendingFilterState = pendingFilterState.copy(paymentStatus = if (pendingFilterState.paymentStatus == value) null else value) },
-                            label = { Text(label) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = AppColors.primary,
-                                selectedLabelColor = AppColors.textOnPrimary
-                            )
-                        )
-                    }
-                }
-
-                Text("Amount", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = pendingFilterState.minAmount?.toString().orEmpty(),
-                        onValueChange = { value -> pendingFilterState = pendingFilterState.copy(minAmount = value.toDoubleOrNull()) },
-                        label = { Text("Min") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = pendingFilterState.maxAmount?.toString().orEmpty(),
-                        onValueChange = { value -> pendingFilterState = pendingFilterState.copy(maxAmount = value.toDoubleOrNull()) },
-                        label = { Text("Max") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Text("Reference", fontWeight = FontWeight.SemiBold, color = AppColors.textSecondary)
-                OutlinedTextField(
-                    value = pendingFilterState.reference.orEmpty(),
-                    onValueChange = { pendingFilterState = pendingFilterState.copy(reference = it) },
-                    label = { Text("Reference no.") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { showFilterSheet = false }) { Text("Cancel") }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = {
-                        appliedFilterState = pendingFilterState
-                        showFilterSheet = false
-                    }) { Text("Apply") }
-                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    appliedFilterState = pendingFilterState
+                    showFilterSheet = false
+                }) { Text("Apply") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showFilterSheet = false }) { Text("Cancel") }
             }
-        }
+        )
     }
 
     if (showSortSheet) {
-        ModalBottomSheet(onDismissRequest = { showSortSheet = false }) {
-            Column(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        AlertDialog(
+            onDismissRequest = { showSortSheet = false },
+            containerColor = AppColors.cardBg,
+            title = {
                 Text("Sort vouchers", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                voucherSortOptions.forEach { option ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clickable { pendingSortOption = option.value },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(option.label)
-                        if (pendingSortOption == option.value) {
-                            Icon(Icons.Default.Check, contentDescription = null, tint = AppColors.primary)
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    voucherSortOptions.forEach { option ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clickable { pendingSortOption = option.value }.padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(option.label)
+                            if (pendingSortOption == option.value) {
+                                Icon(Icons.Default.Check, contentDescription = null, tint = AppColors.primary)
+                            }
                         }
                     }
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { showSortSheet = false }) { Text("Cancel") }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = {
-                        appliedSortOption = pendingSortOption
-                        showSortSheet = false
-                    }) { Text("Apply") }
-                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    appliedSortOption = pendingSortOption
+                    showSortSheet = false
+                }) { Text("Apply") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSortSheet = false }) { Text("Cancel") }
             }
-        }
+        )
     }
 
     if (activeDatePicker != null) {
@@ -1200,6 +1251,40 @@ fun VouchersScreen(
                                 onSelectAll = { selectionController.toggleSelectAll(displayedVouchers.map { it.id }) },
                                 onDelete = { deleteConfirmVoucherIds = selectionController.selectedIdsSnapshot().toList() }
                             )
+                        } else {
+                            TopAppBar(
+                                title = {},
+                                navigationIcon = {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(start = 8.dp)
+                                            .size(40.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(AppColors.cardBg)
+                                            .border(1.dp, AppColors.border, RoundedCornerShape(12.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        IconButton(onClick = onNavigateBack) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                contentDescription = "Back",
+                                                tint = AppColors.textPrimary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                },
+                                actions = {
+                                    Text(
+                                        text = "Vouchers",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AppColors.textPrimary,
+                                        modifier = Modifier.padding(end = 16.dp)
+                                    )
+                                },
+                                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                            )
                         }
                     },
                     floatingActionButton = {
@@ -1234,51 +1319,13 @@ fun VouchersScreen(
                             .padding(innerPadding),
                         verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .padding(top = 12.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.dp, AppColors.border),
-                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                            Text(
-                                text = "Vouchers",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = AppColors.textPrimary,
-                                letterSpacing = (-0.25).sp
-                            )
-                            }
-                        }
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        Spacer(modifier = Modifier.height(12.dp))
 
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.dp, AppColors.border),
-                            colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
-                        ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp)
+                                .padding(horizontal = 16.dp)
                         ) {
                             OutlinedTextField(
                                 value = searchQuery,
@@ -1333,8 +1380,8 @@ fun VouchersScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             BadgedBox(
@@ -1363,6 +1410,7 @@ fun VouchersScreen(
                                     Text("Filter", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                                 }
                             }
+                            Spacer(modifier = Modifier.width(8.dp))
                             OutlinedButton(
                                 onClick = { pendingSortOption = appliedSortOption; showSortSheet = true },
                                 shape = RoundedCornerShape(999.dp),
@@ -1375,11 +1423,7 @@ fun VouchersScreen(
                             ) {
                                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    if (appliedSortOption == SORT_DEFAULT) "Sort" else "Sort: ${voucherSortLabel(appliedSortOption)}",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                Text("Sort", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                             }
                         }
 
@@ -1388,7 +1432,7 @@ fun VouchersScreen(
                             FlowRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp),
+                                    .padding(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
@@ -1409,8 +1453,6 @@ fun VouchersScreen(
                                     leadingIcon = { Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp)) }
                                 )
                             }
-                        }
-                        }
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -1466,12 +1508,6 @@ fun VouchersScreen(
                                     Card(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .shadow(4.dp, RoundedCornerShape(16.dp))
-                                            .border(
-                                                1.dp,
-                                                if (isSelected || selectionController.isSelected(voucher.id)) AppColors.primary.copy(alpha = 0.35f) else AppColors.border.copy(alpha = 0.5f),
-                                                RoundedCornerShape(16.dp)
-                                            )
                                             .premiumCombinedClickable(
                                                 onClick = {
                                                     if (selectionController.isSelectionActive) {
@@ -1612,8 +1648,66 @@ fun VouchersScreen(
                         },
                         onDelete = { deleteConfirmVoucherIds = selectionController.selectedIdsSnapshot().toList() }
                     )
+                } else {
+                    TopAppBar(
+                        title = {},
+                        navigationIcon = {
+                            Box(
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(AppColors.cardBg)
+                                    .border(1.dp, AppColors.border, RoundedCornerShape(12.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                IconButton(onClick = onNavigateBack) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back",
+                                        tint = AppColors.textPrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        },
+                        actions = {
+                            Text(
+                                text = "Vouchers",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AppColors.textPrimary,
+                                modifier = Modifier.padding(end = 16.dp)
+                            )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                    )
                 }
             },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = { navigateToNewVoucher(null) },
+                    containerColor = AppColors.primary,
+                    contentColor = AppColors.textOnPrimary,
+                    shape = CircleShape,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 8.dp,
+                        pressedElevation = 12.dp
+                    ),
+                    modifier = Modifier
+                        .size(56.dp)
+                        .premiumFabEntrance()
+                        .pressScale()
+                        .shadow(8.dp, CircleShape)
+                        .testTag("add_voucher_fab")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Voucher",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
         ) { innerPadding ->
             Column(
                 modifier = Modifier
@@ -1621,57 +1715,15 @@ fun VouchersScreen(
                     .background(Color.Transparent)
                     .padding(innerPadding)
             ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, AppColors.border),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Vouchers",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AppColors.textPrimary
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            text = "FY ${profile?.fyLabel?.takeIf { it.isNotBlank() } ?: viewModel.financialYear.value}",
-                            fontSize = 15.sp,
-                            color = AppColors.textSecondary
-                        )
-                    }
-                }
-
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, AppColors.border),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
-                ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
                 SearchField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = "Search by no., party, amount",
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
                         .testTag("voucher_search_bar")
                 )
 
@@ -1684,84 +1736,55 @@ fun VouchersScreen(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ChipRow(
-                    options = listOf("All", "Sale", "Purchase", "Receipt", "Payment", "Journal"),
-                    selectedIndex = voucherChipIndex(appliedFilterState.type),
-                    onSelect = { index ->
-                        val type = voucherChipTypes[index]
-                        appliedFilterState = appliedFilterState.copy(type = type)
-                        pendingFilterState = pendingFilterState.copy(type = type)
-                    }
-                )
-
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable {
-                            pendingFilterState = appliedFilterState
-                            showFilterSheet = true
-                        }
-                    ) {
-                        BadgedBox(
-                            badge = {
-                                if (appliedFilterState.activeFilterCount > 0) {
-                                    Badge(
-                                        containerColor = AppColors.primary,
-                                        contentColor = AppColors.textOnPrimary,
-                                        modifier = Modifier.size(8.dp)
-                                    ) {}
-                                }
+                    BadgedBox(
+                        badge = {
+                            if (appliedFilterState.activeFilterCount > 0) {
+                                Badge(
+                                    containerColor = AppColors.primary,
+                                    contentColor = AppColors.textOnPrimary,
+                                    modifier = Modifier.size(8.dp)
+                                ) {}
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FilterList,
-                                contentDescription = "Filter",
-                                tint = AppColors.textSecondary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Filter",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = AppColors.textPrimary
-                        )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable {
-                            pendingSortOption = appliedSortOption
-                            showSortSheet = true
                         }
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.SwapVert,
-                            contentDescription = "Sort",
-                            tint = AppColors.textSecondary,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        OutlinedButton(
+                            onClick = { pendingFilterState = appliedFilterState; showFilterSheet = true },
+                            shape = RoundedCornerShape(999.dp),
+                            border = BorderStroke(1.dp, AppColors.border),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = AppColors.cardBg.copy(alpha = 0.7f),
+                                contentColor = AppColors.textSecondary
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Icon(Icons.Default.FilterList, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Filter", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedButton(
+                        onClick = { pendingSortOption = appliedSortOption; showSortSheet = true },
+                        shape = RoundedCornerShape(999.dp),
+                        border = BorderStroke(1.dp, AppColors.border),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = AppColors.cardBg.copy(alpha = 0.7f),
+                            contentColor = AppColors.textSecondary
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Icon(Icons.Default.SwapVert, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (appliedSortOption == SORT_DEFAULT) {
-                                "Sort \u00B7 Date"
-                            } else {
-                                "Sort \u00B7 ${voucherSortLabel(appliedSortOption)}"
-                            },
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = AppColors.textPrimary
-                        )
+                        Text("Sort", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                     }
                 }
 
@@ -1795,8 +1818,6 @@ fun VouchersScreen(
                             }
                         )
                     }
-                }
-                }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -1873,37 +1894,27 @@ fun VouchersScreen(
                         }
                     }
                 } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .padding(horizontal = 16.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(AppColors.cardBg)
-                            .border(1.dp, ScreenBorder, RoundedCornerShape(16.dp))
+                    LazyColumn(
+                        state = mobileVoucherListState,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 100.dp),
+                        modifier = Modifier.weight(1f).fillMaxWidth()
                     ) {
-                        LazyColumn(
-                            state = mobileVoucherListState,
-                            contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(displayedVouchers, key = { it.id }) { voucher ->
-                                VoucherListRow(
-                                    voucher = voucher,
-                                    partyName = voucher.partyId?.let { partyNameById[it] } ?: "Cash / Bank Account",
-                                    selected = selectionController.isSelected(voucher.id),
-                                    selectionActive = selectionController.isSelectionActive,
-                                    onClick = {
-                                        if (selectionController.isSelectionActive) {
-                                            selectionController.toggleSelection(voucher.id)
-                                        } else {
-                                            navigateToVoucherDetail(voucher.id)
-                                        }
-                                    },
-                                    onLongClick = { selectionController.enterSelection(voucher.id) },
-                                    isLast = voucher.id == displayedVouchers.lastOrNull()?.id
-                                )
-                            }
+                        items(displayedVouchers, key = { it.id }) { voucher ->
+                            VoucherListRow(
+                                voucher = voucher,
+                                partyName = voucher.partyId?.let { partyNameById[it] } ?: "Cash / Bank Account",
+                                selected = selectionController.isSelected(voucher.id),
+                                selectionActive = selectionController.isSelectionActive,
+                                onClick = {
+                                    if (selectionController.isSelectionActive) {
+                                        selectionController.toggleSelection(voucher.id)
+                                    } else {
+                                        navigateToVoucherDetail(voucher.id)
+                                    }
+                                },
+                                onLongClick = { selectionController.enterSelection(voucher.id) }
+                            )
                         }
                     }
                 }

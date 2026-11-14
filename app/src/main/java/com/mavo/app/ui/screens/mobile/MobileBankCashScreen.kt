@@ -134,11 +134,9 @@ fun MobileBankCashScreen(
                     Card(
                         modifier = Modifier
                             .weight(1f)
-                            .premiumClickable { activeTab = "CASH" }
-                            .then(
-                                if (activeTab == "CASH") Modifier.border(2.dp, AppColors.primary, RoundedCornerShape(12.dp)) else Modifier
-                            ),
+                            .premiumClickable { activeTab = "CASH" },
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                        elevation = CardDefaults.cardElevation(0.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
@@ -156,11 +154,9 @@ fun MobileBankCashScreen(
                     Card(
                         modifier = Modifier
                             .weight(1f)
-                            .premiumClickable { activeTab = "BANK" }
-                            .then(
-                                if (activeTab == "BANK") Modifier.border(2.dp, AppColors.primary, RoundedCornerShape(12.dp)) else Modifier
-                            ),
+                            .premiumClickable { activeTab = "BANK" },
                         colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                        elevation = CardDefaults.cardElevation(0.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
@@ -210,6 +206,7 @@ fun MobileBankCashScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                                elevation = CardDefaults.cardElevation(0.dp),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Row(

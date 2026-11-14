@@ -111,6 +111,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val setupStatusResolved = MutableStateFlow(false)
     val financialYear = MutableStateFlow(FinancialYearUtils.currentFinancialYearCode())
     val voucherPrefillRequest = MutableStateFlow<VoucherPrefillRequest?>(null)
+    val openCreateParty = MutableStateFlow(false)
+    val openCreateProduct = MutableStateFlow(false)
+    val openCreateLedger = MutableStateFlow(false)
+
+    fun setOpenCreateParty(open: Boolean) { openCreateParty.value = open }
+    fun setOpenCreateProduct(open: Boolean) { openCreateProduct.value = open }
+    fun setOpenCreateLedger(open: Boolean) { openCreateLedger.value = open }
 
     init {
         val tempRepo = try {

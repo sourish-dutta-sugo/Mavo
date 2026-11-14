@@ -27,7 +27,6 @@ val TomorrowFontFamily = FontFamily(
 val NumericFontFamily = TomorrowFontFamily
 
 val Typography = Typography(
-    // Display: DynaPuff 700, 32 / 40
     displayLarge = TextStyle(
         fontFamily = DynaPuffFontFamily,
         fontWeight = FontWeight.Bold,
@@ -49,7 +48,6 @@ val Typography = Typography(
         lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
-    // Screen title / Headline: DynaPuff 700 / 600
     headlineLarge = TextStyle(
         fontFamily = DynaPuffFontFamily,
         fontWeight = FontWeight.Bold,
@@ -71,7 +69,6 @@ val Typography = Typography(
         lineHeight = 24.sp,
         letterSpacing = 0.sp
     ),
-    // Section title / Titles: DynaPuff 600 / 700
     titleLarge = TextStyle(
         fontFamily = DynaPuffFontFamily,
         fontWeight = FontWeight.SemiBold,
@@ -93,7 +90,6 @@ val Typography = Typography(
         lineHeight = 20.sp,
         letterSpacing = 0.sp
     ),
-    // Body & Labels: Tomorrow 400 / 600
     bodyLarge = TextStyle(
         fontFamily = TomorrowFontFamily,
         fontWeight = FontWeight.Normal,

@@ -143,7 +143,7 @@ fun VoucherDetailScreen(
                     .padding(top = 16.dp),
                 color = MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(16.dp),
-                tonalElevation = 1.dp
+                tonalElevation = 0.dp
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(

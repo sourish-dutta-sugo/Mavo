@@ -94,6 +94,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>().configureEa
 }
 
 dependencies {
+  implementation(project(":shared"))
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.accompanist.permissions)
   implementation(libs.androidx.activity.compose)

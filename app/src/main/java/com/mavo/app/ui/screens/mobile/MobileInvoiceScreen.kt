@@ -222,7 +222,7 @@ fun MobileInvoiceScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 2.dp
+                    tonalElevation = 0.dp
                 ) {
                     Row(
                         modifier = Modifier

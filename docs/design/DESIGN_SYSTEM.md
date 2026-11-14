@@ -3,51 +3,63 @@
 > Last updated: 2026-11-04  
 > Source of truth: `ui/theme/` package — `DesignTokens.kt`, `AppTheme.kt`, `AppColors.kt`, `Type.kt`
 
-## Mavo Loop color system
+## Themes (Cafe 60:30:10 System)
 
-The app uses one branded semantic system. `MavoTheme` owns raw anchors and
-components consume `MaterialTheme.colorScheme`.
+4 named soothing cafe light themes, selectable at runtime. Persisted in SharedPreferences
+(`mavo_pref` → `selected_theme`).
 
-| Anchor | Hex | Role |
+- **60% Dominant Base**: Warm Latte Cream Paper (`#FBF8F4`)
+- **30% Structural Medium**: Deep Roasted Espresso & Cocoa Brown (`#2E1F16` / `#5D4432`)
+- **10% Accent Punch**: Warm Caramel Terracotta (`#C86D44`)
+
+| Name | Key | Accent (10%) | Accent light | Background (60%) | Dark? |
+|------|-----|--------------|--------------|-------------------|-------|
+| Zero (Cafe Default) | `ZERO` | `#C86D44` (warm caramel terracotta) | `#F6E7DD` | `#FBF8F4` (warm latte cream) | No |
+| Saffron | `SAFFRON` | `#D6783C` (warm honey caramel) | `#FBEADB` | `#FBF8F4` | No |
+| Slate | `SLATE` | `#5D4432` (mocha roast) | `#E8E0D7` | `#FBF8F4` | No |
+| Ledger | `LEDGER` | `#4E7756` (sage herbal) | `#DDEADE` | `#FBF8F4` | No |
+
+The **Ink** theme (purple, `#7C3AED`) is retired — every accent now sits on the
+paper palette. Each theme defines Material 3 primary, secondary, tertiary,
+surface, outline, and error roles through `MavoTheme`. Themes change accent
+colors only.
+
+Default theme: **Zero**. Legacy names (`BEACH`, `BLUE`, `GREEN`, `TEAL`,
+`PURPLE`, `DARK`, `INK`) resolve through `AppTheme.fromName` and fall back to
+Zero. A saved `NIGHT` selection falls back to Zero.
+
+All screens use the graph-paper canvas. Material 3 surfaces remain opaque
+behind text, fields, and financial data.
+
+## Colors — Semantic
+
+Defined in `DesignTokens.kt` → `Semantic` object. Theme-independent.
+Material 3 container and foreground roles come from the active color scheme.
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `success` | `#22A06B` | Positive actions, credit |
+| `error` | `#E24B4A` | Errors, debit |
+| `warning` | `#D97706` | Warnings, pending |
+| `info` | `#0F766E` | Informational (bg `#DCEFEA`) |
+| `debit` | `#E24B4A` | DR amounts |
+| `credit` | `#22A06B` | CR amounts |
+| `chartIncome` | `#22A06B` | Report charts |
+| `chartExpense` | `#E24B4A` | Report charts |
+
+## Tonal surfaces
+
+| Role | Light value | Usage |
 |---|---|---|
-| Peach Paper | `#F6E0CF` | Canvas and calm large surfaces |
-| Aubergine Ink | `#3A263A` | Text, structure, and navigation |
-| Mango Punch | `#F2A83B` | Primary action, focus, and selection |
+| Canvas | `#F4F0E5` | Graph-paper background |
+| Grid lines | `#CEC8BC` | Canvas grid, 16 dp |
+| Theme background | Transparent | Reveals shared canvas |
+| Surface | `#FFFCF7` | Cards and menus |
+| Surface variant | `#F0ECE4` | Inputs and grouped content |
+| Primary accent | Theme-selected | Primary actions and focus |
+| Outline | `#77736B` | Control boundaries |
 
-Light roles:
-
-| Role | Value |
-|---|---|
-| `background` | `#F6E0CF` |
-| `surface` | `#F9E9DC` |
-| `surfaceVariant` | `#F4D9C6` |
-| `onSurface` | `#3A263A` |
-| `onSurfaceVariant` | `#684E62` |
-| `primary` | `#F2A83B` |
-| `onPrimary` | `#3A263A` |
-| `outline` | `#8D7181` |
-
-Dark roles use `#211721`, `#2A1D2A`, and `#302130` for canvas, surface, and
-surface variant. Text uses Peach Paper and its lighter tones. Mango always uses
-Aubergine text.
-
-`MavoTheme` supports system dark mode and an increased-contrast override.
-Increased contrast replaces low-emphasis outlines with stronger semantic
-outlines. Dynamic color is not enabled by default; branded mode remains the
-identity baseline.
-
-Status colors stay separate from brand colors:
-
-| Role | Foreground | Container |
-|---|---|---|
-| Success / credit | `#286647` | `#D8EBDD` |
-| Warning / pending | `#7A4E00` | `#F8E4B7` |
-| Error / debit | `#8E3B3B` | `#F4D8D4` |
-| Info | `#4E5878` | `#E1E5F3` |
-| Disabled | `#8D7D86` | `#E8DCD8` |
-
-Pair every status color with text, an icon, or a label. Do not use status
-colors as decoration or brand accents.
+Use `MaterialTheme.colorScheme` for new UI instead of fixed surface colors.
 
 ## Colors — Brand
 
@@ -125,19 +137,9 @@ this scale; nested radii add up (inner = outer − padding, never below 4).
 | 24 / 28 / 32 | Hero blocks, wizard headers, M3 dialogs |
 | 999 | Pills (segmented controls, progress tracker, avatars) |
 
-## Surface and elevation
+## Elevation (dp)
 
-The shared canvas is the default surface. Do not wrap ordinary headings, lists,
-metrics, empty states, or navigation in cards. `ZbCard` is flat by default:
-content sits directly on the canvas with no fill, border, or elevation.
-
-Keep filled or outlined surfaces only when they provide a real boundary:
-dialogs, bottom sheets, text inputs, selected controls, status badges, and
-primary actions. Use an outline only for focus, selection, validation, or
-another clear interaction state.
-
-Shadows stay neutral and soft. Do not add colored shadows, glows, or ambient
-tints.
+Shadows stay neutral and soft — no colored shadows, glows, or ambient tints.
 
 | Token | Value |
 |-------|-------|

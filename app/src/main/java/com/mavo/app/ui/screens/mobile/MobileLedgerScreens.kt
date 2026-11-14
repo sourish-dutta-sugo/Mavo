@@ -271,10 +271,10 @@ private fun LedgerListScreen(
             ) {
             Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg)
+                colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
+                elevation = CardDefaults.cardElevation(0.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(12.dp),
@@ -346,11 +346,10 @@ private fun LedgerListScreen(
                     items(filteredRows, key = { it.id }) { row ->
                         Card(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, AppColors.border, RoundedCornerShape(16.dp)),
+                                .fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = AppColors.cardBg),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                            elevation = CardDefaults.cardElevation(0.dp)
                         ) {
                             Row(
                                 modifier = Modifier

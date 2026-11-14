@@ -227,7 +227,7 @@ fun TabletInvoiceScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 3.dp
+                    tonalElevation = 0.dp
                 ) {
                     Row(
                         modifier = Modifier

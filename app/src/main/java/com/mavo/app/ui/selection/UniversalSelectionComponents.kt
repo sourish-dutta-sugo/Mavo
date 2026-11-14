@@ -10,11 +10,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -33,6 +34,7 @@ fun UniversalSelectionTopAppBar(
     onClose: () -> Unit,
     onSelectAll: () -> Unit,
     onDelete: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (!controller.isSelectionActive) return
@@ -52,15 +54,14 @@ fun UniversalSelectionTopAppBar(
             }
         },
         actions = {
-            TextButton(onClick = onSelectAll) {
-                Text(
-                    text = if (controller.isAllSelected(visibleItemCount)) "Deselect All" else "Select All",
-                    color = AppColors.primary
-                )
+            if (controller.selectedCount == 1 && onEdit != null) {
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = AppColors.textPrimary)
+                }
             }
             if (onDelete != null && controller.selectedCount > 0) {
-                TextButton(onClick = onDelete) {
-                    Text("Delete", color = AppColors.error)
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = AppColors.error)
                 }
             }
         },
